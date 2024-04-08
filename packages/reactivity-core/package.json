@@ -1,0 +1,35 @@
+{
+    "name": "@conterra-dev/reactivity-core",
+    "type": "module",
+    "version": "0.1.0",
+    "license": "Apache-2.0",
+    "files": [
+        "README.md",
+        "LICENSE",
+        "package.json",
+        "dist/**"
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./package.json": "./package.json"
+    },
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "tsc -p tsconfig.prod.json",
+        "dev": "tsc -p tsconfig.prod.json -w --preserveWatchOutput",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "@preact/signals-core": "^1.6.0"
+    },
+    "devDependencies": {
+        "project-root": "workspace:*"
+    },
+    "publishConfig": {
+        "access": "public",
+        "linkDirectory": true
+    }
+}

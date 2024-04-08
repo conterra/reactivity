@@ -1,0 +1,45 @@
+{
+    "name": "project-root",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "clean": "pnpm -r run --parallel clean",
+        "test": "pnpm -r run --aggregate-output test run",
+        "check-types": "tsc",
+        "watch-types": "pnpm check-types -w",
+        "lint": "eslint ./packages --ext .js,.ts,.jsx,.tsx,.mjs,.mts,.cjs,.cts,.vue",
+        "prettier-check": "pnpm prettier:common -c",
+        "prettier": "pnpm prettier:common -w",
+        "prettier:common": "prettier ./packages --ignore-path .eslintignore --cache"
+    },
+    "devDependencies": {
+        "@types/node": "^18.19.30",
+        "@typescript-eslint/eslint-plugin": "^7.5.0",
+        "@typescript-eslint/parser": "^7.5.0",
+        "concurrently": "^8.2.2",
+        "esbuild": "^0.20.2",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "happy-dom": "^14.7.1",
+        "prettier": "^3.2.5",
+        "rimraf": "^5.0.5",
+        "tsx": "^4.7.2",
+        "typescript": "~5.4.4",
+        "vite": "^5.2.8",
+        "vitest": "^1.4.0"
+    },
+    "engines": {
+        "node": ">= 18",
+        "pnpm": "^8"
+    },
+    "pnpm": {
+        "packageExtensions": {
+            "@vue/test-utils@^2": {
+                "peerDependencies": {
+                    "vue": "^3"
+                }
+            }
+        }
+    }
+}
