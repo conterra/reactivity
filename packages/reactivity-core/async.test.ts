@@ -1,17 +1,9 @@
-import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
 import { effect, watch } from "./async";
 
-beforeEach(() => {
-    vi.useFakeTimers();
-});
-
-afterEach(() => {
-    vi.restoreAllMocks();
-});
-
 describe("effect", () => {
-    it("re-executes the callback asynchronously", () => {
+    it("re-executes the callback asynchronously", async () => {
         const r = reactive(0);
         const spy = vi.fn();
 
@@ -24,12 +16,12 @@ describe("effect", () => {
         r.value = 1;
         expect(spy).toHaveBeenCalledTimes(1); // _not_ called again
 
-        step();
+        await waitForMacroTask();
         expect(spy).toHaveBeenCalledTimes(2); // called after delay
         expect(spy.mock.lastCall![0]).toBe(1);
     });
 
-    it("ensures that multiple small changes only trigger one re-execution", () => {
+    it("ensures that multiple small changes only trigger one re-execution", async () => {
         const r1 = reactive(0);
         const r2 = reactive(10);
         const spy = vi.fn();
@@ -44,12 +36,12 @@ describe("effect", () => {
         r1.value = 2;
         r2.value = 21;
         r2.value = 22;
-        step();
+        await waitForMacroTask();
         expect(spy).toHaveBeenCalledTimes(2); // called after delay
         expect(spy.mock.lastCall).toEqual([2, 22]);
     });
 
-    it("can be disposed", () => {
+    it("can be disposed", async () => {
         const r = reactive(0);
         const spy = vi.fn();
 
@@ -60,11 +52,11 @@ describe("effect", () => {
         handle.destroy();
 
         r.value = 2;
-        step();
+        await waitForMacroTask();
         expect(spy).toHaveBeenCalledTimes(1); // not called again
     });
 
-    it("can be disposed while an execution is already scheduled", () => {
+    it("can be disposed while an execution is already scheduled", async () => {
         const r = reactive(0);
         const spy = vi.fn();
 
@@ -75,13 +67,13 @@ describe("effect", () => {
         r.value = 2; // triggers execution
 
         handle.destroy();
-        step();
+        await waitForMacroTask();
         expect(spy).toHaveBeenCalledTimes(1); // not called again
     });
 });
 
 describe("watch", () => {
-    it("triggers when the selector function returns different values", () => {
+    it("triggers when the selector function returns different values",async  () => {
         const spy = vi.fn();
         const r1 = reactive(1);
         const r2 = reactive(2);
@@ -96,13 +88,13 @@ describe("watch", () => {
         r1.value = 3;
         expect(spy).toBeCalledTimes(0); // async
 
-        step();
+        await waitForMacroTask();
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledWith(3, 2);
     });
 
-    it("triggers initially if 'immediate' is true", () => {
+    it("triggers initially if 'immediate' is true", async () => {
         const spy = vi.fn();
         const r1 = reactive(1);
         const r2 = reactive(2);
@@ -115,11 +107,11 @@ describe("watch", () => {
         );
         expect(spy).toBeCalledTimes(0); // async
 
-        step();
+        await waitForMacroTask();
         expect(spy).toBeCalledTimes(1);
     });
 
-    it("can be disposed", () => {
+    it("can be disposed", async () => {
         const spy = vi.fn();
         const r1 = reactive(1);
         const handle = watch(
@@ -133,11 +125,11 @@ describe("watch", () => {
         handle.destroy();
 
         r1.value = 2; // ignored
-        step();
+        await waitForMacroTask();
         expect(spy).toBeCalledTimes(0);
     });
 
-    it("can be disposed while a callback is scheduled", () => {
+    it("can be disposed while a callback is scheduled", async () => {
         const spy = vi.fn();
         const r1 = reactive(1);
         const handle = watch(
@@ -150,11 +142,11 @@ describe("watch", () => {
         r1.value = 2; // ignored
         handle.destroy();
 
-        step();
+        await waitForMacroTask();
         expect(spy).toBeCalledTimes(0);
     });
 });
 
-function step() {
-    vi.advanceTimersByTime(10);
+function waitForMacroTask() {
+    return new Promise((resolve) => setTimeout(resolve, 10));
 }

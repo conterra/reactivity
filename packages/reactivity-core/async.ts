@@ -1,4 +1,5 @@
 import { CleanupHandle } from "./Reactive";
+import { TaskQueue } from "./TaskQueue";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EffectFunc, syncEffectOnce, syncEffect, WatchOptions, syncWatch } from "./sync";
 
@@ -167,12 +168,8 @@ export function watch<const Values extends readonly unknown[]>(
     return { destroy };
 }
 
+const tasks = new TaskQueue();
+
 function dispatchCallback(callback: () => void): CleanupHandle {
-    // TODO: Microtask? Queue?
-    const id = setTimeout(callback, 0);
-    return {
-        destroy() {
-            clearTimeout(id);
-        }
-    };
+    return tasks.enqueue(callback);
 }
