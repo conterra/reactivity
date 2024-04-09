@@ -32,3 +32,7 @@ Watch TypeScript errors:
 ```bash
 $ pnpm watch-types
 ```
+
+## Releasing
+
+TODO
