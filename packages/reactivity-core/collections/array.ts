@@ -2,24 +2,24 @@ import { WritableReactive } from "../Reactive";
 import { reactive } from "../ReactiveImpl";
 
 /**
- * Reactive list interface without modifying methods.
+ * Reactive array interface without modifying methods.
  *
- * See also {@link ReactiveList}.
+ * See also {@link ReactiveArray}.
  */
-export interface ReadonlyReactiveList<T> extends Iterable<T> {
+export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     /**
-     * Returns the current number of items in this list.
+     * Returns the current number of items in this Array.
      */
     readonly length: number;
 
     /**
-     * Returns a new, non-reactive array with this list's current content.
+     * Returns a new, non-reactive array with this Array's current content.
      */
     getItems(): T[];
 
     /**
      * Returns the item at the given index, or undefined if the index is out of bounds.
-     * You can use negative indices to address items starting from the end of the list.
+     * You can use negative indices to address items starting from the end of the Array.
      *
      * See also [Array.at](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at).
      */
@@ -36,32 +36,32 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     set(index: number, value: T): void;
 
     /**
-     * Returns a shallow copy of this list.
+     * Returns a shallow copy of this Array.
      *
      * See also [Array.slice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice).
      */
-    slice(start?: number): ReactiveList<T>;
+    slice(start?: number): ReactiveArray<T>;
 
     /**
-     * Returns a shallow copy of this list.
+     * Returns a shallow copy of this array.
      *
      * See also [Array.slice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice).
      */
-    slice(start: number, end?: number): ReactiveList<T>;
+    slice(start: number, end?: number): ReactiveArray<T>;
 
     /**
-     * Returns a new list with `values` concatenated to the end of the current content.
+     * Returns a new array with `values` concatenated to the end of the current content.
      *
      * See also [Array.concat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat).
      */
-    concat(...values: T[]): ReactiveList<T>;
+    concat(...values: T[]): ReactiveArray<T>;
 
     /**
-     * Returns a new list with `values` concatenated to the end of the current content.
+     * Returns a new array with `values` concatenated to the end of the current content.
      *
      * See also [Array.concat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/concat).
      */
-    concat(...values: (T | T[] | ReadonlyReactiveList<T>)[]): ReactiveList<T>;
+    concat(...values: (T | T[] | ReadonlyReactiveArray<T>)[]): ReactiveArray<T>;
 
     /**
      * Searches for the given `value` and returns `true` if it was found, `false` otherwise.
@@ -134,50 +134,50 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     some(predicate: (value: T, index: number) => boolean): boolean;
 
     /**
-     * Returns `true` if the predicate is satisfied for every item in this list, `false` otherwise.
+     * Returns `true` if the predicate is satisfied for every item in this array, `false` otherwise.
      *
      * See also [Array.every](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every).
      */
     every(predicate: (value: T, index: number) => boolean): boolean;
 
     /**
-     * Executes the given callback for every item in the list.
+     * Executes the given callback for every item in the array.
      *
      * See also [Array.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach).
      */
     forEach(callback: (value: T, index: number) => void): void;
 
     /**
-     * Returns a new list where only items are retained that fulfilled the given predicate.
+     * Returns a new array where only items are retained that fulfilled the given predicate.
      *
      * See also [Array.filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter).
      */
-    filter<U extends T>(predicate: (value: T, index: number) => value is U): ReactiveList<U>;
+    filter<U extends T>(predicate: (value: T, index: number) => value is U): ReactiveArray<U>;
 
     /**
-     * Returns a new list where only items are retained that fulfilled the given predicate.
+     * Returns a new array where only items are retained that fulfilled the given predicate.
      *
      * See also [Array.filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter).
      */
-    filter(predicate: (value: T, index: number) => boolean): ReactiveList<T>;
+    filter(predicate: (value: T, index: number) => boolean): ReactiveArray<T>;
 
     /**
-     * Returns a new list where every item has been replaced with the result of calling the given callback function.
+     * Returns a new array where every item has been replaced with the result of calling the given callback function.
      *
      * See also [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
      */
-    map<U>(callback: (value: T, index: number) => U): ReactiveList<U>;
+    map<U>(callback: (value: T, index: number) => U): ReactiveArray<U>;
 
     /**
-     * Returns a new list where every item has been replaced with the result of calling the given callback function.
+     * Returns a new array where every item has been replaced with the result of calling the given callback function.
      * If the callback function returns an array, the items in that array are included individually.
      *
      * See also [Array.flatMap](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap).
      */
-    flatMap<U>(callback: (value: T, index: number) => U | readonly U[]): ReactiveList<U>;
+    flatMap<U>(callback: (value: T, index: number) => U | readonly U[]): ReactiveArray<U>;
 
     /**
-     * Calls the given callback function for all items in this list.
+     * Calls the given callback function for all items in this array.
      * The return value of the previous callback invocation is passed in the next call.
      * The final result of the callback will be returned from this function.
      *
@@ -186,7 +186,7 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     reduce(callback: (previousValue: T, currentValue: T, currentIndex: number) => T): T;
 
     /**
-     * Calls the given callback function for all items in this list.
+     * Calls the given callback function for all items in this array.
      * The return value of the previous callback invocation is passed in the next call.
      * The final result of the callback will be returned from this function.
      *
@@ -198,7 +198,7 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     ): T;
 
     /**
-     * Calls the given callback function for all items in this list.
+     * Calls the given callback function for all items in this array.
      * The return value of the previous callback invocation is passed in the next call.
      * The final result of the callback will be returned from this function.
      *
@@ -210,7 +210,7 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     ): U;
 
     /**
-     * Calls the given callback function for all items in this list, starting from the back.
+     * Calls the given callback function for all items in this array, starting from the back.
      * The return value of the previous callback invocation is passed in the next call.
      * The final result of the callback will be returned from this function.
      *
@@ -219,7 +219,7 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     reduceRight(callback: (previousValue: T, currentValue: T, currentIndex: number) => T): T;
 
     /**
-     * Calls the given callback function for all items in this list, starting from the back.
+     * Calls the given callback function for all items in this array, starting from the back.
      * The return value of the previous callback invocation is passed in the next call.
      * The final result of the callback will be returned from this function.
      *
@@ -231,7 +231,7 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     ): T;
 
     /**
-     * Calls the given callback function for all items in this list, starting from the back.
+     * Calls the given callback function for all items in this array, starting from the back.
      * The return value of the previous callback invocation is passed in the next call.
      * The final result of the callback will be returned from this function.
      *
@@ -243,76 +243,76 @@ export interface ReadonlyReactiveList<T> extends Iterable<T> {
     ): U;
 
     /**
-     * Returns an iterator over the indices in this list.
+     * Returns an iterator over the indices in this array.
      */
     keys(): IterableIterator<number>;
 
     /**
-     * Returns an iterator over the items in this list.
+     * Returns an iterator over the items in this array.
      */
     values(): IterableIterator<T>;
 
     /**
-     * Returns an iterator over the `[index, value]` entries in this list.
+     * Returns an iterator over the `[index, value]` entries in this array.
      */
     entries(): IterableIterator<[index: number, value: T]>;
 }
 
 /**
- * A reactive list.
+ * A reactive array class.
  *
- * The list interface works similar to the builtin `Array` (i.e. `T[]`).
+ * The array interface here works similar to the builtin `Array` (i.e. `T[]`).
  * The major difference is that one must use the `get` and `set` methods instead of
- * using square brackets, i.e. use `list.get(i)` instead of `list[i]`.
- * Note all builtin array methods are implemented right now.
+ * using square brackets, i.e. use `array.get(i)` instead of `array[i]` and `array.set(i, v)` instead of `array[i] = v`.
+ * Not all builtin array methods are implemented right now, but most of them are.
  *
- * Reads and writes to this list are reactive.
+ * Reads and writes to this array are reactive.
  */
-export interface ReactiveList<T> extends ReadonlyReactiveList<T> {
+export interface ReactiveArray<T> extends ReadonlyReactiveArray<T> {
     /**
-     * Appends all given values to the end of this list.
+     * Appends all given values to the end of this array.
      *
      * See also [Array.push](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push).
      */
     push(...values: T[]): void;
 
     /**
-     * Removes the last item from this list and returns it, or `undefined` if the list was empty.
+     * Removes the last item from this array and returns it, or `undefined` if the array was empty.
      *
      * See also [Array.pop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/pop).
      */
     pop(): T | undefined;
 
     /**
-     * Appends all given values to the beginning of this list.
+     * Appends all given values to the beginning of this array.
      *
      * See also [Array.unshift](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/unshift).
      */
     unshift(...values: T[]): void;
 
     /**
-     * Removes the first value from this list and returns it, or `undefined` if the list was empty.
+     * Removes the first value from this array and returns it, or `undefined` if the array was empty.
      *
      * See also [Array.shift](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift).
      */
     shift(): T | undefined;
 
     /**
-     * Changes the contents of this list by removing, replacing and optionally adding new elements.
+     * Changes the contents of this array by removing, replacing and optionally adding new elements.
      *
      * See also [Array.splice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice).
      */
     splice(start: number, deleteCount?: number): T[];
 
     /**
-     * Changes the contents of this list by removing, replacing and optionally adding new elements.
+     * Changes the contents of this array by removing, replacing and optionally adding new elements.
      *
      * See also [Array.splice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice).
      */
     splice(start: number, deleteCount: number, ...values: T[]): T[];
 
     /**
-     * Sorts this list using the given comparison function.
+     * Sorts this array using the given comparison function.
      *
      * See also [Array.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort).
      */
@@ -320,23 +320,23 @@ export interface ReactiveList<T> extends ReadonlyReactiveList<T> {
 }
 
 /**
- * Constructs an new {@link ReactiveList} with the given initial content.
+ * Constructs a new {@link ReactiveArray} with the given initial content.
  *
  * @example
  *
  * ```ts
  * // Empty
- * const list1 = reactiveList<number>();
+ * const array1 = reactiveArray<number>();
  *
  * // With initial content
- * const list2 = reactiveList<number>([1, 2, 3]);
+ * const array2 = reactiveArray<number>([1, 2, 3]);
  * ```
  */
-export function reactiveList<T>(items?: Iterable<T>): ReactiveList<T> {
-    return new ReactiveListImpl(items);
+export function reactiveArray<T>(items?: Iterable<T>): ReactiveArray<T> {
+    return new ReactiveArrayImpl(items);
 }
 
-class ReactiveListImpl<T> implements ReactiveList<T> {
+class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     #items: WritableReactive<T>[];
     #structureChanged = reactive(false);
 
@@ -422,23 +422,23 @@ class ReactiveListImpl<T> implements ReactiveList<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    slice(...args: any[]): ReactiveList<T> {
+    slice(...args: any[]): ReactiveArray<T> {
         this.#subscribeToStructureChange();
         const items = this.#items.slice(...args).map((cell) => cell.value);
-        return reactiveList(items);
+        return reactiveArray(items);
     }
 
-    concat(...values: (T | T[] | ReadonlyReactiveList<T>)[]): ReactiveList<T> {
+    concat(...values: (T | T[] | ReadonlyReactiveArray<T>)[]): ReactiveArray<T> {
         const items = this.getItems().concat(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ...values.map((v: any) => {
-                if (v instanceof ReactiveListImpl) {
+                if (v instanceof ReactiveArrayImpl) {
                     return v.getItems();
                 }
                 return v;
             })
         );
-        return reactiveList(items);
+        return reactiveArray(items);
     }
 
     includes(value: T, fromIndex?: number | undefined): boolean {
@@ -488,16 +488,16 @@ class ReactiveListImpl<T> implements ReactiveList<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    filter(predicate: (value: T, index: number) => boolean): ReactiveList<any> {
-        return reactiveList(this.getItems().filter((value, index) => predicate(value, index)));
+    filter(predicate: (value: T, index: number) => boolean): ReactiveArray<any> {
+        return reactiveArray(this.getItems().filter((value, index) => predicate(value, index)));
     }
 
-    map<U>(callback: (value: T, index: number) => U): ReactiveList<U> {
-        return reactiveList(this.getItems().map((value, index) => callback(value, index)));
+    map<U>(callback: (value: T, index: number) => U): ReactiveArray<U> {
+        return reactiveArray(this.getItems().map((value, index) => callback(value, index)));
     }
 
-    flatMap<U>(callback: (value: T, index: number) => U | readonly U[]): ReactiveList<U> {
-        return reactiveList(this.getItems().flatMap((value, index) => callback(value, index)));
+    flatMap<U>(callback: (value: T, index: number) => U | readonly U[]): ReactiveArray<U> {
+        return reactiveArray(this.getItems().flatMap((value, index) => callback(value, index)));
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */

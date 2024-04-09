@@ -1,5 +1,5 @@
 import { it, expect, describe } from "vitest";
-import { ReactiveMap, reactiveMap } from "./ReactiveMap";
+import { ReactiveMap, reactiveMap } from "./map";
 import { batch, computed } from "../ReactiveImpl";
 import { syncEffect } from "../sync";
 

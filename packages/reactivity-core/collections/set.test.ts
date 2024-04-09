@@ -1,5 +1,5 @@
 import { it, expect, describe } from "vitest";
-import { reactiveSet } from "./ReactiveSet";
+import { reactiveSet } from "./set";
 
 describe("basic API", () => {
     it("can be constructed with initial data", () => {

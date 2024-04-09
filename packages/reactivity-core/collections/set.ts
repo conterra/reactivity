@@ -1,4 +1,4 @@
-import { ReactiveMap, reactiveMap } from "./ReactiveMap";
+import { ReactiveMap, reactiveMap } from "./map";
 
 /**
  * A reactive set.
