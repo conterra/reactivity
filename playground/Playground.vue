@@ -8,7 +8,7 @@ const snapshot = useReactiveSnapshot(() => {
     console.debug("todos reevaluated");
     return {
         todos: Array.from(model.todos.values()).reverse(),
-        todosCount: model.todos.size * 1
+        todosCount: model.todosCount
     };
 });
 
@@ -41,7 +41,7 @@ function createTodo() {
 
             <h2 class="mt-4">All Todos</h2>
 
-            The are {{ snapshot.todosCount }} todos.
+            There are {{ snapshot.todosCount }} todos.
 
             <v-card class="mt-2">
                 <v-list v-if="snapshot.todos.length">

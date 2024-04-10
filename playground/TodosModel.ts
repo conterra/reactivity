@@ -1,4 +1,4 @@
-import { reactiveMap } from "@conterra/reactivity-core";
+import { computed, reactiveMap } from "@conterra/reactivity-core";
 import { ReadonlyReactiveMap } from "@conterra/reactivity-core";
 
 export interface Todo {
@@ -10,6 +10,7 @@ let nextId = 1;
 
 export class TodosModel {
     #todos = reactiveMap<string, Todo>();
+    #todosCount = computed(() => this.#todos.size);
 
     addTodo(title: string): string {
         const id = String(nextId++);
@@ -29,5 +30,9 @@ export class TodosModel {
 
     get todos(): ReadonlyReactiveMap<string, Readonly<Todo>> {
         return this.#todos;
+    }
+
+    get todosCount(): number {
+        return this.#todosCount.value;
     }
 }
