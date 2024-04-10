@@ -1,5 +1,10 @@
 {
-    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
+    "extends": [
+        "plugin:vue/vue3-recommended",
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier"
+    ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         // Can be removed once https://github.com/jsx-eslint/eslint-plugin-react/issues/3602 is closed
@@ -31,6 +36,17 @@
                 // Allow non-null assertions and any casts in test files
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-explicit-any": "off"
+            }
+        },
+        {
+            "files": ["*.vue"],
+            "parser": "vue-eslint-parser",
+            "parserOptions": {
+                "parser": "@typescript-eslint/parser",
+                "sourceType": "module"
+            },
+            "rules": {
+                "vue/multi-word-component-names": "off"
             }
         }
     ]

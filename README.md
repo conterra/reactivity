@@ -33,6 +33,11 @@ Watch TypeScript errors:
 $ pnpm watch-types
 ```
 
+## Playground
+
+You can try this library together with Vue3 in the `playground` directory.
+See [README](./playground/README.md) for more details.
+
 ## Releasing
 
 TODO

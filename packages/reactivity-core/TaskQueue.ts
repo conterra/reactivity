@@ -21,12 +21,12 @@ export class TaskQueue {
 
     /**
      * Enqueues a function to be executed in the next task queue iteration.
-     * 
+     *
      * Tasks are executed in a macro task to leave some room for the execution
      * of promise callbacks in between.
-     * 
+     *
      * See also https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide/In_depth
-     * 
+     *
      * Returns a handle for the scheduled Task.
      * When the handle is destroyed, the task function will be prevented from executing.
      * Destroying the handle does nothing if the task function has already been executed.
@@ -41,7 +41,7 @@ export class TaskQueue {
         if (this.queue.length === 1) {
             this.scheduleIteration();
         }
-        
+
         return {
             destroy() {
                 if (task.destroyed) {

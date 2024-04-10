@@ -73,7 +73,7 @@ describe("effect", () => {
 });
 
 describe("watch", () => {
-    it("triggers when the selector function returns different values",async  () => {
+    it("triggers when the selector function returns different values", async () => {
         const spy = vi.fn();
         const r1 = reactive(1);
         const r2 = reactive(2);
