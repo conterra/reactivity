@@ -1,0 +1,69 @@
+name: Build and release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release:
+        type: boolean
+        description: "RELEASE: Publish to npmjs.com"
+        required: false
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+
+      - name: Install dependencies
+        run: |
+          pnpm install
+
+      - name: Run tests
+        run: |
+          pnpm lint
+          pnpm check-types
+          pnpm build
+          pnpm test
+
+      - name: Determine release tag
+        if: ${{ inputs.release }}
+        run: |
+          cd packages/reactivity-core
+
+          VERSION=$(jq ".version" package.json -r)
+          NAME=$(jq ".name" package.json -r)
+          echo RELEASE_TAG=$NAME@$VERSION >> $GITHUB_ENV
+
+      - name: Tag release
+        if: ${{ inputs.release }}
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: "${{ env.RELEASE_TAG }}"
+          force_push_tag: true
+
+      - name: Publish package
+        if: ${{ inputs.release }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd packages/reactivity-core
+          pnpm publish

@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "clean": "pnpm -r run --parallel clean",
+        "build": "pnpm -r run --aggregate-output build",
         "test": "pnpm -r run --aggregate-output test run",
         "check-types": "tsc",
         "watch-types": "pnpm check-types -w",

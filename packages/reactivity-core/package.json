@@ -3,8 +3,15 @@
     "type": "module",
     "version": "0.1.0",
     "license": "Apache-2.0",
+    "description": "Framework agnostic library for building reactive applications.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/conterra/reactivity",
+        "directory": "packages/reactivity-core"
+    },
     "files": [
         "README.md",
+        "CHANGELOG.md",
         "LICENSE",
         "package.json",
         "dist/**"
@@ -29,7 +36,6 @@
         "project-root": "workspace:*"
     },
     "publishConfig": {
-        "access": "public",
-        "linkDirectory": true
+        "access": "public"
     }
 }

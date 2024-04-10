@@ -35,7 +35,7 @@ This library implements a different set of trade-offs, based on signals:
 
 ## Overview
 
-Signals are reactive "boxes" that contain a value.
+Signals are reactive "boxes" that contain a value, that may change at any time.
 They may be composed via derived (or "computed") signals, which are updated automatically whenever one of their dependencies is updated.
 They can also be used in classes (or plain objects) for organization based on concern or privacy.
 Finally, any kind of value(s) that have been made reactive using signals can be watched for changes by registering a callback.
