@@ -29,5 +29,5 @@ export function useReactiveSnapshot<T>(compute: () => T): Readonly<Ref<T>> {
         onCleanup(() => handle.destroy());
     });
     onScopeDispose(dispose);
-    return computed(() => snapshot.value);
+    return snapshot;
 }
