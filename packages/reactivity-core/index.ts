@@ -20,6 +20,7 @@ export {
     type EffectFunc,
     type WatchOptions,
     syncEffect,
+    syncEffectOnce,
     syncWatch
 } from "./sync";
 export { effect, watch } from "./async";
