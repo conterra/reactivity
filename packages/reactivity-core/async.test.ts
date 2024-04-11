@@ -105,7 +105,7 @@ describe("watch", () => {
             },
             { immediate: true }
         );
-        expect(spy).toBeCalledTimes(0); // async
+        expect(spy).toBeCalledTimes(1); // sync
 
         await waitForMacroTask();
         expect(spy).toBeCalledTimes(1);

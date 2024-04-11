@@ -141,10 +141,18 @@ export function watch<const Values extends readonly unknown[]>(
 ): CleanupHandle {
     let currentValues: Values;
     let currentDispatch: CleanupHandle | undefined;
+    let initialSyncExecution = true;
     const watchHandle = syncWatch(
         selector,
         (values) => {
             currentValues = values;
+            
+            // If the user passed 'immediate: true', the initial execution is not deferred sync.
+            if (initialSyncExecution) {
+                callback(currentValues);
+                return;
+            }
+
             if (currentDispatch) {
                 return;
             }
@@ -158,6 +166,7 @@ export function watch<const Values extends readonly unknown[]>(
         },
         options
     );
+    initialSyncExecution = false;
 
     function destroy() {
         currentDispatch?.destroy();
