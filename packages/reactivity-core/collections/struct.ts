@@ -21,33 +21,20 @@ export function reactiveStruct<T>(
 ): ReactiveStructConstructor<T> {
     class ReactiveStruct {
         constructor(args?: Partial<T>) {
-            defineMembers<T>(this as any, definition);
-            init<T>(this as any, args);
+            defineMembers(this, definition);
+            init(this, args);
         }
     }
     return ReactiveStruct as ReactiveStructConstructor<T>;
 }
 
-function init<T>(target: T, args?: Partial<T>) {
-    if (args != null) {
-        Object.entries(args).forEach(([key, value]) => {
-            if (Array.isArray(value)) {
-                (target as any)[key] = [...value];
-            } else {
-                (target as any)[key] = value;
-            }
-        });
-    };
-}
-
-
-function defineMembers<T>(target: T, definition: ReactiveStructDefinition<T>) {
-    const propertyNames = Object.keys(definition) as (keyof T)[];
+function defineMembers(target: any, definition: ReactiveStructDefinition<any>) {
+    const propertyNames = Object.keys(definition);
     propertyNames.forEach((name) => {
         const field = definition[name];
 
         if (typeof field === "function") {
-            return defineMember<T>(
+            return defineMember(
                 {
                     classValue: field,
                     reactive: false
@@ -58,15 +45,15 @@ function defineMembers<T>(target: T, definition: ReactiveStructDefinition<T>) {
         }
 
         if (typeof field === "object") {
-            return defineMember<T>(field, target, name);
+            return defineMember(field, target, name);
         }
 
         // simple type
-        return defineMember<T>({ classValue: field }, target, name);
+        return defineMember({ classValue: field }, target, name);
     });
 }
 
-function defineMember<T>(member: MemberType<any>, instance: Partial<T>, name: string | number | symbol) {
+function defineMember(member: MemberType<any>, instance: any, name: string | number | symbol) {
     const enumerable = true;
 
     if (member.reactive !== false) {
@@ -93,4 +80,17 @@ function defineMember<T>(member: MemberType<any>, instance: Partial<T>, name: st
         writable: member.writable ?? true,
         enumerable
     });
+}
+
+
+function init(target: any, args?: any) {
+    if (args != null) {
+        Object.entries(args).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                (target as any)[key] = [...value];
+            } else {
+                (target as any)[key] = value;
+            }
+        });
+    };
 }
