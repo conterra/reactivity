@@ -1,41 +1,13 @@
 # @conterra/reactivity-core
 
-This library implements a reactivity system based on [signals](https://github.com/preactjs/signals).
-It is designed to serve as the foundation for reactive applications (such as user interfaces).
+> UI framework independent reactivity library with support for all kinds of values
 
-## Motivation
+## Quick Example
 
-One of the most important responsibilities of an application is to accurately present the current state of the system.
-Such an application will have to implement the means to:
+```ts
+```
 
-1. Fetch the _current_ state and present it to the user.
-2. Subscribe to state changes:
-
-    - On change, goto 1.
-
-While step 1 is rather trivial, step 2 turns out to contain lots of complexity in practice, especially if many different sources of state (e.g. objects) are involved.
-
-Many frameworks have found different solutions for keeping the UI synchronized with the application's state (e.g. React, Vue, Flux architecture, store libraries such as Zustand/VueX/Pinia, etc.).
-These solutions often come with some trade-offs:
-
--   They are often tied to an UI framework (e.g. React).
--   They may impose unusual programming paradigms (e.g. a centralized store instead of a graph of objects) that may be different to integrate with technologies like TypeScript.
--   They may only support reactivity for _some_ objects.
-    For example, Vue's reactivity system is based on wrapping objects with proxies; this is incompatible with some legitimate objects - a fact that can be both surprising and difficult to debug.
--   They may only support reactivity _locally_.
-    For example, a store library may support reactivity _within_ a single store, but referring to values from multiple stores may be difficult.
-
-This library implements a different set of trade-offs, based on signals:
-
--   The implementation is not tied to any UI technology.
-    It can be used with any UI Framework, or none, or multiple UI Frameworks at the same time.
--   All kinds of values are supported.
-    Updating the current value in a reactive "box" will notify all interested parties (such as effects, watchers or computed objects).
-    However, values that have not been prepared for reactivity will not be deeply reactive: when authoring a class, one has to use the reactive primitives or collections provided by this package.
--   State can be kept in objects and classes (this pairs nicely with TypeScript).
-    The state rendered by the user interface can be gathered from an arbitrary set of objects.
-
-## Overview
+## Usage
 
 Signals are reactive "boxes" that contain a value that may change at any time.
 They can be easily watched for changes by, for example, registering a callback using `watch()`.
@@ -212,7 +184,7 @@ effect(() => {
 If your effect callbacks become more complex, it may be difficult to control which signals are ultimately used.
 This can result in your effect running too often, because you're really only interested in _some_ changes and not all of them.
 
-In that case, you can use `watch()`:
+In that case, you can use `watch()` to have more fine grain control:
 
 ```js
 import { reactive, watch } from "@conterra/reactivity-core";
@@ -267,6 +239,7 @@ h2.destroy();
 ```
 
 When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
+This leads to an unnecessary memory consumption and waste of computational power.
 
 ### Reactive collections
 
@@ -339,9 +312,49 @@ effect(() => {
 map.set("foo", "bar"); // effect prints "bar"
 ```
 
+## Why?
+
+One of the most important responsibilities of an application is to accurately present the current state of the system.
+Such an application will have to implement the means to:
+
+1. Fetch the _current_ state and present it to the user.
+2. Subscribe to state changes:
+
+    - On change, goto 1.
+
+While step 1 is rather trivial, step 2 turns out to contain lots of complexity in practice, especially if many different sources of state (e.g. objects) are involved.
+
+Many frameworks have found different solutions for keeping the UI synchronized with the application's state (e.g. React, Vue, Flux architecture, store libraries such as Zustand/VueX/Pinia, etc.).
+These solutions often come with some trade-offs:
+
+-   They are often tied to an UI framework (e.g. React).
+-   They may impose unusual programming paradigms (e.g. a centralized store instead of a graph of objects) that may be different to integrate with technologies like TypeScript.
+-   They may only support reactivity for _some_ objects.
+    For example, Vue's reactivity system is based on wrapping objects with proxies; this is incompatible with some legitimate objects - a fact that can be both surprising and difficult to debug.
+-   They may only support reactivity _locally_.
+    For example, a store library may support reactivity _within_ a single store, but referring to values from multiple stores may be difficult.
+
+This library implements a different set of trade-offs, based on [signals](https://github.com/preactjs/signals):
+
+-   The implementation is not tied to any UI technology.
+    It can be used with any UI Framework, or none, or multiple UI Frameworks at the same time.
+-   All kinds of values are supported.
+    Updating the current value in a reactive "box" will notify all interested parties (such as effects, watchers or computed objects).
+    However, values that have not been prepared for reactivity will not be deeply reactive: when authoring a class, one has to use the reactive primitives or collections provided by this package.
+-   State can be kept in objects and classes (this pairs nicely with TypeScript).
+    The state rendered by the user interface can be gathered from an arbitrary set of objects.
+
 ## API
 
 See the comments inside the type declarations or the built TypeDoc documentation.
+
+## Installation
+
+With [npm](https://npmjs.org/) installed, run
+
+```sh
+npm install @conterra/reactivity-core
+```
 
 ## Gotchas and tips
 
@@ -425,3 +438,5 @@ The example above will not throw an error anymore because the _read_ to `v1` has
 ### Sync vs async effect / watch
 
 ### Writing nonreactive code
+
+## License
