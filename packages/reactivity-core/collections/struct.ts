@@ -2,16 +2,14 @@
 
 import { reactive } from "../ReactiveImpl";
 
-export type SimpleType = string | boolean | number | symbol;
 export type FunctionType<T> = (this: T, ...args: any) => any;
-export type MemberType<V> = {
-    defaultValue?: V;
+export type MemberType = {
     writable?: boolean;
     reactive?: boolean;
 };
 
 export type ReactiveStructDefinition<T> = {
-    [key in keyof T]: MemberType<T[key]> | FunctionType<T> | SimpleType;
+    [key in keyof T]: MemberType | FunctionType<T>;
 };
 
 export type ReactiveStructConstructor<T> = new (args?: Partial<T>) => T;
@@ -20,44 +18,59 @@ export function reactiveStruct<T>(
     definition: ReactiveStructDefinition<T>
 ): ReactiveStructConstructor<T> {
     class ReactiveStruct {
-        constructor(args?: Partial<T>) {
-            defineMembers(this, definition);
-            init(this, args);
+        constructor(initialValues?: Partial<T>) {
+            if (initialValues) {
+                Object.entries(initialValues).forEach(([key, value]) => {
+                    if (Array.isArray(value)) {
+                        value = [...value];
+                    }
+                    const memberDef = definition[key as keyof T];
+                    const isMemberType = typeof memberDef === "object";
+                    if (isMemberType && memberDef.writable === false) {
+                        // in case the member is readonly
+                        // we have to define a member on the instance itself
+                        // as we cannot set the value on the prototype
+                        defineMember(memberDef, this, key, value);
+                    } else {
+                        (this as any)[key] = value;
+                    }
+                });
+            }
         }
     }
+    defineMembers(ReactiveStruct.prototype, definition);
     return ReactiveStruct as ReactiveStructConstructor<T>;
 }
 
-function defineMembers(target: any, definition: ReactiveStructDefinition<any>) {
-    const propertyNames = Object.keys(definition);
+function defineMembers<T>(target: any, definition: ReactiveStructDefinition<T>, value?: any) {
+    const propertyNames = Object.keys(definition) as (keyof T)[];
     propertyNames.forEach((name) => {
         const field = definition[name];
 
         if (typeof field === "function") {
             return defineMember(
                 {
-                    defaultValue: field,
                     reactive: false
                 },
                 target,
-                name
+                name,
+                field
             );
         }
 
         if (typeof field === "object") {
-            return defineMember(field, target, name);
+            return defineMember(field, target, name, value);
         }
 
-        // simple type
-        return defineMember({ defaultValue: field }, target, name);
+        throw new Error(`Invalid member definition for ${String(name)}`);
     });
 }
 
-function defineMember(member: MemberType<any>, instance: any, name: string | number | symbol) {
+function defineMember(member: MemberType, instance: any, name: string | number | symbol, value: any = undefined) {
     const enumerable = true;
 
     if (member.reactive !== false) {
-        const _reactiveValue = reactive(member.defaultValue);
+        const _reactiveValue = reactive(value);
 
         const attributes: any = {
             get: function () {
@@ -76,21 +89,9 @@ function defineMember(member: MemberType<any>, instance: any, name: string | num
 
     // not reactive
     Object.defineProperty(instance, name, {
-        value: member.defaultValue,
+        value,
         writable: member.writable ?? true,
         enumerable
     });
 }
 
-
-function init(target: any, args?: any) {
-    if (args != null) {
-        Object.entries(args).forEach(([key, value]) => {
-            if (Array.isArray(value)) {
-                (target as any)[key] = [...value];
-            } else {
-                (target as any)[key] = value;
-            }
-        });
-    };
-}
