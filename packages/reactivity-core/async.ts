@@ -1,7 +1,7 @@
-import { CleanupHandle } from "./Reactive";
+import { CleanupHandle } from "./sync";
 import { TaskQueue } from "./TaskQueue";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { EffectFunc, syncEffectOnce, syncEffect, WatchOptions, syncWatch } from "./sync";
+import { EffectFunc, syncEffect, syncEffectOnce, syncWatch, WatchOptions } from "./sync";
 
 /**
  * Runs the callback function and tracks its reactive dependencies.

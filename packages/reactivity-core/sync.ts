@@ -4,7 +4,19 @@ import { untracked } from "./ReactiveImpl";
 // Import required for docs
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { effect, watch } from "./async";
-import { CleanupHandle } from "./Reactive";
+
+/**
+ * A handle returned by various functions to dispose of a resource,
+ * such as a watcher or an effect.
+ * 
+ * @group Watching
+ */
+export interface CleanupHandle {
+    /**
+     * Performs the cleanup action associated with the resource.
+     */
+    destroy(): void;
+}
 
 /**
  * A cleanup function returned from an effect.

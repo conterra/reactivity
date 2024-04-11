@@ -1,4 +1,4 @@
-import { WritableReactive } from "../Reactive";
+import { Reactive } from "../Reactive";
 import { reactive } from "../ReactiveImpl";
 
 /**
@@ -92,7 +92,7 @@ export function reactiveMap<K, V>(initial?: Iterable<[K, V]> | undefined): React
 }
 
 class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
-    #map: Map<K, WritableReactive<V>> = new Map();
+    #map: Map<K, Reactive<V>> = new Map();
     #structureChanged = reactive(false); // toggled to notify about additions, removals
 
     constructor(initial: Iterable<[K, V]> | undefined) {

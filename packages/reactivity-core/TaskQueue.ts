@@ -1,4 +1,4 @@
-import { CleanupHandle } from "./Reactive";
+import { CleanupHandle } from "./sync";
 
 type TaskFn = () => void;
 

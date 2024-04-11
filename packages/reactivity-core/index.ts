@@ -17,10 +17,9 @@
  */
 
 export {
-    type ExternalReactive,
+    type ReadonlyReactive,
     type Reactive,
-    type WritableReactive,
-    type CleanupHandle
+    type ExternalReactive,
 } from "./Reactive";
 export {
     type EqualsFunc,
@@ -37,6 +36,7 @@ export {
     type EffectCleanupFn,
     type EffectFunc,
     type WatchOptions,
+    type CleanupHandle,
     syncEffect,
     syncEffectOnce,
     syncWatch

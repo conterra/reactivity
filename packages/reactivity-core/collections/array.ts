@@ -1,4 +1,4 @@
-import { WritableReactive } from "../Reactive";
+import { Reactive } from "../Reactive";
 import { reactive } from "../ReactiveImpl";
 
 /**
@@ -343,7 +343,7 @@ export function reactiveArray<T>(items?: Iterable<T>): ReactiveArray<T> {
 }
 
 class ReactiveArrayImpl<T> implements ReactiveArray<T> {
-    #items: WritableReactive<T>[];
+    #items: Reactive<T>[];
     #structureChanged = reactive(false);
 
     constructor(initial: Iterable<T> | undefined) {
@@ -388,7 +388,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     splice(...args: any[]): T[] {
         const newItems: any[] | undefined = args[2];
-        const removedCells: WritableReactive<T>[] = (this.#items.splice as any)(...args);
+        const removedCells: Reactive<T>[] = (this.#items.splice as any)(...args);
         if ((newItems != null && newItems.length !== 0) || removedCells.length !== 0) {
             this.#triggerStructuralChange();
         }
@@ -513,7 +513,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     ): any {
         this.#subscribeToStructureChange();
         return (this.#items.reduce as any)(
-            (previousValue: any, cell: WritableReactive<T>, index: number) => {
+            (previousValue: any, cell: Reactive<T>, index: number) => {
                 return callback(previousValue, cell.value, index);
             },
             ...args
@@ -528,7 +528,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     ): any {
         this.#subscribeToStructureChange();
         return (this.#items.reduceRight as any)(
-            (previousValue: any, cell: WritableReactive<T>, index: number) => {
+            (previousValue: any, cell: Reactive<T>, index: number) => {
                 return callback(previousValue, cell.value, index);
             },
             ...args

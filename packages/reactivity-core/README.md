@@ -341,16 +341,7 @@ map.set("foo", "bar"); // effect prints "bar"
 
 ## API
 
-This section gives an overview over the available APIs.
-For more details, consult the comments inside the type declarations or the built TypeDoc documentation.
-
-### Primitives
-
-### Subscribing to changes
-
-### Collections
-
-### Types
+See the comments inside the type declarations or the built TypeDoc documentation.
 
 ## Gotchas and tips
 
