@@ -45,7 +45,7 @@ jobs:
           pnpm test
 
       - name: Determine release tag
-        if: ${{ inputs.release }}
+        if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
         run: |
           cd packages/reactivity-core
 
@@ -54,14 +54,14 @@ jobs:
           echo RELEASE_TAG=$NAME@$VERSION >> $GITHUB_ENV
 
       - name: Tag release
-        if: ${{ inputs.release }}
+        if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
         uses: rickstaa/action-create-tag@v1
         with:
           tag: "${{ env.RELEASE_TAG }}"
           force_push_tag: true
 
       - name: Publish package
-        if: ${{ inputs.release }}
+        if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
