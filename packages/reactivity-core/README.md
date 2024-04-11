@@ -347,7 +347,78 @@ See the comments inside the type declarations or the built TypeDoc documentation
 
 ### Avoid side effects in computed signals
 
+Computed signals should use a side effect free function.
+Oftentimes, you cannot control how often the function is re-executed, because that depends on how often
+the dependencies of your functions change and when your signal is actually read (computation is lazy).
+
+Example:
+
+```ts
+let nonreactiveValue = 1;
+const reactiveValue = reactive(1);
+const computedValue = computed(() => {
+    // This works, but it usually bad style for the reasons outlined above:
+    nonReactiveValue += 1;
+
+    // XXX
+    // This is outright forbidden and will result in a runtime error.
+    // You cannot modify a signal from inside a computed signal.
+    reactiveValue.value += 1;
+    return "whatever";
+});
+```
+
 ### Don't trigger an effect from within itself
+
+Updating the value of some signal from within an effect is fine in general.
+However, you should take care not to produce a cycle.
+
+Example: this is okay (but could be replaced by a computed signal).
+
+```ts
+const v1 = reactive(0);
+const v2 = reactive(1);
+effect(() => {
+    // Updates v2 whenever v1 changes
+    v2.value = v1.value * 2;
+});
+```
+
+Example: this is _not_ okay.
+
+```ts
+const v1 = reactive(0);
+effect(() => {
+    // same as `v1.value = v1.value + 1`
+    v1.value += 1; // throws!
+});
+```
+
+This is the shortest possible example of a cycle within an effect.
+When the effect executed, it _reads_ from `v1` (thus requiring that the effect re-executes whenever `v1` changes)
+and then it _writes_ to v1, thus changing it.
+This effect would re-trigger itself endlessly - luckily the underlying signals library throws an exception when this case is detected.
+
+#### Workaround
+
+Sometimes you _really_ have to read something and don't want to become a reactive dependency.
+In that case, you can wrap the code block with `untracked()`.
+Example:
+
+```ts
+import { reactive, effect, untracked } from "@conterra/reactivity-core";
+
+const v1 = reactive(0);
+effect(() => {
+    // Code inside untracked() will not be come a dependency of the effect.
+    const value = untracked(() => v1.value);
+    v1.value = value + 1;
+});
+```
+
+The example above will not throw an error anymore because the _read_ to `v1` has been wrapped with `untracked()`.
+
+> NOTE: In very simple situations you can also use the `.peek()` method of a signal, which is essentially a tiny `untracked` block that only reads from that signal. The code above could be changed to `const value = v1.peek()`.
 
 ### Effects triggering "too often"
 
