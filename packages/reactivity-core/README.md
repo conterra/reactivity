@@ -253,14 +253,6 @@ In this example, the callback function will only re-run when the computed sum tr
 
 TODO: Object identity, arrays, immutability --> Reactive Collections
 
-### Reactive collections
-
-#### Array
-
-#### Set
-
-#### Map
-
 ### Cleanup
 
 Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
@@ -275,6 +267,77 @@ h2.destroy();
 ```
 
 When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
+
+### Reactive collections
+
+This package provides a set of collection classes to simplify working with complex values.
+
+#### Array
+
+The `ReactiveArray<T>` behaves largely like a normal `Array<T>`.
+Most standard methods have been reimplemented with support for reactivity (new methods can be added on demand).
+
+The only major difference is that one cannot use the `[]` operator.
+Users must use the `array.get(index)` and `array.set(index, value)` methods instead.
+
+Example:
+
+```ts
+import { reactiveArray } from "@conterra/reactivity-core";
+
+// Optionally accepts initial content
+const array = reactiveArray<string>();
+
+// Prints undefined since the array is initially empty
+effect(() => {
+    console.log(array.get(0));
+});
+
+array.push(1); // effect prints 1
+
+// later
+array.set(0, 123); // effect prints 123
+```
+
+#### Set
+
+The `ReactiveSet<T>` can be used as substitute for the standard `Set<T>`.
+
+Example:
+
+```ts
+import { reactiveSet } from "@conterra/reactivity-core";
+
+// Optionally accepts initial content
+const set = reactiveSet<number>();
+
+// Prints 0 since the set is initially empty
+effect(() => {
+    console.log(set.size);
+});
+
+set.add(123); // effect prints 1
+```
+
+#### Map
+
+The `ReactiveMap<T>` can be used as a substitute for the standard `Map<T>`.
+
+Example:
+
+```ts
+import { reactiveSet } from "@conterra/reactivity-core";
+
+// Optionally accepts initial content
+const map = reactiveMap<string, string>();
+
+// Prints undefined since the map is initially empty
+effect(() => {
+    console.log(map.get("foo"));
+});
+
+map.set("foo", "bar"); // effect prints "bar"
+```
 
 ## API
 
@@ -291,5 +354,7 @@ When a watcher is not cleaned up properly, it will continue to execute (possibly
 ### Avoid side effects in computed signals
 
 ### Don't trigger an effect from within itself
+
+### Effects triggering "too often"
 
 ### Writing nonreactive code
