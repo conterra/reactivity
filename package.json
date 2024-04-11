@@ -6,6 +6,7 @@
     "scripts": {
         "clean": "pnpm -r run --parallel clean",
         "build": "pnpm -r run --aggregate-output build",
+        "build-docs": "typedoc",
         "test": "pnpm -r run --aggregate-output test run",
         "check-types": "tsc",
         "watch-types": "pnpm check-types -w",
@@ -25,6 +26,7 @@
         "prettier": "^3.2.5",
         "rimraf": "^5.0.5",
         "tsx": "^4.7.2",
+        "typedoc": "^0.25.13",
         "typescript": "~5.4.4",
         "vite": "^5.2.8",
         "vitest": "^1.4.0"
@@ -32,14 +34,5 @@
     "engines": {
         "node": ">= 18",
         "pnpm": "^8"
-    },
-    "pnpm": {
-        "packageExtensions": {
-            "@vue/test-utils@^2": {
-                "peerDependencies": {
-                    "vue": "^3"
-                }
-            }
-        }
     }
 }

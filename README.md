@@ -5,6 +5,10 @@ Framework agnostic library for building reactive applications.
 > [!WARNING]
 > The APIs implemented in this repository are highly experimental and subject to change.
 
+## Reactivity-API
+
+See the [README of the `@conterra/reactivity-core` package](./packages/reactivity-core/README.md).
+
 ## Setup
 
 Install [pnpm](https://pnpm.io/), for example by running `npm install -g pnpm`.
@@ -37,6 +41,22 @@ $ pnpm watch-types
 
 You can try this library together with Vue3 in the `playground` directory.
 See [README](./playground/README.md) for more details.
+
+## Render typedoc
+
+Build typedoc output (to `dist/docs`).
+
+```bash
+$ pnpm build-docs
+```
+
+Then, use any local web server to serve the documentation.
+The following example uses [serve](https://www.npmjs.com/package/serve):
+
+```bash
+$ pnpm install -g serve # global installation; only necessary once
+$ serve dist/docs
+```
 
 ## Releasing
 

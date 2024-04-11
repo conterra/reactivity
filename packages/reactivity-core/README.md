@@ -341,6 +341,9 @@ map.set("foo", "bar"); // effect prints "bar"
 
 ## API
 
+This section gives an overview over the available APIs.
+For more details, consult the comments inside the type declarations or the built TypeDoc documentation.
+
 ### Primitives
 
 ### Subscribing to changes
@@ -356,5 +359,7 @@ map.set("foo", "bar"); // effect prints "bar"
 ### Don't trigger an effect from within itself
 
 ### Effects triggering "too often"
+
+### Sync vs async effect / watch
 
 ### Writing nonreactive code

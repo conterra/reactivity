@@ -5,6 +5,8 @@ import { reactive } from "../ReactiveImpl";
  * Reactive array interface without modifying methods.
  *
  * See also {@link ReactiveArray}.
+ * 
+ * @group Collections
  */
 export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     /**
@@ -267,6 +269,8 @@ export interface ReadonlyReactiveArray<T> extends Iterable<T> {
  * Not all builtin array methods are implemented right now, but most of them are.
  *
  * Reads and writes to this array are reactive.
+ * 
+ * @group Collections
  */
 export interface ReactiveArray<T> extends ReadonlyReactiveArray<T> {
     /**
@@ -331,6 +335,8 @@ export interface ReactiveArray<T> extends ReadonlyReactiveArray<T> {
  * // With initial content
  * const array2 = reactiveArray<number>([1, 2, 3]);
  * ```
+ * 
+ * @group Collections
  */
 export function reactiveArray<T>(items?: Iterable<T>): ReactiveArray<T> {
     return new ReactiveArrayImpl(items);

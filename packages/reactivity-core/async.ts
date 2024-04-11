@@ -37,6 +37,8 @@ import { EffectFunc, syncEffectOnce, syncEffect, WatchOptions, syncWatch } from 
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
  * >
  * > If you need more control, take a look at {@link syncEffect}.
+ * 
+ * @group Watching
  */
 export function effect(callback: EffectFunc): CleanupHandle {
     let currentSyncEffect: CleanupHandle | undefined;
@@ -133,6 +135,8 @@ export function effect(callback: EffectFunc): CleanupHandle {
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
  * >
  * > If you need more control, take a look at {@link syncWatch}.
+ * 
+ * @group Watching
  */
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,

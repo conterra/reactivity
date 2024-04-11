@@ -15,6 +15,8 @@ export type AddWritableBrand<T> = AddBrand<T> & { [IS_WRITABLE_REACTIVE]: true }
  *
  * When a reactive value changes, all users of that value (computed reactive values, effects, watchers)
  * are notified automatically.
+ * 
+ * @group Primitives
  */
 export interface Reactive<T> {
     // Compile time symbol to identify reactive objects.
@@ -45,6 +47,8 @@ export interface Reactive<T> {
  *
  * The value stored in this object can be changed through assignment,
  * and all its users will be notified automatically.
+ * 
+ * @group Primitives
  */
 export interface WritableReactive<T> extends Reactive<T> {
     // Compile time symbol to identify writable objects.
@@ -62,6 +66,8 @@ export interface WritableReactive<T> extends Reactive<T> {
  * Holds a value from an external source.
  *
  * Instances of this type are used to integrate "foreign" state into the reactivity system.
+ * 
+ * @group Primitives
  */
 export interface ExternalReactive<T> extends Reactive<T> {
     /**
@@ -78,6 +84,8 @@ export interface ExternalReactive<T> extends Reactive<T> {
 /**
  * A handle returned by various functions to dispose of a resource,
  * such as a watcher or an effect.
+ * 
+ * @group Watching
  */
 export interface CleanupHandle {
     /**

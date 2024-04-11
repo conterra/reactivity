@@ -16,11 +16,15 @@ import {
 
 /**
  * A function that should return `true` if `a` and `b` are considered equal, `false` otherwise.
+ * 
+ * @group Primitives
  */
 export type EqualsFunc<T> = (a: T, b: T) => boolean;
 
 /**
  * Options that can be passed when creating a new reactive value.
+ * 
+ * @group Primitives
  */
 export interface ReactiveOptions<T> {
     /**
@@ -43,6 +47,8 @@ export interface ReactiveOptions<T> {
  * console.log(foo.value); // undefined
  * foo.value = 123;        // updates the current value
  * ```
+ * 
+ * @group Primitives
  */
 export function reactive<T>(): WritableReactive<T | undefined>;
 
@@ -56,6 +62,8 @@ export function reactive<T>(): WritableReactive<T | undefined>;
  * console.log(foo.value); // 123
  * foo.value = 456;        // updates the current value
  * ```
+ * 
+ * @group Primitives
  */
 export function reactive<T>(initialValue: T, options?: ReactiveOptions<T>): WritableReactive<T>;
 export function reactive<T>(
@@ -86,6 +94,8 @@ export function reactive<T>(
  * foo.value = 2;
  * console.log(doubleFoo.value); // 4
  * ```
+ * 
+ * @group Primitives
  */
 export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): Reactive<T> {
     const impl = new ComputedReactiveImpl(compute, options?.equal);
@@ -121,6 +131,8 @@ export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): Rea
  *
  * // later: unsubscribe from signal
  * ```
+ * 
+ * @group Primitives
  */
 export function external<T>(compute: () => T, options?: ReactiveOptions<T>): ExternalReactive<T> {
     /*
@@ -178,6 +190,8 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * });
  * // now the effect runs once
  * ```
+ * 
+ * @group Primitives
  */
 export function batch<T>(callback: () => T): T {
     return rawBatch(callback);
@@ -190,6 +204,8 @@ export function batch<T>(callback: () => T): T {
  * even if they occur inside a computed object or in an effect.
  *
  * `untracked` returns the value of `callback()`.
+ * 
+ * @group Primitives
  */
 export function untracked<T>(callback: () => T): T {
     return rawUntracked(callback);
@@ -200,6 +216,8 @@ export function untracked<T>(callback: () => T): T {
  * if it is not reactive.
  *
  * The access to `.value` is tracked.
+ * 
+ * @group Primitives
  */
 export function getValue<T>(maybeReactive: Reactive<T> | T) {
     if (!isReactive(maybeReactive)) {
@@ -213,6 +231,8 @@ export function getValue<T>(maybeReactive: Reactive<T> | T) {
  * if it is not reactive.
  *
  * The access to `.value` is _not_ tracked.
+ * 
+ * @group Primitives
  */
 export function peekValue<T>(maybeReactive: Reactive<T> | T) {
     if (!isReactive(maybeReactive)) {

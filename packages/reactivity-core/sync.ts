@@ -11,6 +11,8 @@ import { CleanupHandle } from "./Reactive";
  *
  * This function will be invoked before the effect is triggered again,
  * or when the effect is disposed.
+ * 
+ * @group Watching
  */
 export type EffectCleanupFn = () => void;
 
@@ -19,6 +21,8 @@ export type EffectCleanupFn = () => void;
  *
  * Instructions in this function are tracked: when any of its reactive
  * dependencies change, the effect will be triggered again.
+ * 
+ * @group Watching
  */
 export type EffectFunc = (() => void) | (() => EffectCleanupFn);
 
@@ -54,6 +58,8 @@ export type EffectFunc = (() => void) | (() => EffectCleanupFn);
  * // later:
  * handle.destroy();
  * ```
+ * 
+ * @group Watching
  */
 export function syncEffect(callback: EffectFunc): CleanupHandle {
     const destroy = rawEffect(callback);
@@ -69,6 +75,8 @@ export function syncEffect(callback: EffectFunc): CleanupHandle {
  * Typically, `onInvalidate` will be very cheap (e.g. schedule a new render).
  *
  * Note that `onInvalidate` will never be invoked more than once.
+ * 
+ * @group Watching
  */
 export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): CleanupHandle {
     let execution = 0;
@@ -91,6 +99,8 @@ export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): 
 
 /**
  * Options that can be passed to {@link syncWatch}.
+ * 
+ * @group Watching
  */
 export interface WatchOptions {
     /**
@@ -137,6 +147,8 @@ export interface WatchOptions {
  * ```
  *
  * > NOTE: You must *not* modify the array that gets passed into `callback`.
+ * 
+ * @group Watching
  */
 export function syncWatch<const Values extends readonly unknown[]>(
     selector: () => Values,
