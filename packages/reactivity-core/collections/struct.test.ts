@@ -34,7 +34,7 @@ describe("reactiveStruct", () => {
         }
         const HasMsgClass = reactiveStruct<HasMessage>({
             msg: {
-                classValue: "text"
+                defaultValue: "text"
             }
         });
         const hasMsg = new HasMsgClass();
@@ -75,7 +75,7 @@ describe("reactiveStruct", () => {
         const HasMsgClass = reactiveStruct<HasMessage>({
             msg: {
                 writable: false,
-                classValue: "text"
+                defaultValue: "text"
             }
         });
         const hasMsg = new HasMsgClass();
@@ -135,13 +135,15 @@ describe("reactiveStruct", () => {
             lastName: string
         }
         const PersonClass = reactiveStruct<PersonType>({
-            firstName: "John",
+            firstName: {},
             lastName: {
-                classValue: "Doe",
                 reactive: false
             }
         });
-        const person = new PersonClass();
+        const person = new PersonClass({
+            firstName: "John",
+            lastName: "Doe"
+        });
         const fullName = computed(() => `${person.firstName} ${person.lastName}`);
         expect(fullName.value).toBe("John Doe");
 

@@ -5,7 +5,7 @@ import { reactive } from "../ReactiveImpl";
 export type SimpleType = string | boolean | number | symbol;
 export type FunctionType<T> = (this: T, ...args: any) => any;
 export type MemberType<V> = {
-    classValue?: V;
+    defaultValue?: V;
     writable?: boolean;
     reactive?: boolean;
 };
@@ -36,7 +36,7 @@ function defineMembers(target: any, definition: ReactiveStructDefinition<any>) {
         if (typeof field === "function") {
             return defineMember(
                 {
-                    classValue: field,
+                    defaultValue: field,
                     reactive: false
                 },
                 target,
@@ -49,7 +49,7 @@ function defineMembers(target: any, definition: ReactiveStructDefinition<any>) {
         }
 
         // simple type
-        return defineMember({ classValue: field }, target, name);
+        return defineMember({ defaultValue: field }, target, name);
     });
 }
 
@@ -57,7 +57,7 @@ function defineMember(member: MemberType<any>, instance: any, name: string | num
     const enumerable = true;
 
     if (member.reactive !== false) {
-        const _reactiveValue = reactive(member.classValue);
+        const _reactiveValue = reactive(member.defaultValue);
 
         const attributes: any = {
             get: function () {
@@ -76,7 +76,7 @@ function defineMember(member: MemberType<any>, instance: any, name: string | num
 
     // not reactive
     Object.defineProperty(instance, name, {
-        value: member.classValue,
+        value: member.defaultValue,
         writable: member.writable ?? true,
         enumerable
     });
