@@ -14,6 +14,11 @@ export type ReactiveStructDefinition<T> = {
 
 export type ReactiveStructConstructor<T> = new (args?: Partial<T>) => T;
 
+/**
+ * Creates a reactive struct according to the given definition.
+ * @param definition 
+ * @returns 
+ */
 export function reactiveStruct<T>(
     definition: ReactiveStructDefinition<T>
 ): ReactiveStructConstructor<T> {
@@ -29,7 +34,7 @@ export function reactiveStruct<T>(
                     if (isMemberType && memberDef.writable === false) {
                         // in case the member is readonly
                         // we have to define a member on the instance itself
-                        // as we cannot set the value on the prototype
+                        // as we cannot set the initial value on the prototype
                         defineMember(memberDef, this, key, value);
                     } else {
                         (this as any)[key] = value;
