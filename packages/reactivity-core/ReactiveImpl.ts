@@ -139,12 +139,14 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
         But that function is a) internal and b) mangled (to `N` at the time of this writing) -- this is too risky.
      */
     const invalidateSignal = rawSignal(false);
+    const invalidate = () => {
+        invalidateSignal.value = !invalidateSignal.peek();
+    };
     const externalReactive = computed(() => {
         invalidateSignal.value;
         return rawUntracked(() => compute());
     }, options);
-    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger = () =>
-        (invalidateSignal.value = !invalidateSignal.peek());
+    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger = invalidate;
     return externalReactive as ExternalReactive<T>;
 }
 
