@@ -61,7 +61,7 @@ export interface ReactiveSet<V> extends Iterable<V> {
  * 
  * @group Collections
  */
-export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "set" | "delete" | "clear">;
+export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "add" | "delete" | "clear">;
 
 /**
  * Constructs a new {@link ReactiveMap} with the given initial content.

@@ -19,7 +19,10 @@ export type AddWritableBrand<T> = AddBrand<T> & { [IS_WRITABLE_REACTIVE]: true }
  * @group Primitives
  */
 export interface Reactive<T> {
-    // Compile time symbol to identify reactive objects.
+    /**
+     * Compile time symbol to identify reactive objects.
+     * @internal
+     */
     [IS_REACTIVE]: true;
 
     /**
@@ -37,8 +40,18 @@ export interface Reactive<T> {
      */
     peek(): T;
 
-    // For compatibility with builtin JS constructs
+    /** 
+     * Same as `.value`.
+     * 
+     * For compatibility with builtin JS constructs.
+     **/
     toJSON(): T;
+
+    /**
+     * Formats `.value` as a string.
+     * 
+     * For compatibility with builtin JS constructs.
+     **/
     toString(): string;
 }
 
@@ -51,7 +64,10 @@ export interface Reactive<T> {
  * @group Primitives
  */
 export interface WritableReactive<T> extends Reactive<T> {
-    // Compile time symbol to identify writable objects.
+    /**
+     * Compile time symbol to identify writable reactive objects.
+     * @internal
+     */
     [IS_WRITABLE_REACTIVE]: true;
 
     /**
