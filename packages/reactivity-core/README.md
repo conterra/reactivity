@@ -230,18 +230,51 @@ watch(
     // (2)
     ([sum]) => {
         console.log(sum);
-    }
+    },
+    // (3)
+    { immediate: true }
 );
 ```
 
-`watch()` takes two functions:
+`watch()` takes two functions and one (optional) options object:
 
--   **(1)**: The _selector_ function. This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded. The function must return an array of values.
--   **(2)**: The _callback_ function. This function is called whenever the selector function returned different values. The callback itself is _not_ reactive.
+-   **(1)**: The _selector_ function.
+    This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded.
+    The function must return an array of values.
+-   **(2)**: The _callback_ function.
+    This function is called whenever the selector function returned different values, and it receives those values as its first argument.
+    The callback itself is _not_ reactive.
+-   **(3)**: By default, the callback function will only be invoked after the watched values changed at least once.
+    By specifying `immediate: true`, the callback will also run for the initial values.
 
 In this example, the callback function will only re-run when the computed sum truly changed.
 
+### Complex values
+
+TODO: Object identity, arrays, immutability --> Reactive Collections
+
 ### Reactive collections
+
+#### Array
+
+#### Set
+
+#### Map
+
+### Cleanup
+
+Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
+
+```js
+const h1 = effect(/* ... */);
+const h2 = watch(/* ... */);
+
+// When you are no longer interested in changes:
+h1.destroy();
+h2.destroy();
+```
+
+When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
 
 ## API
 
@@ -253,8 +286,10 @@ In this example, the callback function will only re-run when the computed sum tr
 
 ### Types
 
-## Gotchas
+## Gotchas and tips
 
 ### Avoid side effects in computed signals
 
-###
+### Don't trigger an effect from within itself
+
+### Writing nonreactive code
