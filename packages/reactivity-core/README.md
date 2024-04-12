@@ -153,7 +153,7 @@ class Person {
     }
 
     setLastName(name) {
-        this._lastName_.value = name;
+        this._lastName.value = name;
     }
 
     getFullName() {
