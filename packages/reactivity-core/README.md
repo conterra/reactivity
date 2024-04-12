@@ -273,10 +273,10 @@ Users must use the `array.get(index)` and `array.set(index, value)` methods inst
 Example:
 
 ```ts
-import { reactiveArray } from "@conterra/reactivity-core";
+import { effect, reactiveArray } from "@conterra/reactivity-core";
 
 // Optionally accepts initial content
-const array = reactiveArray<string>();
+const array = reactiveArray<number>();
 
 // Prints undefined since the array is initially empty
 effect(() => {
@@ -296,7 +296,7 @@ The `ReactiveSet<T>` can be used as substitute for the standard `Set<T>`.
 Example:
 
 ```ts
-import { reactiveSet } from "@conterra/reactivity-core";
+import { effect, reactiveSet } from "@conterra/reactivity-core";
 
 // Optionally accepts initial content
 const set = reactiveSet<number>();
@@ -316,7 +316,7 @@ The `ReactiveMap<T>` can be used as a substitute for the standard `Map<T>`.
 Example:
 
 ```ts
-import { reactiveSet } from "@conterra/reactivity-core";
+import { effect, reactiveMap } from "@conterra/reactivity-core";
 
 // Optionally accepts initial content
 const map = reactiveMap<string, string>();
@@ -388,7 +388,7 @@ the dependencies of your functions change and when your signal is actually read 
 Example:
 
 ```ts
-let nonreactiveValue = 1;
+let nonReactiveValue = 1;
 const reactiveValue = reactive(1);
 const computedValue = computed(() => {
     // This works, but it usually bad style for the reasons outlined above:
