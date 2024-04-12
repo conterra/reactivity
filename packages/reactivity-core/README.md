@@ -160,15 +160,15 @@ import { reactive, computed } from "@conterra/reactivity-core";
 // In this example, first name and last name can only be written to.
 // Only the combined full name is available to users of the class.
 class Person {
-    _firstName = reactive("");
-    _lastName = reactive("");
+    _firstName = reactive("John");
+    _lastName = reactive("Doe");
     _fullName = computed(() => `${this._firstName.value} ${this._lastName.value}`);
 
-    setFirstName(name) {
+    setFirstName(name: string) {
         this._firstName.value = name;
     }
 
-    setLastName(name) {
+    setLastName(name: string) {
         this._lastName.value = name;
     }
 
@@ -264,7 +264,7 @@ This package provides a set of collection classes to simplify working with compl
 
 #### Array
 
-The `ReactiveArray<T>` behaves largely like a normal `Array<T>`.
+The `ReactiveArray<T>` behaves largely like a normal [`Array<T>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 Most standard methods have been reimplemented with support for reactivity (new methods can be added on demand).
 
 The only major difference is that one cannot use the `[]` operator.
@@ -291,7 +291,7 @@ array.set(0, 123); // effect prints 123
 
 #### Set
 
-The `ReactiveSet<T>` can be used as substitute for the standard `Set<T>`.
+The `ReactiveSet<T>` can be used as substitute for the standard [`Set<T>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
 
 Example:
 
@@ -311,7 +311,7 @@ set.add(123); // effect prints 1
 
 #### Map
 
-The `ReactiveMap<T>` can be used as a substitute for the standard `Map<T>`.
+The `ReactiveMap<T>` can be used as a substitute for the standard [`Map<T>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
 
 Example:
 
