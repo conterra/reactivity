@@ -1,10 +1,12 @@
-import { WritableReactive } from "../Reactive";
+import { Reactive } from "../Reactive";
 import { reactive } from "../ReactiveImpl";
 
 /**
  * Reactive array interface without modifying methods.
  *
  * See also {@link ReactiveArray}.
+ * 
+ * @group Collections
  */
 export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     /**
@@ -267,6 +269,8 @@ export interface ReadonlyReactiveArray<T> extends Iterable<T> {
  * Not all builtin array methods are implemented right now, but most of them are.
  *
  * Reads and writes to this array are reactive.
+ * 
+ * @group Collections
  */
 export interface ReactiveArray<T> extends ReadonlyReactiveArray<T> {
     /**
@@ -331,13 +335,15 @@ export interface ReactiveArray<T> extends ReadonlyReactiveArray<T> {
  * // With initial content
  * const array2 = reactiveArray<number>([1, 2, 3]);
  * ```
+ * 
+ * @group Collections
  */
 export function reactiveArray<T>(items?: Iterable<T>): ReactiveArray<T> {
     return new ReactiveArrayImpl(items);
 }
 
 class ReactiveArrayImpl<T> implements ReactiveArray<T> {
-    #items: WritableReactive<T>[];
+    #items: Reactive<T>[];
     #structureChanged = reactive(false);
 
     constructor(initial: Iterable<T> | undefined) {
@@ -382,7 +388,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     splice(...args: any[]): T[] {
         const newItems: any[] | undefined = args[2];
-        const removedCells: WritableReactive<T>[] = (this.#items.splice as any)(...args);
+        const removedCells: Reactive<T>[] = (this.#items.splice as any)(...args);
         if ((newItems != null && newItems.length !== 0) || removedCells.length !== 0) {
             this.#triggerStructuralChange();
         }
@@ -507,7 +513,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     ): any {
         this.#subscribeToStructureChange();
         return (this.#items.reduce as any)(
-            (previousValue: any, cell: WritableReactive<T>, index: number) => {
+            (previousValue: any, cell: Reactive<T>, index: number) => {
                 return callback(previousValue, cell.value, index);
             },
             ...args
@@ -522,7 +528,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     ): any {
         this.#subscribeToStructureChange();
         return (this.#items.reduceRight as any)(
-            (previousValue: any, cell: WritableReactive<T>, index: number) => {
+            (previousValue: any, cell: Reactive<T>, index: number) => {
                 return callback(previousValue, cell.value, index);
             },
             ...args

@@ -6,6 +6,8 @@ import { ReactiveMap, reactiveMap } from "./map";
  * This set interface is designed ot be very similar to (but not exactly the same as) the standard JavaScript `Set`.
  *
  * Reads from and writes to this set are reactive.
+ * 
+ * @group Collections
  */
 export interface ReactiveSet<V> extends Iterable<V> {
     /**
@@ -56,8 +58,10 @@ export interface ReactiveSet<V> extends Iterable<V> {
  * Reactive set interface without modifying methods.
  *
  * See also {@link ReactiveSet}.
+ * 
+ * @group Collections
  */
-export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "set" | "delete" | "clear">;
+export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "add" | "delete" | "clear">;
 
 /**
  * Constructs a new {@link ReactiveMap} with the given initial content.
@@ -71,6 +75,8 @@ export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "set" | "delete" | "cl
  * // With initial content
  * const set2 = reactiveSet<string>(["foo", "bar"]);
  * ```
+ * 
+ * @group Collections
  */
 export function reactiveSet<V>(initial?: Iterable<V> | undefined): ReactiveSet<V> {
     return new ReactiveSetImpl<V>(initial);

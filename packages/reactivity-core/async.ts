@@ -1,7 +1,7 @@
-import { CleanupHandle } from "./Reactive";
+import { CleanupHandle } from "./sync";
 import { TaskQueue } from "./TaskQueue";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { EffectFunc, syncEffectOnce, syncEffect, WatchOptions, syncWatch } from "./sync";
+import { EffectFunc, syncEffect, syncEffectOnce, syncWatch, WatchOptions } from "./sync";
 
 /**
  * Runs the callback function and tracks its reactive dependencies.
@@ -37,6 +37,8 @@ import { EffectFunc, syncEffectOnce, syncEffect, WatchOptions, syncWatch } from 
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
  * >
  * > If you need more control, take a look at {@link syncEffect}.
+ * 
+ * @group Watching
  */
 export function effect(callback: EffectFunc): CleanupHandle {
     let currentSyncEffect: CleanupHandle | undefined;
@@ -133,6 +135,8 @@ export function effect(callback: EffectFunc): CleanupHandle {
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
  * >
  * > If you need more control, take a look at {@link syncWatch}.
+ * 
+ * @group Watching
  */
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
@@ -141,10 +145,18 @@ export function watch<const Values extends readonly unknown[]>(
 ): CleanupHandle {
     let currentValues: Values;
     let currentDispatch: CleanupHandle | undefined;
+    let initialSyncExecution = true;
     const watchHandle = syncWatch(
         selector,
         (values) => {
             currentValues = values;
+            
+            // If the user passed 'immediate: true', the initial execution is not deferred sync.
+            if (initialSyncExecution) {
+                callback(currentValues);
+                return;
+            }
+
             if (currentDispatch) {
                 return;
             }
@@ -158,6 +170,7 @@ export function watch<const Values extends readonly unknown[]>(
         },
         options
     );
+    initialSyncExecution = false;
 
     function destroy() {
         currentDispatch?.destroy();

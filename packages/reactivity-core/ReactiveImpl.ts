@@ -9,18 +9,22 @@ import {
     AddBrand,
     AddWritableBrand,
     ExternalReactive,
-    Reactive,
+    ReadonlyReactive,
     RemoveBrand,
-    WritableReactive
+    Reactive
 } from "./Reactive";
 
 /**
  * A function that should return `true` if `a` and `b` are considered equal, `false` otherwise.
+ * 
+ * @group Primitives
  */
 export type EqualsFunc<T> = (a: T, b: T) => boolean;
 
 /**
- * Options that can be passed when creating a new reactive value.
+ * Options that can be passed when creating a new signal.
+ * 
+ * @group Primitives
  */
 export interface ReactiveOptions<T> {
     /**
@@ -34,7 +38,7 @@ export interface ReactiveOptions<T> {
 }
 
 /**
- * Creates a new writable reactive value, initialized to `undefined`.
+ * Creates a new mutable signal, initialized to `undefined`.
  *
  * Example:
  *
@@ -43,11 +47,13 @@ export interface ReactiveOptions<T> {
  * console.log(foo.value); // undefined
  * foo.value = 123;        // updates the current value
  * ```
+ * 
+ * @group Primitives
  */
-export function reactive<T>(): WritableReactive<T | undefined>;
+export function reactive<T>(): Reactive<T | undefined>;
 
 /**
- * Creates a new writable reactive value, initialized to the given value.
+ * Creates a new mutable signal, initialized to the given value.
  *
  * Example:
  *
@@ -56,18 +62,20 @@ export function reactive<T>(): WritableReactive<T | undefined>;
  * console.log(foo.value); // 123
  * foo.value = 456;        // updates the current value
  * ```
+ * 
+ * @group Primitives
  */
-export function reactive<T>(initialValue: T, options?: ReactiveOptions<T>): WritableReactive<T>;
+export function reactive<T>(initialValue: T, options?: ReactiveOptions<T>): Reactive<T>;
 export function reactive<T>(
     initialValue?: T,
     options?: ReactiveOptions<T | undefined>
-): WritableReactive<T | undefined> {
+): Reactive<T | undefined> {
     const impl = new WritableReactiveImpl(initialValue, options?.equal);
     return impl as AddWritableBrand<typeof impl>;
 }
 
 /**
- * Creates a new computed reactive value.
+ * Creates a new computed signal.
  *
  * The `compute` callback will be executed (and re-executed as necessary) to provide the current value.
  * The function body of `compute` is tracked automatically: any reactive values used by `compute`
@@ -86,8 +94,10 @@ export function reactive<T>(
  * foo.value = 2;
  * console.log(doubleFoo.value); // 4
  * ```
+ * 
+ * @group Primitives
  */
-export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): Reactive<T> {
+export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
     const impl = new ComputedReactiveImpl(compute, options?.equal);
     return impl as AddBrand<typeof impl>;
 }
@@ -121,6 +131,8 @@ export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): Rea
  *
  * // later: unsubscribe from signal
  * ```
+ * 
+ * @group Primitives
  */
 export function external<T>(compute: () => T, options?: ReactiveOptions<T>): ExternalReactive<T> {
     /*
@@ -139,12 +151,14 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
         But that function is a) internal and b) mangled (to `N` at the time of this writing) -- this is too risky.
      */
     const invalidateSignal = rawSignal(false);
+    const invalidate = () => {
+        invalidateSignal.value = !invalidateSignal.peek();
+    };
     const externalReactive = computed(() => {
         invalidateSignal.value;
         return rawUntracked(() => compute());
     }, options);
-    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger = () =>
-        (invalidateSignal.value = !invalidateSignal.peek());
+    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger = invalidate;
     return externalReactive as ExternalReactive<T>;
 }
 
@@ -164,18 +178,20 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * const r2 = reactive(2);
  *
  * // Log r1 and r2 every time they change.
- * effect(() => {
+ * syncEffect(() => {
  *     console.log(r1.value, r2.value);
  * });
  *
  * // Trigger multiple updates at once.
  * batch(() => {
- *     // these two updates don't trigger the effect
+ *     // these two updates don't trigger the effect yet
  *     r1.value = 2;
  *     r2.value = 3;
  * });
  * // now the effect runs once
  * ```
+ * 
+ * @group Primitives
  */
 export function batch<T>(callback: () => T): T {
     return rawBatch(callback);
@@ -188,18 +204,22 @@ export function batch<T>(callback: () => T): T {
  * even if they occur inside a computed object or in an effect.
  *
  * `untracked` returns the value of `callback()`.
+ * 
+ * @group Primitives
  */
 export function untracked<T>(callback: () => T): T {
     return rawUntracked(callback);
 }
 
 /**
- * Returns the current `.value` of the given reactive object, or the input argument itself
+ * Returns the current `.value` of the given signal, or the input argument itself
  * if it is not reactive.
  *
  * The access to `.value` is tracked.
+ * 
+ * @group Primitives
  */
-export function getValue<T>(maybeReactive: Reactive<T> | T) {
+export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
     if (!isReactive(maybeReactive)) {
         return maybeReactive;
     }
@@ -207,12 +227,14 @@ export function getValue<T>(maybeReactive: Reactive<T> | T) {
 }
 
 /**
- * Returns the current `.value` of the given reactive object, or the input argument itself
+ * Returns the current `.value` of the given signal, or the input argument itself
  * if it is not reactive.
  *
  * The access to `.value` is _not_ tracked.
+ * 
+ * @group Primitives
  */
-export function peekValue<T>(maybeReactive: Reactive<T> | T) {
+export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
     if (!isReactive(maybeReactive)) {
         return maybeReactive;
     }
@@ -226,7 +248,7 @@ export function peekValue<T>(maybeReactive: Reactive<T> | T) {
  *
  * @group Primitives
  */
-export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is Reactive<T> {
+export function isReactive<T>(maybeReactive: ReadonlyReactive<T> | T): maybeReactive is ReadonlyReactive<T> {
     return maybeReactive instanceof ReactiveImpl;
 }
 
@@ -239,7 +261,7 @@ export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is 
  */
 export function isWritableReactive<T>(
     maybeReactive: Reactive<T> | T
-): maybeReactive is WritableReactive<T> {
+): maybeReactive is Reactive<T> {
     return maybeReactive instanceof WritableReactiveImpl;
 }
 
@@ -247,7 +269,7 @@ const REACTIVE_SIGNAL = Symbol("signal");
 const CUSTOM_EQUALS = Symbol("equals");
 
 abstract class ReactiveImpl<T>
-    implements RemoveBrand<Reactive<T> & WritableReactive<T> & ExternalReactive<T>>
+    implements RemoveBrand<ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>>
 {
     private [REACTIVE_SIGNAL]: Signal<T>;
 
