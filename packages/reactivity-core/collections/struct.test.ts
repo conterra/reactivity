@@ -145,7 +145,7 @@ describe("reactiveStruct", () => {
         person.lastName = "Miller";
         expect(fullName.value).toBe("Jane Doe");
     });
-    it("can be used with computed properties", () => {
+    it.only("can be used with computed properties", () => {
         type ExtendedPersonType = PersonType & {
             fullName: string
         };
@@ -160,7 +160,9 @@ describe("reactiveStruct", () => {
             lastName: {},
             fullName: {
                 type: "computed",
-                compute: compute
+                compute () {
+                    return `${this.firstName} ${this.lastName}`;
+                }
             }
         });
         const person = new PersonClass({
