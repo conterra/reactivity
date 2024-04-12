@@ -5,6 +5,7 @@
 ## Quick Example
 
 ```ts
+
 ```
 
 ## Usage
@@ -239,7 +240,7 @@ h2.destroy();
 ```
 
 When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
-This leads to an unnecessary memory consumption and waste of computational power.
+This leads to unintended side effects, unnecessary memory consumption and waste of computational power.
 
 ### Reactive collections
 
