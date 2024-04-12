@@ -37,12 +37,13 @@ import { EffectFunc, syncEffect, syncEffectOnce, syncWatch, WatchOptions } from 
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
  * >
  * > If you need more control, take a look at {@link syncEffect}.
- * 
+ *
  * @group Watching
  */
 export function effect(callback: EffectFunc): CleanupHandle {
     let currentSyncEffect: CleanupHandle | undefined;
     let currentDispatch: CleanupHandle | undefined;
+    let syncExecution: boolean;
 
     // Runs the actual effect body (once).
     // When the reactive dependencies change, an async callback is dispatched,
@@ -60,20 +61,29 @@ export function effect(callback: EffectFunc): CleanupHandle {
         currentSyncEffect?.destroy();
         currentSyncEffect = undefined;
 
-        currentSyncEffect = syncEffectOnce(callback, () => {
-            currentSyncEffect = undefined;
-            if (currentDispatch) {
-                return;
-            }
-
-            currentDispatch = dispatchCallback(() => {
-                try {
-                    rerunEffect();
-                } finally {
-                    currentDispatch = undefined;
+        syncExecution = true;
+        try {
+            currentSyncEffect = syncEffectOnce(callback, () => {
+                currentSyncEffect = undefined;
+                if (syncExecution) {
+                    throw new Error("Cycle detected");
                 }
+
+                if (currentDispatch) {
+                    return;
+                }
+
+                currentDispatch = dispatchCallback(() => {
+                    try {
+                        rerunEffect();
+                    } finally {
+                        currentDispatch = undefined;
+                    }
+                });
             });
-        });
+        } finally {
+            syncExecution = false;
+        }
     }
 
     function destroy() {
@@ -135,7 +145,7 @@ export function effect(callback: EffectFunc): CleanupHandle {
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
  * >
  * > If you need more control, take a look at {@link syncWatch}.
- * 
+ *
  * @group Watching
  */
 export function watch<const Values extends readonly unknown[]>(
@@ -150,7 +160,7 @@ export function watch<const Values extends readonly unknown[]>(
         selector,
         (values) => {
             currentValues = values;
-            
+
             // If the user passed 'immediate: true', the initial execution is not deferred sync.
             if (initialSyncExecution) {
                 callback(currentValues);

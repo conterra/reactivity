@@ -16,14 +16,14 @@ import {
 
 /**
  * A function that should return `true` if `a` and `b` are considered equal, `false` otherwise.
- * 
+ *
  * @group Primitives
  */
 export type EqualsFunc<T> = (a: T, b: T) => boolean;
 
 /**
  * Options that can be passed when creating a new signal.
- * 
+ *
  * @group Primitives
  */
 export interface ReactiveOptions<T> {
@@ -47,7 +47,7 @@ export interface ReactiveOptions<T> {
  * console.log(foo.value); // undefined
  * foo.value = 123;        // updates the current value
  * ```
- * 
+ *
  * @group Primitives
  */
 export function reactive<T>(): Reactive<T | undefined>;
@@ -62,7 +62,7 @@ export function reactive<T>(): Reactive<T | undefined>;
  * console.log(foo.value); // 123
  * foo.value = 456;        // updates the current value
  * ```
- * 
+ *
  * @group Primitives
  */
 export function reactive<T>(initialValue: T, options?: ReactiveOptions<T>): Reactive<T>;
@@ -94,7 +94,7 @@ export function reactive<T>(
  * foo.value = 2;
  * console.log(doubleFoo.value); // 4
  * ```
- * 
+ *
  * @group Primitives
  */
 export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
@@ -131,7 +131,7 @@ export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): Rea
  *
  * // later: unsubscribe from signal
  * ```
- * 
+ *
  * @group Primitives
  */
 export function external<T>(compute: () => T, options?: ReactiveOptions<T>): ExternalReactive<T> {
@@ -158,7 +158,8 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
         invalidateSignal.value;
         return rawUntracked(() => compute());
     }, options);
-    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger = invalidate;
+    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger =
+        invalidate;
     return externalReactive as ExternalReactive<T>;
 }
 
@@ -190,7 +191,7 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * });
  * // now the effect runs once
  * ```
- * 
+ *
  * @group Primitives
  */
 export function batch<T>(callback: () => T): T {
@@ -204,7 +205,7 @@ export function batch<T>(callback: () => T): T {
  * even if they occur inside a computed object or in an effect.
  *
  * `untracked` returns the value of `callback()`.
- * 
+ *
  * @group Primitives
  */
 export function untracked<T>(callback: () => T): T {
@@ -216,7 +217,7 @@ export function untracked<T>(callback: () => T): T {
  * if it is not reactive.
  *
  * The access to `.value` is tracked.
- * 
+ *
  * @group Primitives
  */
 export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
@@ -231,7 +232,7 @@ export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
  * if it is not reactive.
  *
  * The access to `.value` is _not_ tracked.
- * 
+ *
  * @group Primitives
  */
 export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {

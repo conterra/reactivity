@@ -15,7 +15,7 @@ export type AddWritableBrand<T> = AddBrand<T> & { [IS_WRITABLE_REACTIVE]: true }
  *
  * When the value changes, all users of that value (computed signals, effects, watchers)
  * are notified automatically.
- * 
+ *
  * @group Primitives
  */
 export interface ReadonlyReactive<T> {
@@ -40,16 +40,16 @@ export interface ReadonlyReactive<T> {
      */
     peek(): T;
 
-    /** 
+    /**
      * Same as `.value`.
-     * 
+     *
      * For compatibility with builtin JS constructs.
      **/
     toJSON(): T;
 
     /**
      * Formats `.value` as a string.
-     * 
+     *
      * For compatibility with builtin JS constructs.
      **/
     toString(): string;
@@ -60,7 +60,7 @@ export interface ReadonlyReactive<T> {
  *
  * The value stored in this object can be changed through assignment,
  * and all its users will be notified automatically.
- * 
+ *
  * @group Primitives
  */
 export interface Reactive<T> extends ReadonlyReactive<T> {
@@ -82,7 +82,7 @@ export interface Reactive<T> extends ReadonlyReactive<T> {
  * A signal that holds a value from an external source.
  *
  * Instances of this type are used to integrate "foreign" state into the reactivity system.
- * 
+ *
  * @group Primitives
  */
 export interface ExternalReactive<T> extends ReadonlyReactive<T> {

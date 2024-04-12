@@ -160,7 +160,7 @@ describe("syncEffectOnce", () => {
         expect(invalidateSpy).toHaveBeenCalledTimes(1);
     });
 
-    it("can be cleand up", () => {
+    it("can be cleaned up", () => {
         const r = reactive(1);
         const spy = vi.fn();
 

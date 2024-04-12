@@ -7,7 +7,7 @@ import { reactive } from "../ReactiveImpl";
  * This map interface is designed ot be very similar to (but not exactly the same as) the standard JavaScript `Map`.
  *
  * Reads from and writes to this map are reactive.
- * 
+ *
  * @group Collections
  */
 export interface ReactiveMap<K, V> extends Iterable<[key: K, value: V]> {
@@ -67,7 +67,7 @@ export interface ReactiveMap<K, V> extends Iterable<[key: K, value: V]> {
  * Reactive map interface without modifying methods.
  *
  * See also {@link ReactiveMap}.
- * 
+ *
  * @group Collections
  */
 export type ReadonlyReactiveMap<K, V> = Omit<ReactiveMap<K, V>, "set" | "delete" | "clear">;
@@ -84,7 +84,7 @@ export type ReadonlyReactiveMap<K, V> = Omit<ReactiveMap<K, V>, "set" | "delete"
  * // With initial content
  * const map2 = reactiveMap<string, number>([["foo", 1], ["bar", 2]]);
  * ```
- * 
+ *
  * @group Collections
  */
 export function reactiveMap<K, V>(initial?: Iterable<[K, V]> | undefined): ReactiveMap<K, V> {

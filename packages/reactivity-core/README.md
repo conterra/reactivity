@@ -379,27 +379,23 @@ npm install @conterra/reactivity-core
 
 ## Gotchas and tips
 
-### Avoid side effects in computed signals
+### Avoid cycles in computed signals
 
-Computed signals should use a side effect free function.
-Oftentimes, you cannot control how often the function is re-executed, because that depends on how often
-the dependencies of your functions change and when your signal is actually read (computation is lazy).
+Don't use the value of a computed signal during its own computation.
+The error will be obvious in a simple example, but it may also occur by accident when many objects or functions are involved.
 
 Example:
 
 ```ts
-let nonReactiveValue = 1;
-const reactiveValue = reactive(1);
-const computedValue = computed(() => {
-    // This works, but it usually bad style for the reasons outlined above:
-    nonReactiveValue += 1;
+import { computed } from "@conterra/reactivity-core";
 
-    // XXX
-    // This is outright forbidden and will result in a runtime error.
-    // You cannot modify a signal from inside a computed signal.
-    reactiveValue.value += 1;
-    return "whatever";
+const computedValue = computed(() => {
+    // Trivial example. This may happen through many layers of indirection in real world code.
+    let v = computedValue.value;
+    return v * 2;
 });
+
+console.log(computedValue.value); // throws "Cycle detected"
 ```
 
 ### Don't trigger an effect from within itself
@@ -410,6 +406,8 @@ However, you should take care not to produce a cycle.
 Example: this is okay (but could be replaced by a computed signal).
 
 ```ts
+import { reactive, effect } from "@conterra/reactivity-core";
+
 const v1 = reactive(0);
 const v2 = reactive(1);
 effect(() => {
@@ -421,6 +419,8 @@ effect(() => {
 Example: this is _not_ okay.
 
 ```ts
+import { reactive, effect } from "@conterra/reactivity-core";
+
 const v1 = reactive(0);
 effect(() => {
     // same as `v1.value = v1.value + 1`
@@ -455,6 +455,48 @@ The example above will not throw an error anymore because the _read_ to `v1` has
 > NOTE: In very simple situations you can also use the `.peek()` method of a signal, which is essentially a tiny `untracked` block that only reads from that signal. The code above could be changed to `const value = v1.peek()`.
 
 ### Batching multiple updates
+
+Every update to a signal will usually trigger all watchers.
+This is not really a problem when using the default `watch()` or `effect()`, since multiple changes that follow _immediately_ after each other are grouped into a single notification, with a minimal delay.
+
+However, when using `syncEffect` or `syncWatch`, you will be triggered many times:
+
+```ts
+import { reactive, syncEffect } from "@conterra/reactivity-core";
+
+const count = reactive(0);
+syncEffect(() => {
+    console.log(count.value);
+});
+
+count.value += 1;
+count.value += 1;
+count.value += 1;
+count.value += 1;
+// Effect has executed 5 times
+```
+
+You can avoid this by grouping many updates into a single _batch_.
+Effects or watchers will not get notified until the batch is complete:
+
+```ts
+import { reactive, syncEffect, batch } from "@conterra/reactivity-core";
+
+const count = reactive(0);
+syncEffect(() => {
+    console.log(count.value);
+});
+
+batch(() => {
+    count.value += 1;
+    count.value += 1;
+    count.value += 1;
+    count.value += 1;
+});
+// Effect has executed only twice: one initial call and once after batch() as completed.
+```
+
+It is usually a good idea to surround a complex update operation with `batch()`.
 
 ### Sync vs async effect / watch
 
