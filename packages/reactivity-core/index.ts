@@ -13,7 +13,9 @@ export {
     batch,
     untracked,
     getValue,
-    peekValue
+    peekValue,
+    isReactive,
+    isWritableReactive
 } from "./ReactiveImpl";
 export {
     type EffectCleanupFn,

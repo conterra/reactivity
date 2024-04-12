@@ -219,6 +219,30 @@ export function peekValue<T>(maybeReactive: Reactive<T> | T) {
     return maybeReactive.peek();
 }
 
+/**
+ * Returns true if `maybeReactive` is any kind of signal.
+ *
+ * TODO: must be "isReadonlyReactive"
+ *
+ * @group Primitives
+ */
+export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is Reactive<T> {
+    return maybeReactive instanceof ReactiveImpl;
+}
+
+/**
+ * Returns true if `maybeReactive` is any kind of writable signal.
+ *
+ * TODO: must be "isReactive"
+ *
+ * @group Primitives
+ */
+export function isWritableReactive<T>(
+    maybeReactive: Reactive<T> | T
+): maybeReactive is WritableReactive<T> {
+    return maybeReactive instanceof WritableReactiveImpl;
+}
+
 const REACTIVE_SIGNAL = Symbol("signal");
 const CUSTOM_EQUALS = Symbol("equals");
 
@@ -285,10 +309,6 @@ class WritableReactiveImpl<T> extends ReactiveImpl<T> {
         }
         this[REACTIVE_SIGNAL].value = value;
     }
-}
-
-function isReactive<T>(value: RemoveBrand<Reactive<T>> | T): value is ReactiveImpl<T> {
-    return value instanceof ReactiveImpl;
 }
 
 function computeWithEquals<T>(compute: () => T, equals: EqualsFunc<T>) {

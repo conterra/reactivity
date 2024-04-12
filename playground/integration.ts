@@ -1,5 +1,5 @@
 import { effect as reactivityEffect } from "@conterra/reactivity-core";
-import { Ref, computed, onScopeDispose, ref, watchEffect } from "vue";
+import { Ref, onScopeDispose, ref, watchEffect } from "vue";
 
 /**
  * This composable integrates reactive values into the vue reactivity system.
