@@ -2,34 +2,82 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { computed, getValue, isWritableReactive, reactive } from "../ReactiveImpl";
 
+/**
+ * A property of reactive struct.
+ */
 export interface PropertyMemberType {
-    type?: "property"; // optional as 'property' is the default
+    /**
+     * Type to indicate that this member is a property.
+     */
+    type?: "property";
+    /** 
+     * If `true' the property is writable and it can be changed.
+     * If `false' the property is read-only.
+     * Default is true.
+     */
     writable?: boolean;
+
+    /**
+     * If `true' the property is reactive.
+     * If `false' the property is not reactive.
+     * Default is true.
+     */
     reactive?: boolean;
 }
 
+/**
+ * A method of reactive struct.
+ */
 export interface MethodMemberType<T, Params extends any[], Ret> {
+    /**
+     * Type to indicate that this member is a method.
+     */
     type?: "method";
+    /**
+     * The method of the struct.
+     */
     method: (this: T, ...args: Params) => Ret;
 }
 
+/**
+ * A computed property of reactive struct.
+ */
 export interface ComputedMemberType<T, V> {
+    /**
+     * Type to indicate that this member is a computed property.
+     */
     type?: "computed";
+    /**
+     * The function to compute the value of the property.
+     */
     compute: (this: T) => V;
 }
 
+/**
+ * Definition of a reactive struct.
+ * All properties of T must be part of the definition.
+ * 
+ * @param T The type of the struct.
+ */
 export type ReactiveStructDefinition<T> = {
     [key in keyof T]-?: GetMemberSchemaForProp<T, T[key]>;
 };
 
+/**
+ * A function type.
+ */
 type AnyFunc = (...args: any[]) => any;
 
 /**
+ * @internal
  * Computes which kind of property configuration are allowed for a given member,
  * based on the original TypeScript interface.
  *
  * If a member is a function, then the parameter types and the return type must match.
  * Computed properties must also return the required value type.
+ * 
+ * @param T The type of the struct.
+ * @param V The value of the property.
  */
 type GetMemberSchemaForProp<T, V> = V extends AnyFunc
     ?
@@ -39,7 +87,10 @@ type GetMemberSchemaForProp<T, V> = V extends AnyFunc
     : PropertyMemberType | ComputedMemberType<T, V>;
 
 /**
- * The class returned by TODO.
+ * The class returned by {@link reactiveStruct}.
+ * 
+ * @param T The type of the struct.
+ * @param Def The definition of the struct.
  */
 export type ReactiveStructConstructor<T, Def> = new (
     ...args: ReactiveStructConstructorParams<T, Def>
@@ -57,11 +108,13 @@ type ReactiveStructConstructorParams<T, Def> = ConstructorArgs<
 
 /**
  * Makes the properties object optional if all properties are optional (i.e. if `{}` would be a valid value).
+ * @internal
  */
 type ConstructorArgs<Props> = {} extends Props ? [initialValues?: Props] : [initialValues: Props];
 
 /**
  * Inspects `T` and `Def` and only picks those properties of T that are defined to be properties.
+ * @internal
  */
 type PropertyMembers<T, Def> = {
     [Key in keyof Def as Def[Key] extends PropertyMemberType ? Key : never]: Key extends keyof T
@@ -72,23 +125,133 @@ type PropertyMembers<T, Def> = {
 /**
  * This helper type inspects `Members` and makes all properties optional that may be undefined.
  * All other properties are made required.
+ * @internal
  */
 type ConstructorProps<Members> = Partial<PickOptionalProps<Members>> &
     Required<Omit<Members, keyof PickOptionalProps<Members>>>;
 
 /**
  * Returns a type where only those properties of T remain that may be undefined.
+ * @internal
  */
 type PickOptionalProps<T> = {
     [Key in keyof T as undefined extends T[Key] ? Key : never]: T[Key];
 };
 
+/**
+ * Used to build reactive structs using a struct definition.
+ */
 export interface ReactiveStructBuilder<T> {
+    /**
+     * Create a new reactive struct class based on the provided definition.
+     */
     define<const Def extends ReactiveStructDefinition<T>>(
         def: Def
     ): ReactiveStructConstructor<T, Def>;
 }
 
+/**
+ * Function used to obtain a builder for reactive structs.
+ * Call {@link ReactiveStructBuilder.define} on the builder to create a new reactive struct.
+ * 
+ * @param T The type of the struct.
+ * @returns A builder for reactive structs.
+ * 
+ * @example Create a Person class with a first and last name
+ * ```ts
+ * const PersonClass = reactiveStruct<PersonType>().define({
+ *    firstName: {},
+ *    lastName: {},
+ * });
+ * const person = new PersonClass({
+ *   firstName: "John", 
+ *   lastName: "Doe"
+ * });
+ * 
+ * const fullName = computed(() => `${person.firstName} ${person.lastName}`);
+ * console.log(fullName.value); // John Doe
+ * person.firstName = "Jane";
+ * console.log(fullName.value); // Jane Doe
+ * ```
+ * 
+ * @example Create a Person class with a first, last name and computed property fullName
+ * ```ts
+ * const PersonClass = reactiveStruct<PersonType>().define({
+ *    firstName: {},
+ *    lastName: {},
+ *    fullName: {
+ *        compute() {
+ *             return `${this.firstName} ${this.lastName}`;
+ *        }
+ *    }
+ * });
+ * const person = new PersonClass({
+ *   firstName: "John", 
+ *   lastName: "Doe"
+ * });
+ * console.log(person.fullName); // John Doe
+ * person.firstName = "Jane";
+ * console.log(person.fullName); // Jane Doe
+ * ```
+ * 
+ * @example Create a Person class able to print its full name
+ * ```ts
+ * const PersonClass = reactiveStruct<PersonType>().define({
+ *    firstName: {},
+ *    lastName: {},
+ *    fullName: {
+ *        compute() {
+ *             return `${this.firstName} ${this.lastName}`;
+ *        }
+ *    },
+ *    printName: {
+ *        method() {
+ *             console.log(this.fullName);
+ *        }
+ *    }
+ * });
+ * const person = new PersonClass({
+ *   firstName: "John", 
+ *   lastName: "Doe"
+ * });
+ * person.printName(); // John Doe
+ * person.firstName = "Jane";
+ * person.printName(); // Jane Doe
+ * ```
+ * 
+ * @example Create a Person with a readonly property
+ * ```ts
+ * const PersonClass = reactiveStruct<PersonType>().define({
+ *    firstName: {},
+ *    lastName: {
+ *        writable: false
+ *    }
+ * });
+ * const person = new PersonClass({
+ *   firstName: "John", 
+ *   lastName: "Doe"
+ * });
+ * person.lastName = "Miller"; // throws an error (Cannot set property lastName)
+ * ```
+ * 
+ * @example Create a Person with a non reactive property
+ * ```ts
+ * const PersonClass = reactiveStruct<PersonType>().define({
+ *    firstName: {},
+ *    lastName: {
+ *       reactive: false
+ *    }
+ * });
+ * const person = new PersonClass({
+ *   firstName: "John", 
+ *   lastName: "Doe"
+ * });
+ * const fullName = computed(() => `${person.firstName} ${person.lastName}`);
+ * console.log(fullName.value); // John Doe
+ * person.lastName = "Miller";
+ * console.log(fullName.value); // John Doe
+ * ```
+ */
 export function reactiveStruct<T>(): ReactiveStructBuilder<T> {
     return {
         define(definition) {

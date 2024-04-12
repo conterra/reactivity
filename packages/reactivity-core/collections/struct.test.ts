@@ -179,4 +179,58 @@ describe("reactiveStruct", () => {
         person.firstName = "Jane";
         expect(person.printName()).toBe("Jane Doe");
     });
+    it("supports creating two instances with separate values", () => {
+        type ExtendedPersonType = PersonType & {
+            fullName: string,
+            printName: () => string
+        };
+        const PersonClass = reactiveStruct<ExtendedPersonType>().define({
+            firstName: {},
+            lastName: {},
+            fullName: {
+                compute() {
+                    return `${this.firstName} ${this.lastName}`;
+                }
+            },
+            printName: {
+                method() {
+                    return this.fullName;
+                }
+            }
+        });
+        const person1 = new PersonClass({
+            firstName: "John",
+            lastName: "Doe"
+        });
+        const person2 = new PersonClass({
+            firstName: "Jane",
+            lastName: "Doe"
+        });
+        expect(person1.printName()).toBe("John Doe");
+        expect(person2.printName()).toBe("Jane Doe");
+
+        const familyMembers = computed(() => `${person1.firstName} ${person2.firstName}`);
+        expect(familyMembers.value).toBe("John Jane");
+
+        person1.firstName = "James";
+        expect(familyMembers.value).toBe("James Jane");
+        person2.firstName = "Samantha";
+        expect(familyMembers.value).toBe("James Samantha");
+    });
+    it("uses current values of reactive properties for initialization", () => {
+        const PersonClass = reactiveStruct<PersonType>().define({
+            firstName: {},
+            lastName: {},
+        });
+        const person1 = new PersonClass({
+            firstName: "John",
+            lastName: "Doe"
+        });
+        const person2 = new PersonClass({
+            firstName: "Jimmy",
+            lastName: person1.lastName // current value is used to create Person 2
+        });
+        person1.lastName = "Cooper";
+        expect(person2.lastName).toBe("Doe");
+    });
 });
