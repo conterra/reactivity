@@ -5,7 +5,23 @@
 ## Quick Example
 
 ```ts
+import { reactive, computed, watch } from "@conterra/reactivity-core";
 
+const firstName = reactive("John");
+const lastName = reactive("Doe");
+const fullName = computed(() => `${firstName.value} ${lastName.value}`);
+
+watch(
+    () => [fullName.value],
+    ([fullName]) => {
+        console.log(fullName);
+    },
+    {
+        immediate: true
+    }
+);
+
+firstName.value = "Jane";
 ```
 
 ## Usage
