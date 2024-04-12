@@ -21,6 +21,15 @@ describe("reactiveStruct", () => {
         hasMsg.msg = "changed_text";
         expect(hasMsg.msg).toBe("changed_text");
     });
+    it("can be created with a simple string property providing type 'property'", () => {
+        const HasMsgClass = reactiveStruct<HasMessage>({
+            msg: { type: "property"}
+        });
+        const hasMsg = new HasMsgClass({msg: "text"});
+        expect(hasMsg.msg).toBe("text");
+        hasMsg.msg = "changed_text";
+        expect(hasMsg.msg).toBe("changed_text");
+    });
     it("produces instances where properties can be found via 'in'", () => {
         const HasMsgClass = reactiveStruct<HasMessage>({
             msg: {}
@@ -53,9 +62,7 @@ describe("reactiveStruct", () => {
         }
         const Hello = reactiveStruct<WithFunction>({
             msg: {},
-            hello() {
-                return this.msg;
-            }
+            hello: { type: "function", "function": function() { return this.msg; }}
         });
         const helloInstance = new Hello({msg: "text" });
         expect(helloInstance.hello()).toBe("text");
@@ -137,5 +144,32 @@ describe("reactiveStruct", () => {
 
         person.lastName = "Miller";
         expect(fullName.value).toBe("Jane Doe");
+    });
+    it("can be used with computed properties", () => {
+        type ExtendedPersonType = PersonType & {
+            fullName: string
+        };
+        const compute = function(self: PersonType) {
+            if (self == null) {
+                return;
+            }
+            return `${self.firstName} ${self.lastName}`;
+        };
+        const PersonClass = reactiveStruct<ExtendedPersonType>({
+            firstName: {},
+            lastName: {},
+            fullName: {
+                type: "computed",
+                compute: compute
+            }
+        });
+        const person = new PersonClass({
+            firstName: "John",
+            lastName: "Doe"
+        });
+        expect(person.fullName).toBe("John Doe");
+
+        person.firstName = "Jane";
+        expect(person.fullName).toBe("Jane Doe");
     });
 });
