@@ -313,6 +313,10 @@ effect(() => {
 map.set("foo", "bar"); // effect prints "bar"
 ```
 
+#### Struct
+
+TODO
+
 ## Why?
 
 One of the most important responsibilities of an application is to accurately present the current state of the system.
@@ -434,10 +438,14 @@ The example above will not throw an error anymore because the _read_ to `v1` has
 
 > NOTE: In very simple situations you can also use the `.peek()` method of a signal, which is essentially a tiny `untracked` block that only reads from that signal. The code above could be changed to `const value = v1.peek()`.
 
-### Effects triggering "too often"
+### Batching multiple updates
 
 ### Sync vs async effect / watch
 
 ### Writing nonreactive code
 
+### Effects triggering "too often"
+
 ## License
+
+Apache-2.0 (see `LICENSE` file)
