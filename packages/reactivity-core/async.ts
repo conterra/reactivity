@@ -31,6 +31,17 @@ import { EffectFunc, syncEffect, syncEffectOnce, syncWatch, WatchOptions } from 
  * // later:
  * handle.destroy();
  * ```
+ * 
+ * You can also return a _function_ from your effect callback.
+ * It will be called automatically when either the effect will be re-executed or when the effect is being destroyed.
+ * This can be very convenient to revert (or clean up) the side effects made by an effect:
+ * 
+ * ```js
+ * effect(() => {
+ *     const job = startAJob();
+ *     return () => job.stop();
+ * });
+ * ```
  *
  * > NOTE: This function will slightly defer re-executions of the given `callback`.
  * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.

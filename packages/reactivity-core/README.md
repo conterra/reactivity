@@ -500,9 +500,149 @@ It is usually a good idea to surround a complex update operation with `batch()`.
 
 ### Sync vs async effect / watch
 
+By default, the re-executions of `effect` and the callback executions of `watch` do not happen _immediately_ when a signal is changed.
+Instead, the new executions are dispatched to occur in the next [event loop iteration ("macro task")](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide/In_depth).
+This means that they are delayed very slightly (similar to `setTimeout(..., 0)`) in order to group multiple synchronous changes into a single execution (see [Batching](#batching-multiple-updates)).
+
+Consider the following example:
+
+```ts
+import { watch, effect, reactive } from "@conterra/reactivity-core";
+
+const s = reactive(1);
+effect(() => {
+    console.log("effect:", s.value);
+});
+
+watch(
+    () => [s.value],
+    ([value]) => {
+        console.log("watch:", value);
+    }
+);
+
+s.value = 2;
+console.log("after assignment");
+```
+
+This will print:
+
+```text
+effect: 1           # the initial effect execution always happens synchronously
+after assignment    # watch and effect did NOT execute yet
+effect: 2           # now effect and watch will execute
+watch: 2
+```
+
+If you need more control over your callbacks, you can use `syncEffect` and `syncWatch` instead:
+
+```ts
+import { syncWatch, syncEffect, reactive } from "@conterra/reactivity-core";
+
+const s = reactive(1);
+syncEffect(() => {
+    console.log("effect:", s.value);
+});
+
+syncWatch(
+    () => [s.value],
+    ([value]) => {
+        console.log("watch:", value);
+    }
+);
+
+s.value = 2; // this line also executes the effect and the watch callback!
+console.log("after assignment");
+```
+
+This will print:
+
+```text
+effect: 1
+effect: 2
+watch: 2
+after assignment
+```
+
 ### Writing nonreactive code
 
-### Effects triggering "too often"
+Sometimes you want to read the _current_ value of a signal without being triggered when that signal changes.
+You can do that by opting out of the automatic dependency tracking using the `untracked` function, for example:
+
+```ts
+import { effect, reactive, untracked } from "@conterra/reactivity-core";
+
+const s1 = reactive(0);
+const s2 = reactive(0);
+effect(() => {
+    const v1 = s1.value; // tracked read
+    const v2 = untracked(() => s2.value); // untracked read
+
+    console.log("effect", v1, v2);
+});
+
+s2.value = 1; // does not cause the effect to trigger again
+s1.value = 1; // _does_ cause the effect to trigger again
+```
+
+`untracked()` works everywhere dependencies are tracked:
+
+-   inside `computed()`
+-   in effect callbacks
+-   in the `selector` argument of `watch()`
+
+### Effects triggering often when working with collections
+
+The current implementation of collection types (`Array`, `Map`, `Set`) only supports fine grained reactivity for _existing_ values.
+When the set of values is changed (e.g. by calling `.push()` on an array or `.set` with a new key on a `Map`), only a coarse "change event" will be emitted.
+
+Consider the following example:
+
+```ts
+import { effect, reactiveArray } from "@conterra/reactivity-core";
+
+const array = reactiveArray([1]);
+effect(() => {
+    console.log("first array item", array.get(0));
+});
+
+array.push(2);
+```
+
+The snippet above will print the first array item _twice_, even though that item is never modified.
+The current implementation is a compromise between memory efficiency, code complexity and usability that results in this quirk.
+
+To work around the issue, simply use a `watch()` or wrap the array access into a `computed()` signal.
+Both ways will ensure that the effect or callback is only triggered when the value _actually_ changed:
+
+```ts
+import { computed, effect, reactiveArray, watch } from "@conterra/reactivity-core";
+
+const array = reactiveArray([1]);
+
+// This works because computed() caches its value and only propagates change
+// when the value is actually updated.
+// Essentially, the computed's callback will still re-execute but no one else will be notified.
+const firstItem = computed(() => array.get(0));
+effect(() => {
+    console.log("first array item (effect)", firstItem.value);
+});
+
+// This works because the callback is only invoked when the selector returns different values.
+// Essentially, the selector is executed multiple times but watch() will not invoke the callback.
+// (Behind the scenes, watch() is based on `computed` as well).
+watch(
+    () => [array.get(0)],
+    ([item]) => {
+        console.log("first array item (watch)", item);
+    }
+);
+
+// Triggers neither the effect nor the watch callback.
+array.push(2);
+```
+
+### Working with promises
 
 ## License
 
