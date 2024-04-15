@@ -12,7 +12,7 @@ type PersonType = {
 };
 
 describe("reactiveStruct", () => {
-    it("has reactive properties", () => {
+    it("produces reactive properties", () => {
         const PersonClass = reactiveStruct<PersonType>().define({
             firstName: {},
             lastName: {}
@@ -27,7 +27,7 @@ describe("reactiveStruct", () => {
         person.firstName = "Jane";
         expect(fullName.value).toBe("Jane Doe");
     });
-    it("has enumerable properties", () => {
+    it("produces enumerable properties", () => {
         const PersonClass = reactiveStruct<PersonType>().define({
             firstName: {},
             lastName: {}
@@ -145,7 +145,7 @@ describe("reactiveStruct", () => {
         obj.method = 456;
         expect(obj.method).toBe(456);
     });
-    it("supports providing member types explicitly", () => {
+    it("supports defining member types explicitly", () => {
         type ExtendedPersonType = PersonType & {
             fullName: string,
             printName: () => string
@@ -179,7 +179,81 @@ describe("reactiveStruct", () => {
         person.firstName = "Jane";
         expect(person.printName()).toBe("Jane Doe");
     });
-    it("supports creating two instances with separate values", () => {
+    it("supports all types as property types", () => {
+        const mySymbol = Symbol("abc");
+
+        type ComplexType = {
+            str: string;
+            num: number;
+            bool: boolean;
+            sym: symbol;
+            nul: null;
+            undef: undefined;
+            obj: object;
+        };
+        const MyClass = reactiveStruct<ComplexType>().define({
+            str: {},
+            num: {},
+            bool: {},
+            sym: {},
+            nul: {},
+            undef: {},
+            obj: {}
+        });
+        const myInstance = new MyClass({
+            str: "string",
+            num: 123,
+            bool: true,
+            sym: mySymbol,
+            nul: null,
+            undef: undefined,
+            obj: {}
+        });
+        expect(myInstance.str).toBe("string");
+        expect(myInstance.num).toBe(123);
+        expect(myInstance.bool).toBe(true);
+        expect(myInstance.sym).toBe(mySymbol);
+        expect(myInstance.nul).toBe(null);
+        expect(myInstance.undef).toBe(undefined);
+        expect(myInstance.obj).toEqual({});
+    });
+    it("supports symbols as property keys", () => {
+        const mySymbol = Symbol("abc");
+        type ComplexType = {
+            [mySymbol]: string;
+        };
+        const MyClass = reactiveStruct<ComplexType>().define({
+            [mySymbol]: {}
+        });
+        const myInstance = new MyClass({
+            [mySymbol]: "text"
+        });
+        const symbolVal = computed(() => myInstance[mySymbol]);
+        expect(symbolVal.value).toBe("text");
+        myInstance[mySymbol] = "new text";
+        expect(symbolVal.value).toBe("new text");
+    });
+    it("supports computed properties using private symbols", () => {
+        const mySymbol = Symbol("abc");
+        type ComplexType = {
+            [mySymbol]: string;
+            getSymbolValue: string;
+        };
+        const MyClass = reactiveStruct<ComplexType>().define({
+            [mySymbol]: {},
+            getSymbolValue: {
+                compute() {
+                    return `Symbol value is '${String(this[mySymbol])}'`;
+                }
+            }
+        });
+        const myInstance = new MyClass({
+            [mySymbol]: "123"
+        });
+        const symbolVal = myInstance.getSymbolValue;
+        expect(symbolVal).toBe("Symbol value is '123'");
+    });  
+    it("creates independent instances", () => {
         type ExtendedPersonType = PersonType & {
             fullName: string,
             printName: () => string
@@ -232,5 +306,159 @@ describe("reactiveStruct", () => {
         });
         person1.lastName = "Cooper";
         expect(person2.lastName).toBe("Doe");
+    });
+    it("supports nested reactive structs", () => {
+        type Address = {
+            street: string;
+            city: string;
+        };
+        type PersonType = {
+            name: string;
+            address: Address;
+            printAddress: () => string;
+        };
+        const AddressClass = reactiveStruct<Address>().define({
+            street: {},
+            city: {}
+        });
+        const PersonClass = reactiveStruct<PersonType>().define({
+            name: {},
+            address: {},
+            printAddress: {
+                method() {
+                    return `${this.name} lives at ${this.address.street}, ${this.address.city}`;
+                }
+            }
+        });
+        const address = new AddressClass({
+            street: "123 Main St",
+            city: "Springfield"
+        });
+        const person = new PersonClass({
+            name: "John",
+            address
+        });
+        expect(person.address.city).toBe("Springfield");
+        expect(person.printAddress()).toBe("John lives at 123 Main St, Springfield");
+        address.city = "New York";
+        expect(person.printAddress()).toBe("John lives at 123 Main St, New York");
+    });
+    it("supports nested reactive structs with computed properties", () => {
+        type Address = {
+            street: string;
+            city: string;
+        };
+        type PersonType = {
+            name: string;
+            address: Address;
+            fullAddress: string;
+        };
+        const AddressClass = reactiveStruct<Address>().define({
+            street: {},
+            city: {}
+        });
+        const PersonClass = reactiveStruct<PersonType>().define({
+            name: {},
+            address: {},
+            fullAddress: {
+                compute() {
+                    return `${this.name} lives at ${this.address.street}, ${this.address.city}`;
+                }
+            }
+        });
+        const address = new AddressClass({
+            street: "123 Main St",
+            city: "Springfield"
+        });
+        const person = new PersonClass({
+            name: "John",
+            address
+        });
+        expect(person.address.city).toBe("Springfield");
+        expect(person.fullAddress).toBe("John lives at 123 Main St, Springfield");
+        address.city = "New York";
+        expect(person.fullAddress).toBe("John lives at 123 Main St, New York");
+    });
+    it("creates constructors where optional properties do not have to be initialized", () => {
+        interface ComplexType {
+            a: string | undefined;
+            b: undefined;
+            c?: string;
+            d: string;
+        
+            computedProperty: string;
+            method(): number;
+        }
+        
+        const ComplexClass = reactiveStruct<ComplexType>().define({
+            a: {},
+            b: {},
+            c: {},
+            d: {},
+        
+            computedProperty: {
+                type: "computed",
+                compute() {
+                    return "foo";
+                }
+            },
+            method: {
+                type: "method",
+                method() {
+                    return 3;
+                },
+            }
+        });
+        
+        const person = new ComplexClass({d: "bar"}); // a, b, c are not initialized
+        expect(person.a).toBe(undefined);
+        expect(person.b).toBe(undefined);
+        expect(person.c).toBe(undefined);
+        expect(person.d).toBe("bar");
+    });
+    it("creates a no args constructor if all properties are optional", () => {
+        interface ComplexType {
+            a?: string;
+            computedProperty: string;
+            method(): number;
+        }
+        
+        const ComplexClass = reactiveStruct<ComplexType>().define({
+            a: {},        
+            computedProperty: {
+                type: "computed",
+                compute() {
+                    return "foo";
+                }
+            },
+            method: {
+                type: "method",
+                method() {
+                    return 3;
+                },
+            }
+        });
+        
+        const person = new ComplexClass(); // no args provided
+        expect(person.a).toBe(undefined);
+    });
+    
+    it("supports instanceof", () => {
+        const PersonClass = reactiveStruct<PersonType>().define({
+            firstName: {},
+            lastName: {}
+        });
+        const person = new PersonClass({
+            firstName: "John",
+            lastName: "Doe"
+        });
+        expect(person instanceof PersonClass).toBe(true);
+    });
+    it("supports prototype", () => {
+        const PersonClass = reactiveStruct<PersonType>().define({
+            firstName: {},
+            lastName: {}
+        });
+        expect(PersonClass.prototype).toBeInstanceOf(Object);
     });
 });
