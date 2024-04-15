@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, reactive } from "vue";
 import { Todo } from "./TodosModel";
+import { useReactiveSnapshot } from "./integration";
 
 const props = defineProps<{
     todo: Todo;
 }>();
+
+const todoTitle = useReactiveSnapshot(() => props.todo.title);
 
 defineEmits<{
     remove: [];
@@ -58,7 +61,7 @@ const dialogModel = computed({
 
 <template>
     <v-list-item>
-        <v-list-item-title>{{ todo.title }}</v-list-item-title>
+        <v-list-item-title>{{ todoTitle }}</v-list-item-title>
 
         <template #append>
             <v-dialog v-model="dialogModel" max-width="500">
