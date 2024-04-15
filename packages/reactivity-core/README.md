@@ -183,7 +183,7 @@ class Person {
 We provide two different APIs to run code when reactive values change.
 The simpler one is effect `effect()`:
 
-```js
+```ts
 import { reactive, effect } from "@conterra/reactivity-core";
 
 const r1 = reactive(0);
@@ -203,7 +203,7 @@ This can result in your effect running too often, because you're really only int
 
 In that case, you can use `watch()` to have more fine grain control:
 
-```js
+```ts
 import { reactive, watch } from "@conterra/reactivity-core";
 
 const r1 = reactive(0);
@@ -240,13 +240,122 @@ In this example, the callback function will only re-run when the computed sum tr
 
 ### Complex values
 
-TODO: Object identity, arrays, immutability --> Reactive Collections
+Up to this point, examples have used primitive values such as strings or integers.
+Signals support _any_ kind of `value`, for example:
+
+```ts
+import { reactive, watch } from "@conterra/reactivity-core";
+
+const currentUser = reactive({
+    name: "User 1"
+});
+
+watch(
+    () => [currentUser.value],
+    ([user]) => {
+        console.log(user.name);
+    },
+    { immediate: true }
+);
+
+// Assignment to a signal's `.value` is reactive
+currentUser.value = { name: "User 2" };
+```
+
+You should keep in mind that, by default, change detection is based on JavaScript's default comparison (i.e. `===`).
+This means that objects or arrays (or any other reference type) may trigger changes even if their contents are equivalent (equal _content_ but different _identity_).
+For example, the following change would trigger the `watch()` of the previous example, even though the `name` is the same:
+
+```ts
+// new object and thus a change
+currentUser.value = { name: "User 1" };
+```
+
+For this reason, `reactive` and `computed` allow you to supply a custom equality function.
+This allows you to ignore certain updates by specifying that a value is _equal_ to another value:
+
+```ts
+import { reactive, watch } from "@conterra/reactivity-core";
+
+const currentUser = reactive(
+    {
+        name: "User 1"
+    },
+    {
+        equal: (u1, u2) => u1.name === u2.name
+    }
+);
+
+watch(
+    () => [currentUser.value],
+    ([user]) => {
+        console.log(user.name);
+    },
+    { immediate: true }
+);
+
+// Assignment is ignored because the name is the same.
+currentUser.value = { name: "User 1" };
+```
+
+### Working with collections
+
+As mentioned above, signals support any kind of value.
+This means that you can easily wrap an object, an array, or any other kind of container (e.g. Map/Set) in a signal.
+However, you will only be notified when the _object_ (or array) changes, and not when its _content_ does.
+In other words, deep reactivity is not support for "normal" JavaScript values.
+
+At this point, we can recommend two approaches, based on your requirements.
+
+#### Using immutable values
+
+This approach can be convenient for small collections or collections that don't update very often.
+Essentially, instead of updating the content of an collection, you replace the entire collection with an updated one:
+
+```ts
+import { effect, reactive } from "@conterra/reactivity-core";
+
+const authors = reactive<string[]>(["Tolkien", "Grisham"]);
+effect(() => {
+    console.log(authors.value);
+});
+
+function addAuthor(name: string) {
+    // Replace the array instead of updating it in place.
+    // This way, we can use a normal signal for reactivity.
+    authors.value = authors.value.concat(name);
+}
+
+addAuthor("King");
+```
+
+#### Using reactive collection classes
+
+We implemented a few classes to make working with reactive collection easier, see [Reactive Collections](#reactive-collections).
+
+The previous example could also be written as:
+
+```ts
+import { effect, reactiveArray } from "@conterra/reactivity-core";
+
+// NOTE: not a normal array (but mostly API-compatible).
+const authors = reactiveArray(["Tolkien", "Grisham"]);
+effect(() => {
+    console.log(authors.getItems());
+});
+
+function addAuthor(name: string) {
+    authors.push(name);
+}
+
+addAuthor("King");
+```
 
 ### Cleanup
 
 Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
 
-```js
+```ts
 const h1 = effect(/* ... */);
 const h2 = watch(/* ... */);
 
