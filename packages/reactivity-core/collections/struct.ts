@@ -297,13 +297,16 @@ function preparePrototype<T>(
     definition: ReactiveStructDefinition<T>
 ): PrepareResult<T> {
     const propertyKeys = Object.keys(definition) as (keyof T & (string | symbol))[];
+    const propertySymbols = Object.getOwnPropertySymbols(definition) as (keyof T & (symbol))[];
+
+    const allKeys = [...propertyKeys, ...propertySymbols];
 
     // Initialization steps for certain properties.
     // These are run from the class instance's constructor to prepare an instance.
     type InitStep = (instance: any, storage: PrivateStorage, initialArgs?: Partial<T>) => void;
     const initSteps: InitStep[] = [];
 
-    for (const propertyKey of propertyKeys) {
+    for (const propertyKey of allKeys) {
         const memberDef = definition[propertyKey];
         if ("method" in memberDef) {
             Object.defineProperty(prototype, propertyKey, {
