@@ -15,8 +15,6 @@ export class TaskQueue {
     private queue: Task[] = [];
     private channel = new MessageChannel();
 
-    constructor() {}
-
     /**
      * Enqueues a function to be executed in the next task queue iteration.
      *
@@ -52,6 +50,7 @@ export class TaskQueue {
     }
 
     private messageHandler = () => this.runIteration();
+
     private scheduleIteration() {
         // register and unregister for every iteration otherwise node will not terminate
         // https://stackoverflow.com/a/61574326
