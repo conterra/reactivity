@@ -17,7 +17,7 @@
  *
  * @groupDescription Structs
  * 
- * Create simple class like objects having reactive properties.
+ * Create class like objects having reactive properties.
  */
 export {
     type ReadonlyReactive,
