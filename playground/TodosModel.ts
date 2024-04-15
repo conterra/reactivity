@@ -1,10 +1,17 @@
-import { computed, reactiveMap } from "@conterra/reactivity-core";
+import { computed, reactiveMap, reactiveStruct } from "@conterra/reactivity-core";
 import { ReadonlyReactiveMap } from "@conterra/reactivity-core";
 
 export interface Todo {
-    id: string;
+    readonly id: string;
     title: string;
 }
+
+const Todo = reactiveStruct<Todo>().define({
+    id: {
+        writable: false
+    },
+    title: {}
+});
 
 let nextId = 1;
 
@@ -14,10 +21,7 @@ export class TodosModel {
 
     addTodo(title: string): string {
         const id = String(nextId++);
-        this.#todos.set(id, {
-            id,
-            title
-        });
+        this.#todos.set(id, new Todo({ id, title }));
         return id;
     }
 

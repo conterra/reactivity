@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { TodosModel } from "./TodosModel";
 import { useReactiveSnapshot } from "./integration";
+import TodoItem from "./TodoItem.vue";
 
 const model = new TodosModel();
 const snapshot = useReactiveSnapshot(() => {
@@ -47,17 +48,7 @@ function createTodo() {
                 <v-list v-if="snapshot.todos.length">
                     <template v-for="(todo, index) in snapshot.todos" :key="todo.id">
                         <v-divider v-if="index !== 0" />
-                        <v-list-item>
-                            <v-list-item-title>{{ todo.title }}</v-list-item-title>
-
-                            <template #append>
-                                <v-btn
-                                    icon="mdi-trash-can"
-                                    variant="text"
-                                    @click.stop.prevent="model.removeTodo(todo.id)"
-                                />
-                            </template>
-                        </v-list-item>
+                        <todo-item :todo="todo" @remove="model.removeTodo(todo.id)" />
                     </template>
                 </v-list>
             </v-card>
