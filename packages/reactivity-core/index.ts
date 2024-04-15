@@ -14,8 +14,11 @@
  * @groupDescription Collections
  * 
  * Reactive collections to simplify working with complex data structures.
+ *
+ * @groupDescription Structs
+ * 
+ * Create simple class like objects having reactive properties.
  */
-
 export {
     type ReadonlyReactive,
     type Reactive,
@@ -45,3 +48,4 @@ export {
 } from "./sync";
 export { effect, watch } from "./async";
 export * from "./collections";
+export * from "./struct";
