@@ -644,6 +644,52 @@ array.push(2);
 
 ### Working with promises
 
+All dependency tracking (computed, watch, effect, etc.) is based on tracking accesses to `signal.value` in _synchronous_ code.
+
+The following snippet will _not_ be reactive with respect to the values accessed after the effect's body:
+
+```ts
+import { effect, reactive } from "@conterra/reactivity-core";
+
+const s1 = reactive("a");
+const s2 = reactive("b");
+
+effect(() => {
+    const v1 = s1.value; // (1)
+    functionThatReturnsAPromise(v1).then(() => {
+        console.log(s2.value); // (2)
+    });
+});
+```
+
+The effect will be triggered again if the value of `s1` changes because `s1` is read from within the effect in (1).
+The execution of the `.then()` callback in (2) will always happen after the effect's body is done - possibly much later.
+Thus, the effect will not re-execute if `s2` is updated.
+If you need reactivity for `s2`, simply read it at an earlier time, e.g. next to (1).
+
+This trap is easy to fall into when using asynchronous functions:
+
+```ts
+import { effect, reactive } from "@conterra/reactivity-core";
+
+const s1 = reactive("a");
+const s2 = reactive("b");
+
+// note the `async` keyword
+effect(async () => {
+    const v1 = s1.value; // (1)
+    const result = await functionThatReturnsAPromise(v1);
+    const v2 = s2.value; // (2)
+});
+```
+
+This syntax works in practice, but it is easy to make mistakes.
+Like in the previous example, the access to `s1` in (1) will work.
+However, because of the `await` keyword, the effect will _not_ track (2).
+This is because `async` / `await` is just a different syntax for promises with `.then()` / `.catch()`.
+
+Because it is so easy to make this mistake, we recommend _not_ using `async` / `await` directly in `effect`, `watch` or computed signals.
+
 ## License
 
 Apache-2.0 (see `LICENSE` file)
