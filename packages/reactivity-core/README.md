@@ -530,6 +530,52 @@ For example, they do not support base classes or private properties.
 If you need an advanced class, we recommend writing it yourself using standard JavaScript / TypeScript means.
 You can still (if needed) use a reactive struct internally, or you can use manual signals instead.
 
+#### Integrating external state
+
+This reactivity system does automatically integrate with other ways to manage state (e.g. event based systems, third party reactivity systems).
+However, we do provide facilities to easily integrate "external" state yourself using the `external` signal.
+
+To use `external`, you must implement two functionalities:
+
+1. A function to _compute_ the _current_ value of the external state.
+   This is very similar to the way computed signals work, but it is not automatically reactive.
+2. You must subscribe to changes of the external state (through whatever appropriate means) and `.trigger()` the external signal.
+   This tells our reactivity system that the current value is no longer up-to-date.
+
+Example:
+
+```ts
+import { effect, external } from "@conterra/reactivity-core";
+
+// An abort signal is a value that may be `aborted` through its controller.
+// It provides both the `aborted` property (the current state) and a simple event that fires when that state changes.
+// We use these facilities to provide a reactive boolean that accurately reflects the current state.
+const controller = new AbortController();
+const signal = controller.signal;
+
+// boolean signal that tracks the aborted state.
+// calls 'trigger()` on the signal when the signal is aborted.
+const isAborted = external(() => signal.aborted);
+signal.addEventListener("abort", isAborted.trigger);
+// later, don't forget to unregister the event handler:
+// signal.removeEventListener("abort", isAborted.trigger);
+
+effect(() => {
+    console.log("is aborted:", isAborted.value);
+});
+
+setTimeout(() => {
+    controller.abort();
+}, 1000);
+```
+
+Output:
+
+```text
+is aborted: false
+is aborted: true
+```
+
 ## Why?
 
 One of the most important responsibilities of an application is to accurately present the current state of the system.
