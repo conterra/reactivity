@@ -54,8 +54,10 @@ export class TaskQueue {
     private scheduleIteration() {
         // register and unregister for every iteration otherwise node will not terminate
         // https://stackoverflow.com/a/61574326
-        this.channel.port2.addEventListener("message", this.messageHandler);
-        this.channel.port1.postMessage(""); // queue macro task
+        const channel = this.channel;
+        channel.port2.addEventListener("message", this.messageHandler);
+        channel.port2.start();
+        channel.port1.postMessage(""); // queue macro task
     }
 
     private runIteration() {
