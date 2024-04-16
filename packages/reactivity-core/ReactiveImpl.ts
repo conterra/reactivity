@@ -249,7 +249,9 @@ export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
  *
  * @group Primitives
  */
-export function isReactive<T>(maybeReactive: ReadonlyReactive<T> | T): maybeReactive is ReadonlyReactive<T> {
+export function isReactive<T>(
+    maybeReactive: ReadonlyReactive<T> | T
+): maybeReactive is ReadonlyReactive<T> {
     return maybeReactive instanceof ReactiveImpl;
 }
 

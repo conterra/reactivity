@@ -16,7 +16,7 @@
  * Reactive collections to simplify working with complex data structures.
  *
  * @groupDescription Struct
- * 
+ *
  * Utilities to create reactive data structures/objects.
  */
 

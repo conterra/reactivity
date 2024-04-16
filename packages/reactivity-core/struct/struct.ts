@@ -4,7 +4,7 @@ import { computed, getValue, isWritableReactive, reactive } from "../ReactiveImp
 
 /**
  * A property of a reactive struct.
- * 
+ *
  * @group Struct
  */
 export interface PropertyMemberType {
@@ -12,7 +12,7 @@ export interface PropertyMemberType {
      * Type to indicate that this member is a property.
      */
     type?: "property";
-    /** 
+    /**
      * If `true' the property is writable and it can be changed.
      * If `false' the property is read-only.
      * Default is true.
@@ -29,7 +29,7 @@ export interface PropertyMemberType {
 
 /**
  * A method of a reactive struct.
- * 
+ *
  * @group Struct
  */
 export interface MethodMemberType<T, Params extends any[], Ret> {
@@ -45,7 +45,7 @@ export interface MethodMemberType<T, Params extends any[], Ret> {
 
 /**
  * A computed property of a reactive struct.
- * 
+ *
  * @group Struct
  */
 export interface ComputedMemberType<T, V> {
@@ -62,7 +62,7 @@ export interface ComputedMemberType<T, V> {
 /**
  * Definition of a reactive struct.
  * All properties of T must be part of the definition.
- * 
+ *
  * @param T The type of the struct.
  * @group Struct
  */
@@ -81,7 +81,7 @@ type AnyFunc = (...args: any[]) => any;
  *
  * If a member is a function, then the parameter types and the return type must match.
  * Computed properties must also return the required value type.
- * 
+ *
  * @param T The type of the struct.
  * @param V The value of the property.
  */
@@ -94,7 +94,7 @@ type GetMemberSchemaForProp<T, V> = V extends AnyFunc
 
 /**
  * Constructor for reactive struct instances {@link reactiveStruct}.
- * 
+ *
  * @param T The type of the struct.
  * @param Def The definition of the struct.
  * @group Struct
@@ -103,7 +103,7 @@ export interface ReactiveStructConstructor<T, Def> {
     /**
      * Creates a new reactive struct instance.
      */
-    new (...args: ReactiveStructConstructorParams<T, Def>) : T;
+    new (...args: ReactiveStructConstructorParams<T, Def>): T;
 }
 
 /**
@@ -146,7 +146,7 @@ type PickOptionalProps<T> = {
 
 /**
  * Used to build reactive structs using a struct definition.
- * 
+ *
  * @group Struct
  */
 export interface ReactiveStructBuilder<T> {
@@ -163,11 +163,11 @@ export interface ReactiveStructBuilder<T> {
  *
  * A reactive struct is a class like object that can contain properties, computed properties and methods.
  * By default all properties are reactive and writable.
- * 
+ *
  * #### Create a reactive struct
  *
  * To create a reactive struct proceed as follows:
- * 
+ *
  * 1. Define the type of the struct.
  *     ```ts
  *     type PersonType = {
@@ -175,7 +175,7 @@ export interface ReactiveStructBuilder<T> {
  *       lastName: string;
  *     }
  *     ```
- * 
+ *
  * 2. Create a definition for the struct according to the type.
  *     ```ts
  *     const personDefinition: ReactiveStructDefinition<PersonType> = {
@@ -183,12 +183,12 @@ export interface ReactiveStructBuilder<T> {
  *       lastName: {}   // default options (reactive and writable)
  *     };
  *     ```
- * 
+ *
  * 3. Create a new reactive struct class based on the provided definition.
  *     ```ts
  *     const PersonClass = reactiveStruct<PersonType>().define(personDefinition);
  *     ```
- * 
+ *
  * 4. Create a new instance of the struct.
  *     ```ts
  *     const person = new PersonClass({
@@ -199,20 +199,20 @@ export interface ReactiveStructBuilder<T> {
  * 5. Use the created instance.
  *
  *    Now, you can use the person instance for example to compute the person's full name.
- *    
+ *
  *    ```ts
  *    const fullName = computed(() => `${person.firstName} ${person.lastName}`);
  *    console.log(fullName.value); // John Doe
  *    person.firstName = "Jane";
  *    console.log(fullName.value); // Jane Doe
  *    ```
- * 
+ *
  * #### Options for simple properties
- * 
+ *
  * The following options can be set for properties in the struct definition:
  * - `writable`: if `true` the property is writable and it can be changed (the default). If `false` the property is read-only.
  * - `reactive`: if `true` the property is reactive (the default). If `false` the property is not reactive.
- *  
+ *
  * To define a read-only property set `writable` to `false`:
  * ```ts
  * type PersonType = {
@@ -230,7 +230,7 @@ export interface ReactiveStructBuilder<T> {
  * });
  * person.lastName = "Smith"; // type error, throws error at runtime
  * ```
- * 
+ *
  * To define a non reactive property set `reactive` to `false`:
  * ```ts
  * const personDefinition: ReactiveStructDefinition<PersonType> = {
@@ -246,12 +246,12 @@ export interface ReactiveStructBuilder<T> {
  * person.lastName = "Miller";
  * console.log(fullName.value); // John Doe
  * ```
- * 
+ *
  * #### Computed properties
- * 
+ *
  * Computed properties are properties that are computed based on other properties.
  * They can be defined in the struct definition as follows:
- * 
+ *
  * ```ts
  * type PersonType = {
  *     firstName: string;
@@ -276,11 +276,11 @@ export interface ReactiveStructBuilder<T> {
  * person.firstName = "Jane";
  * console.log(person.fullName); // Jane Doe
  * ```
- * 
+ *
  * #### Methods
- * 
+ *
  * You can also define methods in the struct definition:
- * 
+ *
  * ```ts
  * type PersonType = {
  *     firstName: string;
@@ -301,13 +301,13 @@ export interface ReactiveStructBuilder<T> {
  *     firstName: "John",
  *     lastName: "Doe"
  * });
- * person.printName(); // prints "John Doe"  
+ * person.printName(); // prints "John Doe"
  * ```
- * 
+ *
  * > NOTE:
  * > All strings or symbols are allowed as property names, _except_ for strings starting with '$'.
  * > Strings starting with '$' are reserved for future extensions.
- * 
+ *
  * @group Struct
  */
 export function reactiveStruct<T>(): ReactiveStructBuilder<T> {
@@ -342,7 +342,7 @@ interface PrepareResult<T> {
     /**
      * Function that must be called on every new instance to initialize
      * the private storage.
-     * 
+     *
      * @param instance the new instance, not yet fully initialized
      * @param initialValues the constructor parameter (if any)
      */
@@ -358,7 +358,7 @@ function preparePrototype<T>(
     definition: ReactiveStructDefinition<T>
 ): PrepareResult<T> {
     const propertyKeys = Object.keys(definition) as (keyof T & (string | symbol))[];
-    const propertySymbols = Object.getOwnPropertySymbols(definition) as (keyof T & (symbol))[];
+    const propertySymbols = Object.getOwnPropertySymbols(definition) as (keyof T & symbol)[];
     const allKeys = [...propertyKeys, ...propertySymbols];
 
     // Initialization steps for certain properties.
