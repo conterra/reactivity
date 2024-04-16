@@ -5,7 +5,7 @@ import { computed, getValue, isWritableReactive, reactive } from "../ReactiveImp
 /**
  * A property of a reactive struct.
  * 
- * @group Structs
+ * @group Struct
  */
 export interface PropertyMemberType {
     /**
@@ -30,7 +30,7 @@ export interface PropertyMemberType {
 /**
  * A method of a reactive struct.
  * 
- * @group Structs
+ * @group Struct
  */
 export interface MethodMemberType<T, Params extends any[], Ret> {
     /**
@@ -46,7 +46,7 @@ export interface MethodMemberType<T, Params extends any[], Ret> {
 /**
  * A computed property of reactive struct.
  * 
- * @group Structs
+ * @group Struct
  */
 export interface ComputedMemberType<T, V> {
     /**
@@ -64,7 +64,7 @@ export interface ComputedMemberType<T, V> {
  * All properties of T must be part of the definition.
  * 
  * @param T The type of the struct.
- * @group Structs
+ * @group Struct
  */
 export type ReactiveStructDefinition<T> = {
     [key in keyof T]-?: GetMemberSchemaForProp<T, T[key]>;
@@ -97,7 +97,7 @@ type GetMemberSchemaForProp<T, V> = V extends AnyFunc
  * 
  * @param T The type of the struct.
  * @param Def The definition of the struct.
- * @group Structs
+ * @group Struct
  */
 export interface ReactiveStructConstructor<T, Def> {
     /**
@@ -147,7 +147,7 @@ type PickOptionalProps<T> = {
 /**
  * Used to build reactive structs using a struct definition.
  * 
- * @group Structs
+ * @group Struct
  */
 export interface ReactiveStructBuilder<T> {
     /**
@@ -303,7 +303,7 @@ export interface ReactiveStructBuilder<T> {
  * });
  * person.printName(); // prints "John Doe"  
  * ```
- * @group Structs
+ * @group Struct
  */
 export function reactiveStruct<T>(): ReactiveStructBuilder<T> {
     return {

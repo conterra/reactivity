@@ -15,9 +15,9 @@
  * 
  * Reactive collections to simplify working with complex data structures.
  *
- * @groupDescription Structs
+ * @groupDescription Struct
  * 
- * Create class like objects having reactive properties.
+ * Utilities to create reactive data structures/objects.
  */
 export {
     type ReadonlyReactive,
