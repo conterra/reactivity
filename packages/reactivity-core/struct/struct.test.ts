@@ -1,6 +1,6 @@
 import { it, expect, describe } from "vitest";
 import { reactiveStruct } from "./struct";
-import { computed, reactive } from "../ReactiveImpl";
+import { computed } from "../ReactiveImpl";
 
 type HasMessage = {
     msg: string;
