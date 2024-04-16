@@ -331,8 +331,9 @@ map.set("foo", "bar"); // effect prints "bar"
 
 #### Struct
 
-Previously we described how you can create objects with reactive properties using `reactive` and `computed`.
-For example a person having a first name, a last name and computed property computing the full name, whenever first or last name changes.
+With the basic building blocks like `reactive` and `computed` you are able to create reactive objects.
+For example, you can create a `Person` class having a first name, a last name and computed property computing the full name, whenever first or last name changes.
+Instances of that class are reactive objects.
 
 The reactivity API helps you to create such reactive objects by providing a function called `reactiveStruct`.
 
