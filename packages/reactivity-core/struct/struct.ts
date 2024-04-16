@@ -44,7 +44,7 @@ export interface MethodMemberType<T, Params extends any[], Ret> {
 }
 
 /**
- * A computed property of reactive struct.
+ * A computed property of a reactive struct.
  * 
  * @group Struct
  */
@@ -210,8 +210,8 @@ export interface ReactiveStructBuilder<T> {
  * #### Options for simple properties
  * 
  * The following options can be set for properties in the struct definition:
- * - `writable`: if `true` the property is writable and it can be changed. If `false` the property is read-only.
- * - `reactive`: if `true` the property is reactive. If `false` the property is not reactive.
+ * - `writable`: if `true` the property is writable and it can be changed (the default). If `false` the property is read-only.
+ * - `reactive`: if `true` the property is reactive (the default). If `false` the property is not reactive.
  *  
  * To define a read-only property set `writable` to `false`:
  * ```ts
@@ -303,6 +303,11 @@ export interface ReactiveStructBuilder<T> {
  * });
  * person.printName(); // prints "John Doe"  
  * ```
+ * 
+ * > NOTE:
+ * > All strings or symbols are allowed as property names, _except_ for strings starting with '$'.
+ * > Strings starting with '$' are reserved for future extensions.
+ * 
  * @group Struct
  */
 export function reactiveStruct<T>(): ReactiveStructBuilder<T> {
@@ -337,6 +342,9 @@ interface PrepareResult<T> {
     /**
      * Function that must be called on every new instance to initialize
      * the private storage.
+     * 
+     * @param instance the new instance, not yet fully initialized
+     * @param initialValues the constructor parameter (if any)
      */
     prepareInstance: (instance: any, initialValues?: Partial<T>) => void;
 }
@@ -351,7 +359,6 @@ function preparePrototype<T>(
 ): PrepareResult<T> {
     const propertyKeys = Object.keys(definition) as (keyof T & (string | symbol))[];
     const propertySymbols = Object.getOwnPropertySymbols(definition) as (keyof T & (symbol))[];
-
     const allKeys = [...propertyKeys, ...propertySymbols];
 
     // Initialization steps for certain properties.
@@ -360,6 +367,10 @@ function preparePrototype<T>(
     const initSteps: InitStep[] = [];
 
     for (const propertyKey of allKeys) {
+        if (typeof propertyKey === "string" && propertyKey.startsWith("$")) {
+            throw new Error("Properties starting with '$' are reserved.");
+        }
+
         const memberDef = definition[propertyKey];
         if ("method" in memberDef) {
             Object.defineProperty(prototype, propertyKey, {

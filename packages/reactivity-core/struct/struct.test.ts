@@ -1,6 +1,6 @@
 import { it, expect, describe } from "vitest";
 import { reactiveStruct } from "./struct";
-import { computed } from "../ReactiveImpl";
+import { computed, reactive } from "../ReactiveImpl";
 
 type HasMessage = {
     msg: string;
@@ -147,8 +147,8 @@ describe("reactiveStruct", () => {
     });
     it("supports defining member types explicitly", () => {
         type ExtendedPersonType = PersonType & {
-            fullName: string,
-            printName: () => string
+            fullName: string;
+            printName: () => string;
         };
         const PersonClass = reactiveStruct<ExtendedPersonType>().define({
             firstName: {
@@ -252,11 +252,11 @@ describe("reactiveStruct", () => {
         });
         const symbolVal = myInstance.getSymbolValue;
         expect(symbolVal).toBe("Symbol value is '123'");
-    });  
+    });
     it("creates independent instances", () => {
         type ExtendedPersonType = PersonType & {
-            fullName: string,
-            printName: () => string
+            fullName: string;
+            printName: () => string;
         };
         const PersonClass = reactiveStruct<ExtendedPersonType>().define({
             firstName: {},
@@ -294,7 +294,7 @@ describe("reactiveStruct", () => {
     it("uses current values of reactive properties for initialization", () => {
         const PersonClass = reactiveStruct<PersonType>().define({
             firstName: {},
-            lastName: {},
+            lastName: {}
         });
         const person1 = new PersonClass({
             firstName: "John",
@@ -385,17 +385,17 @@ describe("reactiveStruct", () => {
             b: undefined;
             c?: string;
             d: string;
-        
+
             computedProperty: string;
             method(): number;
         }
-        
+
         const ComplexClass = reactiveStruct<ComplexType>().define({
             a: {},
             b: {},
             c: {},
             d: {},
-        
+
             computedProperty: {
                 type: "computed",
                 compute() {
@@ -406,11 +406,11 @@ describe("reactiveStruct", () => {
                 type: "method",
                 method() {
                     return 3;
-                },
+                }
             }
         });
-        
-        const person = new ComplexClass({d: "bar"}); // a, b, c are not initialized
+
+        const person = new ComplexClass({ d: "bar" }); // a, b, c are not initialized
         expect(person.a).toBe(undefined);
         expect(person.b).toBe(undefined);
         expect(person.c).toBe(undefined);
@@ -422,9 +422,9 @@ describe("reactiveStruct", () => {
             computedProperty: string;
             method(): number;
         }
-        
+
         const ComplexClass = reactiveStruct<ComplexType>().define({
-            a: {},        
+            a: {},
             computedProperty: {
                 type: "computed",
                 compute() {
@@ -435,14 +435,14 @@ describe("reactiveStruct", () => {
                 type: "method",
                 method() {
                     return 3;
-                },
+                }
             }
         });
-        
+
         const person = new ComplexClass(); // no args provided
         expect(person.a).toBe(undefined);
     });
-    
+
     it("supports instanceof", () => {
         const PersonClass = reactiveStruct<PersonType>().define({
             firstName: {},
@@ -460,5 +460,20 @@ describe("reactiveStruct", () => {
             lastName: {}
         });
         expect(PersonClass.prototype).toBeInstanceOf(Object);
+
+        const person = new PersonClass({
+            firstName: "a",
+            lastName: "b"
+        });
+        expect(person).toBeInstanceOf(PersonClass);
+    });
+    it("throws when properties starting with '$' are used (these are reserved)", () => {
+        expect(() => {
+            reactiveStruct<{ $: number }>().define({
+                $: {}
+            });
+        }).toThrowErrorMatchingInlineSnapshot(
+            `[Error: Properties starting with '$' are reserved.]`
+        );
     });
 });
