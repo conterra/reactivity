@@ -346,23 +346,29 @@ type PersonType = {
     firstName: string;
     lastName: string;
 }
+
 // define a class like PersonClass
 const PersonClass = reactiveStruct<PersonType>().define({
     firstName: {}, // default options (reactive and writable)
     lastName: { writable: false } // read-only
 });
+
 // create a new reactive instance
 const person = new PersonClass({
     firstName: "John",
     lastName: "Doe"
 });
+
 // compute the full name
 const fullName = computed(() => `${person.firstName} ${person.lastName}`);
 console.log(fullName.value); // John Doe
+
 person.firstName = "Jane";
 console.log(fullName.value); // Jane Doe
 ```
+
 The `define` function can be used to
+
 - make properties read-only
 - declare non reactive properties
 - create computed properties
@@ -377,6 +383,7 @@ type PersonType = {
     fullName: string; // will be a computed property
     printName: () => void // a method printing the full name
 }
+
 const PersonClass = reactiveStruct<PersonType>().define({
     firstName: {},
     lastName: { writable: false },
@@ -393,6 +400,7 @@ const PersonClass = reactiveStruct<PersonType>().define({
         }
     }
 });
+
 // create a new reactive instance
 const person = new PersonClass({
     firstName: "John",
