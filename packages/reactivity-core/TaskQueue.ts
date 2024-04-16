@@ -1,3 +1,4 @@
+import { reportTaskError } from "./reportTaskError";
 import { CleanupHandle } from "./sync";
 
 type TaskFn = () => void;
@@ -13,11 +14,6 @@ interface Task {
 export class TaskQueue {
     private queue: Task[] = [];
     private channel = new MessageChannel();
-
-    constructor() {
-        // https://stackoverflow.com/a/61574326
-        this.channel.port2.onmessage = () => this.runIteration();
-    }
 
     /**
      * Enqueues a function to be executed in the next task queue iteration.
@@ -53,11 +49,18 @@ export class TaskQueue {
         };
     }
 
+    private messageHandler = () => this.runIteration();
+
     private scheduleIteration() {
+        // register and unregister for every iteration otherwise node will not terminate
+        // https://stackoverflow.com/a/61574326
+        this.channel.port2.addEventListener("message", this.messageHandler);
         this.channel.port1.postMessage(""); // queue macro task
     }
 
     private runIteration() {
+        this.channel.port2.removeEventListener("message", this.messageHandler);
+
         // Swap arrays so that NEW tasks are not queued into the same array;
         // they will be handled in the next iteration.
         const tasks = this.queue;
@@ -70,9 +73,7 @@ export class TaskQueue {
             try {
                 task.fn();
             } catch (e) {
-                // This makes the error an unhandled rejection for lack of a better
-                // reporting mechanisms. Stupid idea?
-                Promise.reject(new Error(`Error in effect or watch callback`, { cause: e }));
+                reportTaskError(e);
             }
         }
     }

@@ -1,29 +1,26 @@
 /**
  * A framework agnostic library for building reactive applications.
- * 
+ *
  * @module
- * 
+ *
  * @groupDescription Primitives
- * 
+ *
  * Primitive building blocks for reactive code.
- * 
+ *
  * @groupDescription Watching
- * 
+ *
  * Utilities to run code when reactive values change.
- * 
+ *
  * @groupDescription Collections
- * 
+ *
  * Reactive collections to simplify working with complex data structures.
  *
  * @groupDescription Struct
  * 
  * Utilities to create reactive data structures/objects.
  */
-export {
-    type ReadonlyReactive,
-    type Reactive,
-    type ExternalReactive,
-} from "./Reactive";
+
+export { type ReadonlyReactive, type Reactive, type ExternalReactive } from "./Reactive";
 export {
     type EqualsFunc,
     type ReactiveOptions,

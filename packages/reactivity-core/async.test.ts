@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
 import { effect, watch } from "./async";
+import * as report from "./reportTaskError";
+
+afterEach(() => {
+    vi.restoreAllMocks();
+});
 
 describe("effect", () => {
     it("re-executes the callback asynchronously", async () => {
@@ -69,6 +74,35 @@ describe("effect", () => {
         handle.destroy();
         await waitForMacroTask();
         expect(spy).toHaveBeenCalledTimes(1); // not called again
+    });
+
+    it("throws when a cycle is detected", async () => {
+        const v1 = reactive(0);
+        expect(() => {
+            effect(() => {
+                v1.value = v1.value + 1;
+            });
+        }).toThrowError(/Cycle detected/);
+    });
+
+    it("throws when a cycle is detected in a later execution", async () => {
+        const errorSpy = vi.spyOn(report, "reportTaskError").mockImplementation(() => {});
+
+        const v1 = reactive(0);
+        const trigger = reactive(false);
+        effect(() => {
+            if (!trigger.value) {
+                return;
+            }
+
+            v1.value = v1.value + 1;
+        });
+        expect(errorSpy).toHaveBeenCalledTimes(0);
+
+        trigger.value = true;
+        await waitForMacroTask();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: Cycle detected]`);
     });
 });
 

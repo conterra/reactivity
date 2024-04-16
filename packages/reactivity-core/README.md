@@ -160,15 +160,15 @@ import { reactive, computed } from "@conterra/reactivity-core";
 // In this example, first name and last name can only be written to.
 // Only the combined full name is available to users of the class.
 class Person {
-    _firstName = reactive("");
-    _lastName = reactive("");
+    _firstName = reactive("John");
+    _lastName = reactive("Doe");
     _fullName = computed(() => `${this._firstName.value} ${this._lastName.value}`);
 
-    setFirstName(name) {
+    setFirstName(name: string) {
         this._firstName.value = name;
     }
 
-    setLastName(name) {
+    setLastName(name: string) {
         this._lastName.value = name;
     }
 
@@ -183,7 +183,7 @@ class Person {
 We provide two different APIs to run code when reactive values change.
 The simpler one is effect `effect()`:
 
-```js
+```ts
 import { reactive, effect } from "@conterra/reactivity-core";
 
 const r1 = reactive(0);
@@ -203,7 +203,7 @@ This can result in your effect running too often, because you're really only int
 
 In that case, you can use `watch()` to have more fine grain control:
 
-```js
+```ts
 import { reactive, watch } from "@conterra/reactivity-core";
 
 const r1 = reactive(0);
@@ -240,13 +240,122 @@ In this example, the callback function will only re-run when the computed sum tr
 
 ### Complex values
 
-TODO: Object identity, arrays, immutability --> Reactive Collections
+Up to this point, examples have used primitive values such as strings or integers.
+Signals support _any_ kind of `value`, for example:
+
+```ts
+import { reactive, watch } from "@conterra/reactivity-core";
+
+const currentUser = reactive({
+    name: "User 1"
+});
+
+watch(
+    () => [currentUser.value],
+    ([user]) => {
+        console.log(user.name);
+    },
+    { immediate: true }
+);
+
+// Assignment to a signal's `.value` is reactive
+currentUser.value = { name: "User 2" };
+```
+
+You should keep in mind that, by default, change detection is based on JavaScript's default comparison (i.e. `===`).
+This means that objects or arrays (or any other reference type) may trigger changes even if their contents are equivalent (equal _content_ but different _identity_).
+For example, the following change would trigger the `watch()` of the previous example, even though the `name` is the same:
+
+```ts
+// new object and thus a change
+currentUser.value = { name: "User 1" };
+```
+
+For this reason, `reactive` and `computed` allow you to supply a custom equality function.
+This allows you to ignore certain updates by specifying that a value is _equal_ to another value:
+
+```ts
+import { reactive, watch } from "@conterra/reactivity-core";
+
+const currentUser = reactive(
+    {
+        name: "User 1"
+    },
+    {
+        equal: (u1, u2) => u1.name === u2.name
+    }
+);
+
+watch(
+    () => [currentUser.value],
+    ([user]) => {
+        console.log(user.name);
+    },
+    { immediate: true }
+);
+
+// Assignment is ignored because the name is the same.
+currentUser.value = { name: "User 1" };
+```
+
+### Working with collections
+
+As mentioned above, signals support any kind of value.
+This means that you can easily wrap an object, an array, or any other kind of container (e.g. Map/Set) in a signal.
+However, you will only be notified when the _object_ (or array) changes, and not when its _content_ does.
+In other words, deep reactivity is not support for "normal" JavaScript values.
+
+At this point, we can recommend two approaches, based on your requirements.
+
+#### Using immutable values
+
+This approach can be convenient for small collections or collections that don't update very often.
+Essentially, instead of updating the content of an collection, you replace the entire collection with an updated one:
+
+```ts
+import { effect, reactive } from "@conterra/reactivity-core";
+
+const authors = reactive<string[]>(["Tolkien", "Grisham"]);
+effect(() => {
+    console.log(authors.value);
+});
+
+function addAuthor(name: string) {
+    // Replace the array instead of updating it in place.
+    // This way, we can use a normal signal for reactivity.
+    authors.value = authors.value.concat(name);
+}
+
+addAuthor("King");
+```
+
+#### Using reactive collection classes
+
+We implemented a few classes to make working with reactive collection easier, see [Reactive Collections](#reactive-collections).
+
+The previous example could also be written as:
+
+```ts
+import { effect, reactiveArray } from "@conterra/reactivity-core";
+
+// NOTE: not a normal array (but mostly API-compatible).
+const authors = reactiveArray(["Tolkien", "Grisham"]);
+effect(() => {
+    console.log(authors.getItems());
+});
+
+function addAuthor(name: string) {
+    authors.push(name);
+}
+
+addAuthor("King");
+```
 
 ### Cleanup
 
 Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
 
-```js
+```ts
 const h1 = effect(/* ... */);
 const h2 = watch(/* ... */);
 
@@ -264,7 +373,7 @@ This package provides a set of collection classes to simplify working with compl
 
 #### Array
 
-The `ReactiveArray<T>` behaves largely like a normal `Array<T>`.
+The `ReactiveArray<T>` behaves largely like a normal [`Array<T>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 Most standard methods have been reimplemented with support for reactivity (new methods can be added on demand).
 
 The only major difference is that one cannot use the `[]` operator.
@@ -273,10 +382,10 @@ Users must use the `array.get(index)` and `array.set(index, value)` methods inst
 Example:
 
 ```ts
-import { reactiveArray } from "@conterra/reactivity-core";
+import { effect, reactiveArray } from "@conterra/reactivity-core";
 
 // Optionally accepts initial content
-const array = reactiveArray<string>();
+const array = reactiveArray<number>();
 
 // Prints undefined since the array is initially empty
 effect(() => {
@@ -291,12 +400,12 @@ array.set(0, 123); // effect prints 123
 
 #### Set
 
-The `ReactiveSet<T>` can be used as substitute for the standard `Set<T>`.
+The `ReactiveSet<T>` can be used as substitute for the standard [`Set<T>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
 
 Example:
 
 ```ts
-import { reactiveSet } from "@conterra/reactivity-core";
+import { effect, reactiveSet } from "@conterra/reactivity-core";
 
 // Optionally accepts initial content
 const set = reactiveSet<number>();
@@ -311,12 +420,12 @@ set.add(123); // effect prints 1
 
 #### Map
 
-The `ReactiveMap<T>` can be used as a substitute for the standard `Map<T>`.
+The `ReactiveMap<T>` can be used as a substitute for the standard [`Map<T>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
 
 Example:
 
 ```ts
-import { reactiveSet } from "@conterra/reactivity-core";
+import { effect, reactiveMap } from "@conterra/reactivity-core";
 
 // Optionally accepts initial content
 const map = reactiveMap<string, string>();
@@ -462,27 +571,23 @@ npm install @conterra/reactivity-core
 
 ## Gotchas and tips
 
-### Avoid side effects in computed signals
+### Avoid cycles in computed signals
 
-Computed signals should use a side effect free function.
-Oftentimes, you cannot control how often the function is re-executed, because that depends on how often
-the dependencies of your functions change and when your signal is actually read (computation is lazy).
+Don't use the value of a computed signal during its own computation.
+The error will be obvious in a simple example, but it may also occur by accident when many objects or functions are involved.
 
 Example:
 
 ```ts
-let nonreactiveValue = 1;
-const reactiveValue = reactive(1);
-const computedValue = computed(() => {
-    // This works, but it usually bad style for the reasons outlined above:
-    nonReactiveValue += 1;
+import { computed } from "@conterra/reactivity-core";
 
-    // XXX
-    // This is outright forbidden and will result in a runtime error.
-    // You cannot modify a signal from inside a computed signal.
-    reactiveValue.value += 1;
-    return "whatever";
+const computedValue = computed(() => {
+    // Trivial example. This may happen through many layers of indirection in real world code.
+    let v = computedValue.value;
+    return v * 2;
 });
+
+console.log(computedValue.value); // throws "Cycle detected"
 ```
 
 ### Don't trigger an effect from within itself
@@ -493,6 +598,8 @@ However, you should take care not to produce a cycle.
 Example: this is okay (but could be replaced by a computed signal).
 
 ```ts
+import { reactive, effect } from "@conterra/reactivity-core";
+
 const v1 = reactive(0);
 const v2 = reactive(1);
 effect(() => {
@@ -504,6 +611,8 @@ effect(() => {
 Example: this is _not_ okay.
 
 ```ts
+import { reactive, effect } from "@conterra/reactivity-core";
+
 const v1 = reactive(0);
 effect(() => {
     // same as `v1.value = v1.value + 1`
@@ -539,11 +648,239 @@ The example above will not throw an error anymore because the _read_ to `v1` has
 
 ### Batching multiple updates
 
+Every update to a signal will usually trigger all watchers.
+This is not really a problem when using the default `watch()` or `effect()`, since multiple changes that follow _immediately_ after each other are grouped into a single notification, with a minimal delay.
+
+However, when using `syncEffect` or `syncWatch`, you will be triggered many times:
+
+```ts
+import { reactive, syncEffect } from "@conterra/reactivity-core";
+
+const count = reactive(0);
+syncEffect(() => {
+    console.log(count.value);
+});
+
+count.value += 1;
+count.value += 1;
+count.value += 1;
+count.value += 1;
+// Effect has executed 5 times
+```
+
+You can avoid this by grouping many updates into a single _batch_.
+Effects or watchers will not get notified until the batch is complete:
+
+```ts
+import { reactive, syncEffect, batch } from "@conterra/reactivity-core";
+
+const count = reactive(0);
+syncEffect(() => {
+    console.log(count.value);
+});
+
+batch(() => {
+    count.value += 1;
+    count.value += 1;
+    count.value += 1;
+    count.value += 1;
+});
+// Effect has executed only twice: one initial call and once after batch() as completed.
+```
+
+It is usually a good idea to surround a complex update operation with `batch()`.
+
 ### Sync vs async effect / watch
+
+By default, the re-executions of `effect` and the callback executions of `watch` do not happen _immediately_ when a signal is changed.
+Instead, the new executions are dispatched to occur in the next [event loop iteration ("macro task")](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide/In_depth).
+This means that they are delayed very slightly (similar to `setTimeout(..., 0)`) in order to group multiple synchronous changes into a single execution (see [Batching](#batching-multiple-updates)).
+
+Consider the following example:
+
+```ts
+import { watch, effect, reactive } from "@conterra/reactivity-core";
+
+const s = reactive(1);
+effect(() => {
+    console.log("effect:", s.value);
+});
+
+watch(
+    () => [s.value],
+    ([value]) => {
+        console.log("watch:", value);
+    }
+);
+
+s.value = 2;
+console.log("after assignment");
+```
+
+This will print:
+
+```text
+effect: 1           # the initial effect execution always happens synchronously
+after assignment    # watch and effect did NOT execute yet
+effect: 2           # now effect and watch will execute
+watch: 2
+```
+
+If you need more control over your callbacks, you can use `syncEffect` and `syncWatch` instead:
+
+```ts
+import { syncWatch, syncEffect, reactive } from "@conterra/reactivity-core";
+
+const s = reactive(1);
+syncEffect(() => {
+    console.log("effect:", s.value);
+});
+
+syncWatch(
+    () => [s.value],
+    ([value]) => {
+        console.log("watch:", value);
+    }
+);
+
+s.value = 2; // this line also executes the effect and the watch callback!
+console.log("after assignment");
+```
+
+This will print:
+
+```text
+effect: 1
+effect: 2
+watch: 2
+after assignment
+```
 
 ### Writing nonreactive code
 
-### Effects triggering "too often"
+Sometimes you want to read the _current_ value of a signal without being triggered when that signal changes.
+You can do that by opting out of the automatic dependency tracking using the `untracked` function, for example:
+
+```ts
+import { effect, reactive, untracked } from "@conterra/reactivity-core";
+
+const s1 = reactive(0);
+const s2 = reactive(0);
+effect(() => {
+    const v1 = s1.value; // tracked read
+    const v2 = untracked(() => s2.value); // untracked read
+
+    console.log("effect", v1, v2);
+});
+
+s2.value = 1; // does not cause the effect to trigger again
+s1.value = 1; // _does_ cause the effect to trigger again
+```
+
+`untracked()` works everywhere dependencies are tracked:
+
+-   inside `computed()`
+-   in effect callbacks
+-   in the `selector` argument of `watch()`
+
+### Effects triggering often when working with collections
+
+The current implementation of collection types (`Array`, `Map`, `Set`) only supports fine grained reactivity for _existing_ values.
+When the set of values is changed (e.g. by calling `.push()` on an array or `.set` with a new key on a `Map`), only a coarse "change event" will be emitted.
+
+Consider the following example:
+
+```ts
+import { effect, reactiveArray } from "@conterra/reactivity-core";
+
+const array = reactiveArray([1]);
+effect(() => {
+    console.log("first array item", array.get(0));
+});
+
+array.push(2);
+```
+
+The snippet above will print the first array item _twice_, even though that item is never modified.
+The current implementation is a compromise between memory efficiency, code complexity and usability that results in this quirk.
+
+To work around the issue, simply use a `watch()` or wrap the array access into a `computed()` signal.
+Both ways will ensure that the effect or callback is only triggered when the value _actually_ changed:
+
+```ts
+import { computed, effect, reactiveArray, watch } from "@conterra/reactivity-core";
+
+const array = reactiveArray([1]);
+
+// This works because computed() caches its value and only propagates change
+// when the value is actually updated.
+// Essentially, the computed's callback will still re-execute but no one else will be notified.
+const firstItem = computed(() => array.get(0));
+effect(() => {
+    console.log("first array item (effect)", firstItem.value);
+});
+
+// This works because the callback is only invoked when the selector returns different values.
+// Essentially, the selector is executed multiple times but watch() will not invoke the callback.
+// (Behind the scenes, watch() is based on `computed` as well).
+watch(
+    () => [array.get(0)],
+    ([item]) => {
+        console.log("first array item (watch)", item);
+    }
+);
+
+// Triggers neither the effect nor the watch callback.
+array.push(2);
+```
+
+### Working with promises
+
+All dependency tracking (computed, watch, effect, etc.) is based on tracking accesses to `signal.value` in _synchronous_ code.
+
+The following snippet will _not_ be reactive with respect to the values accessed after the effect's body:
+
+```ts
+import { effect, reactive } from "@conterra/reactivity-core";
+
+const s1 = reactive("a");
+const s2 = reactive("b");
+
+effect(() => {
+    const v1 = s1.value; // (1)
+    functionThatReturnsAPromise(v1).then(() => {
+        console.log(s2.value); // (2)
+    });
+});
+```
+
+The effect will be triggered again if the value of `s1` changes because `s1` is read from within the effect in (1).
+The execution of the `.then()` callback in (2) will always happen after the effect's body is done - possibly much later.
+Thus, the effect will not re-execute if `s2` is updated.
+If you need reactivity for `s2`, simply read it at an earlier time, e.g. next to (1).
+
+This trap is easy to fall into when using asynchronous functions:
+
+```ts
+import { effect, reactive } from "@conterra/reactivity-core";
+
+const s1 = reactive("a");
+const s2 = reactive("b");
+
+// note the `async` keyword
+effect(async () => {
+    const v1 = s1.value; // (1)
+    const result = await functionThatReturnsAPromise(v1);
+    const v2 = s2.value; // (2)
+});
+```
+
+This syntax works in practice, but it is easy to make mistakes.
+Like in the previous example, the access to `s1` in (1) will work.
+However, because of the `await` keyword, the effect will _not_ track (2).
+This is because `async` / `await` is just a different syntax for promises with `.then()` / `.catch()`.
+
+Because it is so easy to make this mistake, we recommend _not_ using `async` / `await` directly in `effect`, `watch` or computed signals.
 
 ## License
 

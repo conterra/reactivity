@@ -8,7 +8,7 @@ import { effect, watch } from "./async";
 /**
  * A handle returned by various functions to dispose of a resource,
  * such as a watcher or an effect.
- * 
+ *
  * @group Watching
  */
 export interface CleanupHandle {
@@ -23,7 +23,7 @@ export interface CleanupHandle {
  *
  * This function will be invoked before the effect is triggered again,
  * or when the effect is disposed.
- * 
+ *
  * @group Watching
  */
 export type EffectCleanupFn = () => void;
@@ -33,7 +33,7 @@ export type EffectCleanupFn = () => void;
  *
  * Instructions in this function are tracked: when any of its reactive
  * dependencies change, the effect will be triggered again.
- * 
+ *
  * @group Watching
  */
 export type EffectFunc = (() => void) | (() => EffectCleanupFn);
@@ -70,7 +70,7 @@ export type EffectFunc = (() => void) | (() => EffectCleanupFn);
  * // later:
  * handle.destroy();
  * ```
- * 
+ *
  * @group Watching
  */
 export function syncEffect(callback: EffectFunc): CleanupHandle {
@@ -87,12 +87,14 @@ export function syncEffect(callback: EffectFunc): CleanupHandle {
  * Typically, `onInvalidate` will be very cheap (e.g. schedule a new render).
  *
  * Note that `onInvalidate` will never be invoked more than once.
- * 
+ *
  * @group Watching
  */
 export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): CleanupHandle {
     let execution = 0;
-    const handle = syncEffect(() => {
+    let syncExecution = true;
+    let handle: CleanupHandle | undefined = undefined;
+    handle = syncEffect(() => {
         const thisExecution = execution++;
         if (thisExecution === 0) {
             callback();
@@ -101,17 +103,22 @@ export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): 
                 try {
                     onInvalidate();
                 } finally {
-                    handle.destroy();
+                    if (syncExecution) {
+                        Promise.resolve().then(() => handle?.destroy());
+                    } else {
+                        handle?.destroy();
+                    }
                 }
             });
         }
     });
+    syncExecution = false;
     return handle;
 }
 
 /**
  * Options that can be passed to {@link syncWatch}.
- * 
+ *
  * @group Watching
  */
 export interface WatchOptions {
@@ -159,7 +166,7 @@ export interface WatchOptions {
  * ```
  *
  * > NOTE: You must *not* modify the array that gets passed into `callback`.
- * 
+ *
  * @group Watching
  */
 export function syncWatch<const Values extends readonly unknown[]>(
