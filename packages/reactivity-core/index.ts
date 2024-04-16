@@ -14,6 +14,10 @@
  * @groupDescription Collections
  *
  * Reactive collections to simplify working with complex data structures.
+ *
+ * @groupDescription Struct
+ * 
+ * Utilities to create reactive data structures/objects.
  */
 
 export { type ReadonlyReactive, type Reactive, type ExternalReactive } from "./Reactive";
@@ -26,7 +30,9 @@ export {
     batch,
     untracked,
     getValue,
-    peekValue
+    peekValue,
+    isReactive,
+    isWritableReactive
 } from "./ReactiveImpl";
 export {
     type EffectCleanupFn,
@@ -39,3 +45,4 @@ export {
 } from "./sync";
 export { effect, watch } from "./async";
 export * from "./collections";
+export * from "./struct";

@@ -23,6 +23,7 @@
         },
         "./package.json": "./package.json"
     },
+    "sideEffects": false,
     "scripts": {
         "clean": "rimraf dist",
         "build": "tsc -p tsconfig.prod.json",
