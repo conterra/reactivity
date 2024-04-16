@@ -15,6 +15,8 @@ node_modules
 
 # Editor directories and files
 .vscode/*
+!.vscode/cspell.json
+!.vscode/custom-words.txt
 !.vscode/extensions.json
 .idea
 .DS_Store

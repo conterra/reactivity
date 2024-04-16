@@ -1,0 +1,15 @@
+{
+    "version": "0.2",
+    "ignorePaths": [
+        "node_modules"
+    ],
+    "language": "en",
+    "dictionaries": ["Custom Words"],
+    "dictionaryDefinitions": [
+        {
+            "name": "Custom Words",
+            "path": "./custom-words.txt",
+            "addWords": true
+        }
+    ]
+}
