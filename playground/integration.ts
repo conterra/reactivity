@@ -1,5 +1,5 @@
 import { effect as reactivityEffect } from "@conterra/reactivity-core";
-import { Ref, onScopeDispose, ref, watchEffect } from "vue";
+import { Ref, ShallowRef, onScopeDispose, shallowRef, watchEffect } from "vue";
 
 /**
  * This composable integrates reactive values into the vue reactivity system.
@@ -17,7 +17,7 @@ export function useReactiveSnapshot<T>(compute: () => T): Readonly<Ref<T>> {
      * 1. React to changes of reactive values (from reactivity-core) inside `compute`
      * 2. React to changes of *vue* values inside `compute`
      */
-    const snapshot = ref() as Ref<T>;
+    const snapshot = shallowRef() as ShallowRef<T>;
     const dispose = watchEffect((onCleanup) => {
         // *slightly* inefficient here to use effect, in case compute's dependencies change very often.
         // in that case, snapshot.value would be updated more often than needed (need at most ~60 FPS).
