@@ -444,7 +444,7 @@ With the basic building blocks like `reactive` and `computed` you are able to cr
 For example, you can create a `Person` class having a first name, a last name and computed property computing the full name, whenever first or last name changes.
 Instances of that class are reactive objects.
 
-The reactivity API helps you to create such reactive objects by providing a function called `reactiveStruct`.
+The reactivity API helps you to create simple reactive objects by providing a function called `reactiveStruct`.
 
 For example, to create a person with `reactiveStruct` proceed as follows:
 
@@ -452,13 +452,13 @@ For example, to create a person with `reactiveStruct` proceed as follows:
 import { reactiveStruct } from "@conterra/reactivity-core";
 
 // declare a type for the reactive object
-type PersonType = {
+interface Person {
     firstName: string;
     lastName: string;
 }
 
 // define a class like PersonClass
-const PersonClass = reactiveStruct<PersonType>().define({
+const PersonClass = reactiveStruct<Person>().define({
     firstName: {}, // default options (reactive and writable)
     lastName: { writable: false } // read-only
 });
@@ -479,22 +479,24 @@ console.log(fullName.value); // Jane Doe
 
 The `define` function can be used to
 
-- make properties read-only
-- declare non reactive properties
-- create computed properties
-- add methods to the reactive object
+-   make properties read-only
+-   declare non-reactive properties
+-   create computed properties
+-   add methods to the reactive object
 
 The following example shows declaring an extended `Person`:
 
 ```ts
-type PersonType = {
+import { reactiveStruct } from "@conterra/reactivity-core";
+
+interface Person {
     firstName: string;
     lastName: string;
     fullName: string; // will be a computed property
-    printName: () => void // a method printing the full name
+    printName(): void; // a method printing the full name
 }
 
-const PersonClass = reactiveStruct<PersonType>().define({
+const PersonClass = reactiveStruct<Person>().define({
     firstName: {},
     lastName: { writable: false },
     fullName: {
@@ -521,9 +523,12 @@ person.firstName = "Jane";
 person.printName(); // My name is Jane Doe
 ```
 
-Reactive structs are class like, as they don't support inheritance for example.
-You can imagine reactive structs as simple objects having reactive properties, computed properties and methods.
-Please consider writing your own classes with the basic API like `reactive` if a _class like_ is not enough.
+Reactive structs are designed to help implement very simple classes: you can think of reactive structs as objects having reactive properties, computed properties and methods.
+They are not designed to replace every usage of the `class` keyword.
+For example, they do not support base classes or private properties.
+
+If you need an advanced class, we recommend writing it yourself using standard JavaScript / TypeScript means.
+You can still (if needed) use a reactive struct internally, or you can use manual signals instead.
 
 ## Why?
 
