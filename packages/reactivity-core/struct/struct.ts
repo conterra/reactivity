@@ -12,17 +12,17 @@ export interface PropertyMemberType {
      * Type to indicate that this member is a property.
      */
     type?: "property";
-    /**
-     * If `true' the property is writable and it can be changed.
-     * If `false' the property is read-only.
-     * Default is true.
+    /** 
+     * If `true` the property is writable and it can be changed.
+     * If `false` the property is read-only.
+     * Default is `true`.
      */
     writable?: boolean;
 
     /**
-     * If `true' the property is reactive.
-     * If `false' the property is not reactive.
-     * Default is true.
+     * If `true` the property is reactive.
+     * If `false` the property is not reactive.
+     * Default is `true`.
      */
     reactive?: boolean;
 }
@@ -159,7 +159,7 @@ export interface ReactiveStructBuilder<T> {
 }
 
 /**
- * Function used to create reactive structs with the help of the returned builder.
+ * Creates a reactive structs with the help of the returned builder.
  *
  * A reactive struct is a class like object that can contain properties, computed properties and methods.
  * By default all properties are reactive and writable.
@@ -171,16 +171,16 @@ export interface ReactiveStructBuilder<T> {
  * 1. Define the type of the struct.
  *     ```ts
  *     type PersonType = {
- *       firstName: string;
- *       lastName: string;
+ *         firstName: string;
+ *         lastName: string;
  *     }
  *     ```
  *
  * 2. Create a definition for the struct according to the type.
  *     ```ts
  *     const personDefinition: ReactiveStructDefinition<PersonType> = {
- *       firstName: {}, // default options (reactive and writable)
- *       lastName: {}   // default options (reactive and writable)
+ *         firstName: {}, // default options (reactive and writable)
+ *         lastName: {}   // default options (reactive and writable)
  *     };
  *     ```
  *
@@ -192,8 +192,8 @@ export interface ReactiveStructBuilder<T> {
  * 4. Create a new instance of the struct.
  *     ```ts
  *     const person = new PersonClass({
- *      firstName: "John",
- *      lastName: "Doe"
+ *         firstName: "John",
+ *         lastName: "Doe"
  *     });
  *     ```
  * 5. Use the created instance.
@@ -216,16 +216,13 @@ export interface ReactiveStructBuilder<T> {
  * To define a read-only property set `writable` to `false`:
  * ```ts
  * type PersonType = {
- *   firstName: string;
- *   readonly lastName: string;
+ *     readonly lastName: string;
  * }
  * const personDefinition: ReactiveStructDefinition<PersonType> = {
- *  firstName: {},
- *  lastName: { writable: false }
+ *     lastName: { writable: false }
  * };
  * const PersonClass = reactiveStruct<PersonType>().define(personDefinition);
  * const person = new PersonClass({
- *     firstName: "John",
  *     lastName: "Doe"
  * });
  * person.lastName = "Smith"; // type error, throws error at runtime
@@ -234,8 +231,8 @@ export interface ReactiveStructBuilder<T> {
  * To define a non reactive property set `reactive` to `false`:
  * ```ts
  * const personDefinition: ReactiveStructDefinition<PersonType> = {
- *  firstName: {},
- *  lastName: { reactive: false }
+ *     firstName: {},
+ *     lastName: { reactive: false }
  * };
  * const PersonClass = reactiveStruct<PersonType>().define(personDefinition);
  * const person = new PersonClass({
