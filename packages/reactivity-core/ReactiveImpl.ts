@@ -15,7 +15,7 @@ import {
 } from "./Reactive";
 
 /**
- * A function that should return `true` if `a` and `b` are considered equal, `false` otherwise.
+ * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.
  *
  * @group Primitives
  */
@@ -28,7 +28,7 @@ export type EqualsFunc<T> = (a: T, b: T) => boolean;
  */
 export interface ReactiveOptions<T> {
     /**
-     * Should return `true` if the two values are considered equal.
+     * Shall return `true` if the two values are considered equal.
      *
      * Reactive assignments using a new value equal to the current value
      * will be ignored.
@@ -81,8 +81,8 @@ export function reactive<T>(
  * The function body of `compute` is tracked automatically: any reactive values used by `compute`
  * will be watched automatically; if any of them changes then the computed value will be updated as well.
  *
- * NOTE: the `compute` callback should not have any side effects as it may be called any number of times
- * if its dependencies change.
+ * > NOTE: the `compute` callback should not have any side effects as it may be called any number of times
+ * > if its dependencies change.
  *
  * Example:
  *
@@ -243,7 +243,7 @@ export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
 }
 
 /**
- * Returns true if `maybeReactive` is any kind of signal.
+ * Returns `true` if `maybeReactive` is any kind of signal.
  *
  * @group Primitives
  */
@@ -254,7 +254,7 @@ export function isReadonlyReactive<T>(
 }
 
 /**
- * Returns true if `maybeReactive` is any kind of writable signal.
+ * Returns `true` if `maybeReactive` is any kind of writable signal.
  *
  * @group Primitives
  */

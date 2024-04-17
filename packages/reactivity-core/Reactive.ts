@@ -92,8 +92,8 @@ export interface ExternalReactive<T> extends ReadonlyReactive<T> {
      * The users of this value will be notified automatically; if there are any users
      * then the value will be re-computed from its external source using the original callback.
      *
-     * NOTE: This function is bound to its instance. You can use it directly as an event handler callback
-     * without safeguarding `this`.
+     * > NOTE: This function is bound to its instance. You can use it directly as an event handler callback
+     * > without safeguarding `this`.
      */
     trigger(): void;
 }

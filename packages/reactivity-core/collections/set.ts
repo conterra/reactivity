@@ -3,7 +3,7 @@ import { ReactiveMap, reactiveMap } from "./map";
 /**
  * A reactive set.
  *
- * This set interface is designed ot be very similar to (but not exactly the same as) the standard JavaScript `Set`.
+ * This set interface is designed to be very similar to (but not exactly the same as) the standard JavaScript `Set`.
  *
  * Reads from and writes to this set are reactive.
  *
@@ -32,14 +32,14 @@ export interface ReactiveSet<V> extends Iterable<V> {
 
     /**
      * Removes the given `value` from this set.
-     * Returns `true` if value was a previously in this set, or `false` otherwise.
+     * Returns `true` if `value` was a previously in this set, or `false` otherwise.
      */
     delete(value: V): boolean;
 
     /**
      * Returns an iterator over the `[value, value]` entries in this set.
      *
-     * NOTE: This is actually in the JS Standard..
+     * > NOTE: This is actually in the JS Standard..
      */
     entries(): IterableIterator<[value: V, value: V]>;
 
@@ -70,7 +70,7 @@ export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "add" | "delete" | "cl
  *
  * ```ts
  * // Empty
- * const set1 = reactiveSet<string, number>();
+ * const set1 = reactiveSet<string>();
  *
  * // With initial content
  * const set2 = reactiveSet<string>(["foo", "bar"]);

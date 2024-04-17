@@ -4,7 +4,7 @@ import { reactive } from "../ReactiveImpl";
 /**
  * A reactive map.
  *
- * This map interface is designed ot be very similar to (but not exactly the same as) the standard JavaScript `Map`.
+ * This map interface is designed to be very similar to (but not exactly the same as) the standard JavaScript `Map`.
  *
  * Reads from and writes to this map are reactive.
  *

@@ -8,8 +8,8 @@ import { Ref, ShallowRef, onScopeDispose, shallowRef, watchEffect } from "vue";
  *
  * Because `compute` may be called very often (if there are many updates), it should be fast.
  *
- * NOTE: a function such as this would usually be provided by your application / framework,
- * there is no need to create it yourself.
+ * > NOTE: a function such as this would usually be provided by your application / framework,
+ * > there is no need to create it yourself.
  */
 export function useReactiveSnapshot<T>(compute: () => T): Readonly<Ref<T>> {
     /**

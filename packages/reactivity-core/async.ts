@@ -113,7 +113,7 @@ export function effect(callback: EffectFunc): CleanupHandle {
  *
  * `watch` works like this:
  *
- * 1. The `selector` is a tracked function that should return an array of values.
+ * 1. The `selector` is a tracked function that shall return an array of values.
  *    Those values are usually obtained by accessing one or more reactive objects.
  * 2. Whenever the values inside the array returned by `selector` change, `callback`
  *    will be executed with those values.

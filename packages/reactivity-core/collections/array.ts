@@ -10,18 +10,18 @@ import { reactive } from "../ReactiveImpl";
  */
 export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     /**
-     * Returns the current number of items in this Array.
+     * Returns the current number of items in this array.
      */
     readonly length: number;
 
     /**
-     * Returns a new, non-reactive array with this Array's current content.
+     * Returns a new, non-reactive array with this array's current content.
      */
     getItems(): T[];
 
     /**
      * Returns the item at the given index, or `undefined` if the index is out of bounds.
-     * You can use negative indices to address items starting from the end of the Array.
+     * You can use negative indices to address items starting from the end of the array.
      *
      * See also [Array.at](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at).
      */
@@ -38,7 +38,7 @@ export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     set(index: number, value: T): void;
 
     /**
-     * Returns a shallow copy of this Array.
+     * Returns a shallow copy of this array.
      *
      * See also [Array.slice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice).
      */
