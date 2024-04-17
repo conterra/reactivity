@@ -159,15 +159,15 @@ export function effect(callback: EffectFunc): CleanupHandle {
  * );
  * ```
  *
- * `watch` returns a dispose function that can be used to unsubscribe from changes.
- * That function should be called to stop watching when you are no longer interested in updates:
+ * `watch` returns a handle that can be used to unsubscribe from changes.
+ * That handle's `destroy()` function should be called to stop watching when you are no longer interested in updates:
  *
  * ```js
- * const dispose = watch(() => [someReactive.value], () => {
+ * const handle = watch(() => [someReactive.value], () => {
  *   // ...
  * });
  * // later:
- * dispose();
+ * handle.destroy();
  * ```
  *
  * > NOTE: You must *not* modify the array that gets passed into `callback`.
