@@ -221,7 +221,7 @@ export function untracked<T>(callback: () => T): T {
  * @group Primitives
  */
 export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
-    if (!isReactive(maybeReactive)) {
+    if (!isReadonlyReactive(maybeReactive)) {
         return maybeReactive;
     }
     return maybeReactive.value;
@@ -236,7 +236,7 @@ export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
  * @group Primitives
  */
 export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
-    if (!isReactive(maybeReactive)) {
+    if (!isReadonlyReactive(maybeReactive)) {
         return maybeReactive;
     }
     return maybeReactive.peek();
@@ -245,11 +245,9 @@ export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
 /**
  * Returns true if `maybeReactive` is any kind of signal.
  *
- * TODO: must be "isReadonlyReactive"
- *
  * @group Primitives
  */
-export function isReactive<T>(
+export function isReadonlyReactive<T>(
     maybeReactive: ReadonlyReactive<T> | T
 ): maybeReactive is ReadonlyReactive<T> {
     return maybeReactive instanceof ReactiveImpl;
@@ -258,11 +256,9 @@ export function isReactive<T>(
 /**
  * Returns true if `maybeReactive` is any kind of writable signal.
  *
- * TODO: must be "isReactive"
- *
  * @group Primitives
  */
-export function isWritableReactive<T>(
+export function isReactive<T>(
     maybeReactive: Reactive<T> | T
 ): maybeReactive is Reactive<T> {
     return maybeReactive instanceof WritableReactiveImpl;

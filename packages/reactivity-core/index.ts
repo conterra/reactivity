@@ -31,8 +31,8 @@ export {
     untracked,
     getValue,
     peekValue,
-    isReactive,
-    isWritableReactive
+    isReadonlyReactive,
+    isReactive
 } from "./ReactiveImpl";
 export {
     type EffectCleanupFn,

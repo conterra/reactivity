@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { computed, getValue, isWritableReactive, reactive } from "../ReactiveImpl";
+import { computed, getValue, isReactive, reactive } from "../ReactiveImpl";
 
 /**
  * A property of a reactive struct.
@@ -438,20 +438,24 @@ interface PropertyConfig {
  */
 function prepareInstanceProperty(options: PropertyConfig): PropertyDescriptor {
     const key = options.propertyKey;
-    const isReactive = options.reactive;
+    const reactiveProperty = options.reactive;
 
     const getter = function (this: any) {
         const storage = getPrivateStorage(this);
-        return getValue(storage[key]);
+        const data = storage[key];
+        if (reactiveProperty) {
+            return getValue(data);
+        } 
+        return data;
     };
 
     let setter;
     if (options.writable) {
         setter = function (this: any, value: any) {
             const storage = getPrivateStorage(this);
-            if (isReactive) {
+            if (reactiveProperty) {
                 const signal = storage[key];
-                if (!isWritableReactive(signal)) {
+                if (!isReactive(signal)) {
                     throw new Error("internal error: property must be a writable signal");
                 }
                 signal.value = value;
