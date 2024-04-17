@@ -67,7 +67,7 @@ To prepare for a new release:
 2. Ensure the `CHANGELOG.md` in that package is up to date.
 3. Commit and push your changes.
 4. Trigger the [Build Action](https://github.com/conterra/reactivity/actions/workflows/build.yml) (via _run workflow_) and tick the **RELEASE** checkbox.
-   This action will build the package and publish it to npm.
+   This action will build the package, tag the commit and publish it to npm.
 
 ## License
 
