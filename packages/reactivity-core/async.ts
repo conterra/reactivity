@@ -1,7 +1,10 @@
+import { computed as rawComputed } from "@preact/signals-core";
 import { CleanupHandle } from "./sync";
+import { reportTaskError, shallowEqual } from "./utils";
 import { TaskQueue } from "./TaskQueue";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { EffectFunc, syncEffect, syncEffectOnce, syncWatch, WatchOptions } from "./sync";
+import { untracked } from "./ReactiveImpl";
 
 /**
  * Runs the callback function and tracks its reactive dependencies.
@@ -55,6 +58,7 @@ export function effect(callback: EffectFunc): CleanupHandle {
     let currentSyncEffect: CleanupHandle | undefined;
     let currentDispatch: CleanupHandle | undefined;
     let syncExecution: boolean;
+    let initialExecution = true;
 
     // Runs the actual effect body (once).
     // When the reactive dependencies change, an async callback is dispatched,
@@ -74,24 +78,40 @@ export function effect(callback: EffectFunc): CleanupHandle {
 
         syncExecution = true;
         try {
-            currentSyncEffect = syncEffectOnce(callback, () => {
-                currentSyncEffect = undefined;
-                if (syncExecution) {
-                    throw new Error("Cycle detected");
-                }
-
-                if (currentDispatch) {
-                    return;
-                }
-
-                currentDispatch = dispatchCallback(() => {
-                    try {
-                        rerunEffect();
-                    } finally {
-                        currentDispatch = undefined;
+            currentSyncEffect = syncEffectOnce(
+                () => {
+                    if (initialExecution) {
+                        callback();
+                    } else {
+                        try {
+                            callback();
+                        } catch (e) {
+                            // Don't let the error escape in later executions;
+                            // we need to return normally so we get triggered again.
+                            // This is done to preserve consistent behavior w.r.t. syncEffect
+                            reportTaskError(e);
+                        }
                     }
-                });
-            });
+                },
+                () => {
+                    currentSyncEffect = undefined;
+                    if (syncExecution) {
+                        // effect triggers itself
+                        throw new Error("Cycle detected");
+                    }
+
+                    if (currentDispatch) {
+                        return;
+                    }
+                    currentDispatch = dispatchCallback(() => {
+                        try {
+                            rerunEffect();
+                        } finally {
+                            currentDispatch = undefined;
+                        }
+                    });
+                }
+            );
         } finally {
             syncExecution = false;
         }
@@ -105,6 +125,7 @@ export function effect(callback: EffectFunc): CleanupHandle {
     }
 
     rerunEffect();
+    initialExecution = false;
     return { destroy };
 }
 
@@ -164,42 +185,20 @@ export function watch<const Values extends readonly unknown[]>(
     callback: (values: Values) => void,
     options?: WatchOptions
 ): CleanupHandle {
-    let currentValues: Values;
-    let currentDispatch: CleanupHandle | undefined;
-    let initialSyncExecution = true;
-    const watchHandle = syncWatch(
-        selector,
-        (values) => {
-            currentValues = values;
-
-            // If the user passed 'immediate: true', the initial execution is not deferred sync.
-            if (initialSyncExecution) {
+    const computedArgs = rawComputed(selector);
+    const immediate = options?.immediate ?? false;
+    let oldValues: Values | undefined;
+    return effect(() => {
+        const currentValues = computedArgs.value; // Tracked
+        untracked(() => {
+            const execute =
+                (!oldValues && immediate) || (oldValues && !shallowEqual(oldValues, currentValues));
+            oldValues = currentValues;
+            if (execute) {
                 callback(currentValues);
-                return;
             }
-
-            if (currentDispatch) {
-                return;
-            }
-            currentDispatch = dispatchCallback(() => {
-                try {
-                    callback(currentValues); // receives latest value, even if old dispatch
-                } finally {
-                    currentDispatch = undefined;
-                }
-            });
-        },
-        options
-    );
-    initialSyncExecution = false;
-
-    function destroy() {
-        currentDispatch?.destroy();
-        currentDispatch = undefined;
-        watchHandle.destroy();
-    }
-
-    return { destroy };
+        });
+    });
 }
 
 const tasks = new TaskQueue();

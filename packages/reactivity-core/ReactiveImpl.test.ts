@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import { batch, computed, external, reactive } from "./ReactiveImpl";
 import { syncEffect } from "./sync";
 
-// TODO: Test error cases
-
 describe("reactive", () => {
     it("supports setting an initial value", () => {
         const r = reactive(123);
@@ -164,6 +162,42 @@ describe("computed", () => {
         expect(newValue).toBe(oldValue); // no change
         expect(spy).toHaveBeenCalledOnce(); // no effect triggered
     });
+
+    it("throws error from compute function", () => {
+        let count = 0;
+        const boom = computed(() => {
+            count++;
+            throw new Error("boom");
+        });
+
+        expect(() => boom.value).toThrowError("boom");
+        expect(count).toBe(1);
+
+        expect(() => boom.value).toThrowError("boom");
+        expect(count).toBe(1); // error is cached
+    });
+
+    it("remains usable after compute has thrown", () => {
+        const doThrow = reactive(true);
+        let count = 0;
+        const boom = computed(() => {
+            count++;
+            if (doThrow.value) {
+                throw new Error("boom");
+            }
+            return "ok";
+        });
+
+        // Throws initially
+        expect(() => boom.value).toThrowError("boom");
+        expect(count).toBe(1);
+
+        // Recovers and no longer throws
+        doThrow.value = false;
+        expect(count).toBe(1);
+        expect(boom.value).toBe("ok");
+        expect(count).toBe(2);
+    });
 });
 
 describe("external", () => {
@@ -222,5 +256,42 @@ describe("external", () => {
         provider.mockReturnValue(2);
         ext.trigger();
         expect(spy).toHaveBeenCalledTimes(2); // called after change
+    });
+
+    it("throws error from compute function", () => {
+        let count = 0;
+        const boom = external(() => {
+            count++;
+            throw new Error("boom");
+        });
+
+        expect(() => boom.value).toThrowError("boom");
+        expect(count).toBe(1);
+
+        expect(() => boom.value).toThrowError("boom");
+        expect(count).toBe(1); // error is cached
+    });
+
+    it("remains usable after compute has thrown", () => {
+        let doThrow = true;
+        let count = 0;
+        const boom = external(() => {
+            count++;
+            if (doThrow) {
+                throw new Error("boom");
+            }
+            return "ok";
+        });
+
+        // Throws initially
+        expect(() => boom.value).toThrowError("boom");
+        expect(count).toBe(1);
+
+        // Recovers and no longer throws
+        doThrow = false;
+        boom.trigger();
+        expect(count).toBe(1);
+        expect(boom.value).toBe("ok");
+        expect(count).toBe(2);
     });
 });

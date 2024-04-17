@@ -4,6 +4,7 @@
 
 -   Rename `isReactive()` to `isReadonlyReactive()`
 -   Rename `isWritableReactive()` to `isReactive()`
+-   Ensure `watch()` / `effect` and their sync variants behave consistently when errors are thrown from callbacks
 
 ## v0.2.0
 

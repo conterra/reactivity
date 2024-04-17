@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
 import { effect, watch } from "./async";
-import * as report from "./reportTaskError";
+import * as utils from "./utils";
 
 afterEach(() => {
     vi.restoreAllMocks();
@@ -86,7 +86,7 @@ describe("effect", () => {
     });
 
     it("throws when a cycle is detected in a later execution", async () => {
-        const errorSpy = vi.spyOn(report, "reportTaskError").mockImplementation(() => {});
+        const errorSpy = mockErrorReport();
 
         const v1 = reactive(0);
         const trigger = reactive(false);
@@ -103,6 +103,58 @@ describe("effect", () => {
         await waitForMacroTask();
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: Cycle detected]`);
+    });
+
+    it("does not continue running if the initial execution throws an error", async () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        expect(() => {
+            effect(() => {
+                spy(r.value);
+                throw new Error("boom");
+            });
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledOnce();
+
+        // Not called again, effect is not running in the background
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it("continues running after successful setup, even if an error is thrown", async () => {
+        const errorSpy = mockErrorReport();
+
+        const r = reactive(1);
+        const spy = vi.fn();
+        const handle = effect(() => {
+            spy(r.value);
+            if (r.value == 2) {
+                throw new Error("boom");
+            }
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledTimes(0);
+
+        // increment trigger async error
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: boom]`);
+
+        // Executes again (without an error)
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(3);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+
+        // Clean shutdown, not called again.
+        handle.destroy();
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(3);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -123,7 +175,6 @@ describe("watch", () => {
         expect(spy).toBeCalledTimes(0); // async
 
         await waitForMacroTask();
-        expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledWith(3, 2);
     });
@@ -179,8 +230,133 @@ describe("watch", () => {
         await waitForMacroTask();
         expect(spy).toBeCalledTimes(0);
     });
+
+    it("rethrows errors from the initial selector execution and does not continue running", async () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        expect(() => {
+            watch(
+                (): [number] => {
+                    r.value;
+                    throw new Error("boom");
+                },
+                ([v1]) => {
+                    spy(v1);
+                }
+            );
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+
+        // callback never invoked because of error during setup
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(0);
+    });
+
+    it("keeps running even if some selector executions (other than the first) throw an error", async () => {
+        const errorSpy = mockErrorReport();
+
+        const spy = vi.fn();
+        const r = reactive(1);
+        const handle = watch(
+            () => {
+                const result = r.value;
+                if (result == 2) {
+                    throw new Error("boom");
+                }
+                return [result];
+            },
+            ([v1]) => {
+                spy(v1);
+            },
+            {
+                immediate: true
+            }
+        );
+        expect(spy).toHaveBeenCalledOnce();
+
+        // value == 2 -> error and no additional callback execution
+        r.value += 1;
+        await waitForMacroTask();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledOnce();
+
+        // recovered, callback gets executed
+        r.value += 1;
+        await waitForMacroTask();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(2);
+
+        // clean destroy, callback no longer gets executed
+        handle.destroy();
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it("stops running if the immediate execution of the callback throws", async () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        expect(() => {
+            watch(
+                () => [r.value],
+                ([v1]) => {
+                    spy(v1);
+                    throw new Error("boom");
+                },
+                { immediate: true }
+            );
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        // Not called again, watch is not running
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps running if the later executions of the callback throw", async () => {
+        const errorSpy = mockErrorReport();
+
+        const spy = vi.fn();
+        const r = reactive(1);
+        const handle = watch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                if (v1 == 2) {
+                    throw new Error("boom");
+                }
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(0);
+
+        // Triggers error
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: boom]`);
+
+        // Recovers, called again
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+
+        // Clean shutdown works
+        handle.destroy();
+        r.value += 1;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
 });
 
 function waitForMacroTask() {
     return new Promise((resolve) => setTimeout(resolve, 10));
+}
+
+function mockErrorReport() {
+    const errorSpy = vi.spyOn(utils, "reportTaskError").mockImplementation(() => {});
+    return errorSpy;
 }

@@ -1,5 +1,5 @@
-import { reportTaskError } from "./reportTaskError";
 import { CleanupHandle } from "./sync";
+import { reportTaskError } from "./utils";
 
 type TaskFn = () => void;
 
@@ -14,6 +14,11 @@ interface Task {
 export class TaskQueue {
     private queue: Task[] = [];
     private channel = new MessageChannel();
+
+    constructor() {
+        // Start event delivery (required by browsers)
+        this.channel.port2.start();
+    }
 
     /**
      * Enqueues a function to be executed in the next task queue iteration.
@@ -56,7 +61,6 @@ export class TaskQueue {
         // https://stackoverflow.com/a/61574326
         const channel = this.channel;
         channel.port2.addEventListener("message", this.messageHandler);
-        channel.port2.start();
         channel.port1.postMessage(""); // queue macro task
     }
 

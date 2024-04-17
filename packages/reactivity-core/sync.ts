@@ -4,6 +4,7 @@ import { untracked } from "./ReactiveImpl";
 // Import required for docs
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { effect, watch } from "./async";
+import { shallowEqual } from "./utils";
 
 /**
  * A handle returned by various functions to dispose of a resource,
@@ -188,11 +189,4 @@ export function syncWatch<const Values extends readonly unknown[]>(
             }
         });
     });
-}
-
-function shallowEqual(oldValue: readonly unknown[], newValue: readonly unknown[]): boolean {
-    if (oldValue === newValue) {
-        return true;
-    }
-    return oldValue.length === newValue.length && oldValue.every((v, i) => v === newValue[i]);
 }

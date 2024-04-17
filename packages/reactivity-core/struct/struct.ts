@@ -12,7 +12,7 @@ export interface PropertyMemberType {
      * Type to indicate that this member is a property.
      */
     type?: "property";
-    /** 
+    /**
      * If `true` the property is writable and it can be changed.
      * If `false` the property is read-only.
      * Default is `true`.
@@ -445,7 +445,7 @@ function prepareInstanceProperty(options: PropertyConfig): PropertyDescriptor {
         const data = storage[key];
         if (reactiveProperty) {
             return getValue(data);
-        } 
+        }
         return data;
     };
 

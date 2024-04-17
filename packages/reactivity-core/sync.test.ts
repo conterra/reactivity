@@ -139,6 +139,43 @@ describe("syncEffect", () => {
             })
         ).toThrowErrorMatchingInlineSnapshot(`[Error: Cycle detected]`);
     });
+
+    it("does not continue running if the initial execution throws an error", () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        expect(() => {
+            syncEffect(() => {
+                spy(r.value);
+                throw new Error("boom");
+            });
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledOnce();
+
+        r.value += 1;
+        // Not called again, effect is not running in the background
+        expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it("continues running after successful setup, even if an error is thrown", () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        const handle = syncEffect(() => {
+            spy(r.value);
+            if (r.value > 1) {
+                throw new Error("boom");
+            }
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        expect(() => (r.value += 1)).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledTimes(2);
+
+        expect(() => (r.value += 1)).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledTimes(3);
+
+        handle.destroy();
+        expect(() => (r.value += 1)).not.toThrowError(); // okay; effect no longer running
+    });
 });
 
 describe("syncEffectOnce", () => {
@@ -174,6 +211,25 @@ describe("syncEffectOnce", () => {
         // not called since effect was dispose already
         r.value = 2;
         expect(spy).toHaveBeenCalledTimes(0);
+    });
+
+    it("does not invoke the callback if the initial execution threw an error", () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        const callback = vi.fn();
+        expect(() => {
+            syncEffectOnce(() => {
+                spy(r.value);
+                throw new Error("boom");
+            }, callback);
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(callback).not.toHaveBeenCalled();
+
+        r.value += 1;
+        // Not called, effect is not running in the background
+        expect(spy).toHaveBeenCalledOnce();
+        expect(callback).not.toHaveBeenCalled();
     });
 });
 
@@ -250,5 +306,106 @@ describe("syncWatch", () => {
         handle.destroy();
         r1.value = 2; // ignored
         expect(spy).toBeCalledTimes(1);
+    });
+
+    it("rethrows errors from the initial selector execution and does not continue running", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        expect(() => {
+            syncWatch(
+                (): [number] => {
+                    r.value;
+                    throw new Error("boom");
+                },
+                ([v1]) => {
+                    spy(v1);
+                }
+            );
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+
+        // callback never invoked because of error during setup
+        r.value += 1;
+        expect(spy).toHaveBeenCalledTimes(0);
+    });
+
+    it("keeps running even if some selector executions (other than the first) throw an error", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        const handle = syncWatch(
+            () => {
+                const result = r.value;
+                if (result == 2) {
+                    throw new Error("boom");
+                }
+                return [result];
+            },
+            ([v1]) => {
+                spy(v1);
+            },
+            {
+                immediate: true
+            }
+        );
+        expect(spy).toHaveBeenCalledOnce();
+
+        // value == 2 -> error and no additional callback execution
+        expect(() => (r.value += 1)).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledOnce();
+
+        // recovered, callback gets executed
+        r.value += 1;
+        expect(spy).toHaveBeenCalledTimes(2);
+
+        // clean destroy, callback no longer gets executed
+        handle.destroy();
+        r.value += 1;
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it("stops running if the immediate execution of the callback throws", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        expect(() => {
+            syncWatch(
+                () => [r.value],
+                ([v1]) => {
+                    spy(v1);
+                    throw new Error("boom");
+                },
+                { immediate: true }
+            );
+        }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        // Not called again, watch is not running
+        r.value += 1;
+        expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps running if the later executions of the callback throw", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        const handle = syncWatch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                if (v1 == 2) {
+                    throw new Error("boom");
+                }
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(0);
+
+        expect(() => (r.value += 1)).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        // Recovers, called again
+        r.value += 1;
+        expect(spy).toHaveBeenCalledTimes(2);
+
+        // Clean shutdown works
+        handle.destroy();
+        r.value += 1;
+        expect(spy).toHaveBeenCalledTimes(2);
     });
 });
