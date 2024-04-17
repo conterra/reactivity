@@ -241,7 +241,7 @@ export interface ReactiveStructBuilder<T> {
  * });
  * const fullName = computed(() => `${person.firstName} ${person.lastName}`);
  * person.lastName = "Miller";
- * console.log(fullName.value); // John Doe
+ * console.log(fullName.value); // John Miller
  * ```
  *
  * #### Computed properties

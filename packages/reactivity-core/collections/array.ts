@@ -20,7 +20,7 @@ export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     getItems(): T[];
 
     /**
-     * Returns the item at the given index, or undefined if the index is out of bounds.
+     * Returns the item at the given index, or `undefined` if the index is out of bounds.
      * You can use negative indices to address items starting from the end of the Array.
      *
      * See also [Array.at](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at).
@@ -28,7 +28,7 @@ export interface ReadonlyReactiveArray<T> extends Iterable<T> {
     at(index: number): T | undefined;
 
     /**
-     * Returns the item at the given index, or undefined if the index is out of bounds.
+     * Returns the item at the given index, or `undefined` if the index is out of bounds.
      */
     get(index: number): T | undefined;
 
