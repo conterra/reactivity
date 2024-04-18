@@ -476,4 +476,24 @@ describe("reactiveStruct", () => {
             `[Error: Properties starting with '$' are reserved.]`
         );
     });
+    it("supports boolean values as computed properties", () => {
+        // For this test to pass, we had to prevent the return type of 
+        // the computed property being calculated to true | false.
+        type MyType = {
+            boolA: boolean;
+            boolB: boolean;
+        };
+        const MyClass = reactiveStruct<MyType>().define({
+            boolA: {},
+            boolB: {
+                compute() {
+                    return this.boolA;
+                }
+            }
+        });
+        const myInstance = new MyClass({
+            boolA: true
+        });
+        expect(myInstance.boolB).toBe(true);
+    });
 });

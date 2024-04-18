@@ -1,10 +1,11 @@
 # @conterra/reactivity-core
 
-## v0.3.0 (unreleased)
+## v0.3.0
 
 -   Rename `isReactive()` to `isReadonlyReactive()`
 -   Rename `isWritableReactive()` to `isReactive()`
 -   Ensure `watch()` / `effect` and their sync variants behave consistently when errors are thrown from callbacks
+-   Fix typings in `reactiveStruct` for union types
 
 ## v0.2.0
 
