@@ -81,10 +81,10 @@ export function effect(callback: EffectFunc): CleanupHandle {
             currentSyncEffect = syncEffectOnce(
                 () => {
                     if (initialExecution) {
-                        callback();
+                        return callback();
                     } else {
                         try {
-                            callback();
+                            return callback();
                         } catch (e) {
                             // Don't let the error escape in later executions;
                             // we need to return normally so we get triggered again.

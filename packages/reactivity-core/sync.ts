@@ -98,7 +98,7 @@ export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): 
     handle = syncEffect(() => {
         const thisExecution = execution++;
         if (thisExecution === 0) {
-            callback();
+            return callback();
         } else if (thisExecution === 1) {
             untracked(() => {
                 try {

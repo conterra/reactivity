@@ -156,6 +156,30 @@ describe("effect", () => {
         expect(spy).toHaveBeenCalledTimes(3);
         expect(errorSpy).toHaveBeenCalledTimes(1);
     });
+
+    it("calls the clean up function after the effect did run", async () => {
+        const r = reactive(0);
+        const effectSpy = vi.fn();
+        const cleanUpSpy = vi.fn();
+
+        const handle = effect(() => {
+            effectSpy(r.value);
+            return () => {
+                cleanUpSpy("clean up called");
+            };
+        });
+        expect(effectSpy).toHaveBeenCalledTimes(1);
+        expect(cleanUpSpy).toHaveBeenCalledTimes(0);
+
+        r.value = 1;
+
+        await waitForMacroTask();
+        expect(effectSpy).toHaveBeenCalledTimes(2);
+        expect(cleanUpSpy).toHaveBeenCalledTimes(1);
+
+        handle.destroy();
+        expect(cleanUpSpy).toHaveBeenCalledTimes(2);
+    });
 });
 
 describe("watch", () => {

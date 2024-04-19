@@ -200,13 +200,18 @@ describe("syncEffectOnce", () => {
     it("can be cleaned up", () => {
         const r = reactive(1);
         const spy = vi.fn();
+        const cleanUpSpy = vi.fn();
 
         const handle = syncEffectOnce(() => {
             r.value;
+            return () => cleanUpSpy();
         }, spy);
         expect(spy).toHaveBeenCalledTimes(0);
+        expect(cleanUpSpy).toHaveBeenCalledTimes(0);
 
         handle.destroy();
+
+        expect(cleanUpSpy).toHaveBeenCalledTimes(1);
 
         // not called since effect was dispose already
         r.value = 2;
