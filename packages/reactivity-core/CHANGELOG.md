@@ -1,5 +1,9 @@
 # @conterra/reactivity-core
 
+## v0.3.1
+
+-   Fix clean up of async effects / syncEffectOnce
+
 ## v0.3.0
 
 -   Rename `isReactive()` to `isReadonlyReactive()`
