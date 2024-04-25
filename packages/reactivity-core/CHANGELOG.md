@@ -1,5 +1,9 @@
 # @conterra/reactivity-core
 
+## v0.3.2
+
+-   Switch to esbuild for building js code. The should be no difference to users.
+
 ## v0.3.1
 
 -   Fix clean up of async effects / syncEffectOnce
