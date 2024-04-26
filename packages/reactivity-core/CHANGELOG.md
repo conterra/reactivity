@@ -2,7 +2,7 @@
 
 ## v0.3.2
 
--   Switch to esbuild for building js code. The should be no difference to users.
+-   Switch to esbuild for building js code. There should be no difference to users of this package.
 
 ## v0.3.1
 
