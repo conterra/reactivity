@@ -48,7 +48,7 @@ console.log(r.value); // prints "bar"
 ```
 
 The current value of a signal can be accessed by reading the property `.value`.
-If you have a writable signal (which is the case for signals returned by `reactive<T>()`), you can update the inner value of assigning to the property `.value`.
+If you have a writable signal (which is the case for signals returned by `reactive<T>()`), you can update the inner value by assigning to the property `.value`.
 
 Whenever the value of a signal changes, any watcher (a party interested in the current value) will automatically be notified.
 The `effect()` function is one way to track one (or many) signals:
