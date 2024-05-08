@@ -73,10 +73,10 @@ r.value = "bar";
 
 -   First, it will execute the given `callback` immediately.
 -   During the execution, it tracks all signals whose values were accessed by `callback`.
-    This also works indirectly, for example if you call one or more function which internally use signals.
+    This also works indirectly, for example if you call one or more functions which internally use signals.
 -   When _any_ of those signals are updated, the effect will re-execute `callback`.
 -   These re-executions will happen indefinitely: either until the signals no longer change or until the effect has been destroyed.
-    Effect's can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
+    Effects can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
 -   For an alternative API that doesn't trigger on _every_ change, see [watch()](#effect-vs-watch).
 
 Signals can be composed by deriving values from them via `computed()`.
