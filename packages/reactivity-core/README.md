@@ -60,6 +60,8 @@ const r = reactive("foo");
 
 // Effect callback is executed once; prints "foo" immediately
 effect(() => {
+    // This access to `r.value` is tracked by the effect.
+    // When the signal's value changes, the effect is executed again.
     console.log(r.value);
 });
 
@@ -67,8 +69,15 @@ effect(() => {
 r.value = "bar";
 ```
 
-`effect()` executes a callback function and tracks which signals have been accessed (meaning: reading `signal.value`) by that function - even indirectly.
-Whenever one of those signals changes in any way, the effect will be triggered again.
+`effect(callback)` works like this:
+
+-   First, it will execute the given `callback` immediately.
+-   During the execution, it tracks all signals whose values were accessed by `callback`.
+    This also works indirectly, for example if you call one or more function which internally use signals.
+-   When _any_ of those signals are updated, the effect will re-execute `callback`.
+-   These re-executions will happen indefinitely: either until the signals no longer change or until the effect has been destroyed.
+    Effect's can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
+-   For an alternative API that doesn't trigger on _every_ change, see [watch()](#effect-vs-watch).
 
 Signals can be composed by deriving values from them via `computed()`.
 `computed()` takes a callback function as its argument.
