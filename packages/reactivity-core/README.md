@@ -948,7 +948,7 @@ async function performJob() {
 }
 ```
 
-However, one should not use asynchronous code (i.e. the keywords `async` and `await`) _directly_ in an effect/watch/computed.
+**However, one should not use asynchronous code (i.e. the keywords `async` and `await`) _directly_ in an effect/watch/computed.**
 The following snippet is bad style and can lead to surprising behavior:
 
 ```ts
@@ -957,7 +957,8 @@ import { effect, reactive } from "@conterra/reactivity-core";
 const s1 = reactive("a");
 const s2 = reactive("b");
 
-// note the `async` keyword
+/// XXX BAD style
+/// Note the `async` keyword
 effect(async () => {
     const v1 = s1.value;
     const result = await functionThatReturnsAPromise(v1); // (1)
