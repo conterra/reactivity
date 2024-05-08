@@ -896,30 +896,60 @@ array.push(2);
 
 ### Working with promises
 
-All dependency tracking (computed, watch, effect, etc.) is based on tracking accesses to `signal.value` in _synchronous_ code.
+It is a completely legitimate use case to manage asynchronous operations (involving promises) from reactive code, such as `effect()` or `watch()`.
 
-The following snippet will _not_ be reactive with respect to the values accessed after the effect's body:
+For example, the following code will re-trigger another "long running operation" whenever `input` changes:
 
 ```ts
-import { effect, reactive } from "@conterra/reactivity-core";
+import { reactive, effect } from "@conterra/reactivity-core";
 
-const s1 = reactive("a");
-const s2 = reactive("b");
-
+const input = reactive("foo");
 effect(() => {
-    const v1 = s1.value; // (1)
-    functionThatReturnsAPromise(v1).then(() => {
-        console.log(s2.value); // (2)
+    const currentInput = input.value;
+    longRunningOperation(currentInput).catch((e) => {
+        console.error("Something went wrong", e);
     });
 });
+
+input.value = "bar";
+
+async function longRunningOperation(param: string) {
+    // ...
+    console.log("long running:", param);
+}
 ```
 
-The effect will be triggered again if the value of `s1` changes because `s1` is read from within the effect in (1).
-The execution of the `.then()` callback in (2) will always happen after the effect's body is done - possibly much later.
-Thus, the effect will not re-execute if `s2` is updated.
-If you need reactivity for `s2`, simply read it at an earlier time, e.g. next to (1).
+You can also use signals to track the status of an asynchronous operation:
 
-This trap is easy to fall into when using asynchronous functions:
+```ts
+import { reactive, effect } from "@conterra/reactivity-core";
+
+type JobState =
+    | { state: "pending" }
+    | { state: "done"; result: unknown }
+    | { state: "error"; error: unknown };
+
+const jobState = reactive<JobState>({ state: "pending" });
+effect(() => {
+    console.log(jobState.value);
+});
+
+performJob()
+    .then((result) => {
+        jobState.value = { state: "done", result };
+    })
+    .catch((error) => {
+        jobState.value = { state: "error", error };
+    });
+
+async function performJob() {
+    // ...
+    return 42;
+}
+```
+
+However, one should not use asynchronous code (i.e. the keywords `async` and `await`) _directly_ in an effect/watch/computed.
+The following snippet is bad style and can lead to surprising behavior:
 
 ```ts
 import { effect, reactive } from "@conterra/reactivity-core";
@@ -929,18 +959,42 @@ const s2 = reactive("b");
 
 // note the `async` keyword
 effect(async () => {
-    const v1 = s1.value; // (1)
-    const result = await functionThatReturnsAPromise(v1);
-    const v2 = s2.value; // (2)
+    const v1 = s1.value;
+    const result = await functionThatReturnsAPromise(v1); // (1)
+    const v2 = s2.value;
+    console.log(v2);
+});
+
+setTimeout(() => {
+    s2.value = "c"; // (2)
+}, 1000);
+
+async function functionThatReturnsAPromise(v1: string) {
+    // ...
+}
+```
+
+The effect will be executed once (initially) but it will _not_ be triggered by the update in (2).
+
+This is because the original read (`s2.value`) was not observed by the effect, which will become more obvious
+when we write the same effect in a different style:
+
+```ts
+// does pretty much the same as the previous effect
+effect(() => {
+    const v1 = s1.value;
+    functionThatReturnsAPromise(v1).then((result) => {
+        const v2 = s2.value;
+        console.log(v2);
+    });
 });
 ```
 
-This syntax works in practice, but it is easy to make mistakes.
-Like in the previous example, the access to `s1` in (1) will work.
-However, because of the `await` keyword, the effect will _not_ track (2).
-This is because `async` / `await` is just a different syntax for promises with `.then()` / `.catch()`.
+While the read to `s1.value` happens _directly_ inside the effect, the access to `v2.value` happens later, possibly much later.
+No matter how long it takes, the callback executed by the effect will already have completed by then: all APIs in this package can only track reactive dependencies in _synchronous_ code.
 
-Because it is so easy to make this mistake, we recommend _not_ using `async` / `await` directly in `effect`, `watch` or computed signals.
+If you must use an asynchronous function directly in a reactive context, keep in mind that only the code until the first `await` statement will actually become reactive.
+However, because this is confusing and error prone, it is best to avoid it altogether.
 
 ## License
 
