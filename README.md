@@ -3,7 +3,7 @@
 Framework agnostic library for building reactive applications.
 
 > [!WARNING]
-> The APIs implemented in this repository are highly experimental and subject to change.
+> The APIs implemented in this repository are still under active development and may change based on feedback.
 
 ## Reactivity-API
 
