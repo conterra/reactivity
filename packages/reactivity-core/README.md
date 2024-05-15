@@ -247,6 +247,53 @@ watch(
 
 In this example, the callback function will only re-run when the computed sum truly changed.
 
+### Returning cleanup functions
+
+You can return a function from `effect` and `watch` callbacks.
+This function will be invoked before the effect or watch is triggered again, or if the effect / watch is being destroyed.
+
+You can use this function to undo or cancel an action started by your callback.
+
+The following example fetches the user details for a given user id whenever that id changes:
+
+```ts
+import { reactive, effect, watch } from "@conterra/reactivity-core";
+
+const userId = reactive("test-1");
+
+// Fetch user details whenever the user id changes.
+// The cleanup function cancels the previous job if it's still running.
+effect(() => {
+    const controller = new AbortController();
+    const id = userId.value;
+    fetchUserDetails(id, controller.signal);
+    return () => {
+        controller.abort();
+    };
+});
+
+// Same thing, using watch():
+watch(
+    () => [userId.value],
+    ([id]) => {
+        const controller = new AbortController();
+        fetchUserDetails(id, controller.signal);
+        return () => {
+            controller.abort();
+        };
+    },
+    { immediate: true }
+);
+
+// Trigger watch and effect
+userId.value = "test-2";
+
+async function fetchUserDetails(id: string, signal: AbortSignal): Promise<void> {
+    // ... would do a network request
+    console.log("fetch user", id);
+}
+```
+
 ### Complex values
 
 Up to this point, examples have used primitive values such as strings or integers.
