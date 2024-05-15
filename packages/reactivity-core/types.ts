@@ -97,3 +97,66 @@ export interface ExternalReactive<T> extends ReadonlyReactive<T> {
      */
     trigger(): void;
 }
+
+/**
+ * A handle returned by various functions to dispose of a resource,
+ * such as a watcher or an effect.
+ *
+ * @group Watching
+ */
+export interface CleanupHandle {
+    /**
+     * Performs the cleanup action associated with the resource.
+     */
+    destroy(): void;
+}
+
+/**
+ * A cleanup function returned from an effect or a watch callback.
+ *
+ * This function will be invoked before the effect or watch callback is triggered again,
+ * or when it is being disposed.
+ *
+ * @group Watching
+ */
+export type CleanupFunc = () => void;
+
+/**
+ * The body of an effect.
+ *
+ * Instructions in this function are tracked: when any of its reactive
+ * dependencies change, the effect will be triggered again.
+ * 
+ * An effect may return a cleanup function that will be executed
+ * before the effect is triggered again, or when the effect is being destroyed.
+ *
+ * @group Watching
+ */
+export type EffectCallback = () => void | CleanupFunc;
+
+/**
+ * A watch callback triggered if observed values change.
+ * 
+ * The body of a watch statement is _not_ tracked.
+ * 
+ * A watch callback may return a cleanup function that will be executed
+ * before the callback is triggered again, or when the watch is being destroyed.
+ *
+ * @group Watching
+ */
+export type WatchCallback = () => void | CleanupFunc;
+
+/**
+ * Options that can be passed to {@link syncWatch}.
+ *
+ * @group Watching
+ */
+export interface WatchOptions {
+    /**
+     * Whether to call the watch callback once during setup.
+     *
+     * If this is `false`, the watch callback will only be invoked
+     * after at least a single value changed.
+     */
+    immediate?: boolean;
+}

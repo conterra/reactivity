@@ -20,7 +20,16 @@
  * Utilities to create reactive data structures/objects.
  */
 
-export { type ReadonlyReactive, type Reactive, type ExternalReactive } from "./Reactive";
+export {
+    type ReadonlyReactive,
+    type Reactive,
+    type ExternalReactive,
+    type CleanupFunc,
+    type EffectCallback,
+    type WatchCallback,
+    type WatchOptions,
+    type CleanupHandle
+} from "./types";
 export {
     type EqualsFunc,
     type ReactiveOptions,
@@ -34,15 +43,7 @@ export {
     isReadonlyReactive,
     isReactive
 } from "./ReactiveImpl";
-export {
-    type EffectCleanupFn,
-    type EffectFunc,
-    type WatchOptions,
-    type CleanupHandle,
-    syncEffect,
-    syncEffectOnce,
-    syncWatch
-} from "./sync";
+export { syncEffect, syncEffectOnce, syncWatch } from "./sync";
 export { effect, watch } from "./async";
 export * from "./collections";
 export * from "./struct";

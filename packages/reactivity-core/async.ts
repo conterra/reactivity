@@ -1,9 +1,9 @@
-import { computed as rawComputed } from "@preact/signals-core";
-import { CleanupHandle } from "./sync";
-import { reportTaskError, shallowEqual } from "./utils";
-import { TaskQueue } from "./TaskQueue";
+import { TaskQueue } from "./utils/TaskQueue";
+import { CleanupFunc, CleanupHandle, EffectCallback, WatchOptions } from "./types";
+import { reportTaskError } from "./utils/reportTaskError";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { EffectFunc, syncEffect, syncEffectOnce, syncWatch, WatchOptions } from "./sync";
+import { syncEffect, syncEffectOnce, syncWatch } from "./sync";
+import { watchImpl } from "./watch";
 import { untracked } from "./ReactiveImpl";
 
 /**
@@ -54,11 +54,47 @@ import { untracked } from "./ReactiveImpl";
  *
  * @group Watching
  */
-export function effect(callback: EffectFunc): CleanupHandle {
-    let currentSyncEffect: CleanupHandle | undefined;
-    let currentDispatch: CleanupHandle | undefined;
-    let syncExecution: boolean;
-    let initialExecution = true;
+export function effect(callback: EffectCallback): CleanupHandle {
+    const effect = new AsyncEffect(callback);
+    return {
+        destroy: effect.destroy.bind(effect)
+    };
+}
+
+class AsyncEffect {
+    private callback: EffectCallback;
+    private cleanup: CleanupFunc | void | undefined;
+    private effectHandle: CleanupHandle | undefined;
+    private scheduledExecution: CleanupHandle | undefined;
+    private isDestroyed = false;
+
+    // True during first run of the effect
+    private initialExecution = true;
+
+    // True while running the effect
+    private isExecuting = false;
+
+    constructor(callback: EffectCallback) {
+        this.callback = callback;
+        this.execute();
+        this.initialExecution = false;
+    }
+
+    destroy() {
+        if (this.isDestroyed) {
+            return;
+        }
+
+        this.isDestroyed = true;
+        try {
+            this.triggerCleanup();
+        } finally {
+            this.effectHandle?.destroy();
+            this.effectHandle = undefined;
+            this.scheduledExecution?.destroy();
+            this.scheduledExecution = undefined;
+        }
+    }
 
     // Runs the actual effect body (once).
     // When the reactive dependencies change, an async callback is dispatched,
@@ -72,19 +108,16 @@ export function effect(callback: EffectFunc): CleanupHandle {
     // 2) listen to that signal's invalidation, __without__ computing the new value.
     //
     // There is currently no API for that in @preact/signals-core (subscribing to a signal implies computing its value).
-    function rerunEffect() {
-        currentSyncEffect?.destroy();
-        currentSyncEffect = undefined;
-
-        syncExecution = true;
+    private execute() {
+        this.isExecuting = true;
         try {
-            currentSyncEffect = syncEffectOnce(
+            const effectHandle = syncEffectOnce(
                 () => {
-                    if (initialExecution) {
-                        return callback();
+                    if (this.initialExecution) {
+                        this.triggerCallback();
                     } else {
                         try {
-                            return callback();
+                            this.triggerCallback();
                         } catch (e) {
                             // Don't let the error escape in later executions;
                             // we need to return normally so we get triggered again.
@@ -93,40 +126,62 @@ export function effect(callback: EffectFunc): CleanupHandle {
                         }
                     }
                 },
-                () => {
-                    currentSyncEffect = undefined;
-                    if (syncExecution) {
-                        // effect triggers itself
-                        throw new Error("Cycle detected");
-                    }
-
-                    if (currentDispatch) {
-                        return;
-                    }
-                    currentDispatch = dispatchCallback(() => {
-                        try {
-                            rerunEffect();
-                        } finally {
-                            currentDispatch = undefined;
-                        }
-                    });
-                }
+                () => this.scheduleExecution()
             );
+            if (this.isDestroyed) {
+                // Effect may have been destroyed in the execution of `triggerCallback()`
+                effectHandle.destroy();
+            } else {
+                this.effectHandle = effectHandle;
+            }
         } finally {
-            syncExecution = false;
+            this.isExecuting = false;
         }
     }
 
-    function destroy() {
-        currentSyncEffect?.destroy();
-        currentSyncEffect = undefined;
-        currentDispatch?.destroy();
-        currentDispatch = undefined;
+    private triggerCallback() {
+        this.triggerCleanup();
+        if (!this.isDestroyed) {
+            this.cleanup = this.callback();
+        }
     }
 
-    rerunEffect();
-    initialExecution = false;
-    return { destroy };
+    private triggerCleanup() {
+        const cleanup = this.cleanup;
+        this.cleanup = undefined;
+        try {
+            if (cleanup) {
+                untracked(cleanup);
+            }
+        } catch (e) {
+            this.destroy();
+            throw e;
+        }
+    }
+
+    private scheduleExecution() {
+        if (this.isDestroyed) {
+            return;
+        }
+        
+        this.effectHandle?.destroy();
+        this.effectHandle = undefined;
+        if (this.isExecuting) {
+            // effect triggers itself
+            throw new Error("Cycle detected");
+        }
+
+        if (this.scheduledExecution) {
+            return;
+        }
+        this.scheduledExecution = dispatchCallback(() => {
+            try {
+                this.execute();
+            } finally {
+                this.scheduledExecution = undefined;
+            }
+        });
+    }
 }
 
 /**
@@ -182,23 +237,10 @@ export function effect(callback: EffectFunc): CleanupHandle {
  */
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
-    callback: (values: Values) => void,
+    callback: (values: Values) => void | CleanupFunc,
     options?: WatchOptions
 ): CleanupHandle {
-    const computedArgs = rawComputed(selector);
-    const immediate = options?.immediate ?? false;
-    let oldValues: Values | undefined;
-    return effect(() => {
-        const currentValues = computedArgs.value; // Tracked
-        untracked(() => {
-            const execute =
-                (!oldValues && immediate) || (oldValues && !shallowEqual(oldValues, currentValues));
-            oldValues = currentValues;
-            if (execute) {
-                callback(currentValues);
-            }
-        });
-    });
+    return watchImpl(effect, selector, callback, options);
 }
 
 const tasks = new TaskQueue();

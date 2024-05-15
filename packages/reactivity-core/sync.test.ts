@@ -129,6 +129,64 @@ describe("syncEffect", () => {
         `);
     });
 
+    it("calls cleanup function during dispose", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn();
+        const r = reactive(1);
+        const handle = syncEffect(() => {
+            spy(r.value);
+            return cleanup;
+        });
+
+        handle.destroy();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls cleanup function during dispose in later execution", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn();
+        const r = reactive(1);
+        const handle = syncEffect(() => {
+            spy(r.value);
+            return cleanup;
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+
+        handle.destroy();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(cleanup).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not trigger again once a cleanup function threw an exception", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn().mockImplementation(() => {
+            throw new Error("cleanup error");
+        });
+        const r = reactive(1);
+        syncEffect(() => {
+            spy(r.value);
+            return cleanup;
+        });
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+
+        expect(() => r.value = 2).toThrowErrorMatchingInlineSnapshot(`[Error: cleanup error]`);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1); // not called again
+
+        // effect is dead
+        r.value = 3;
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
     it("throws on cycle", () => {
         const r = reactive(1);
         expect(() =>
@@ -181,7 +239,7 @@ describe("syncEffect", () => {
 describe("syncEffectOnce", () => {
     it("triggers when reactive dependencies may have changed", () => {
         const r = reactive(1);
-        const callbackSpy = vi.fn(() => r.value);
+        const callbackSpy = vi.fn(() => void r.value);
         const invalidateSpy = vi.fn();
 
         syncEffectOnce(callbackSpy, invalidateSpy);
@@ -412,5 +470,82 @@ describe("syncWatch", () => {
         handle.destroy();
         r.value += 1;
         expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it("calls cleanup function during dispose", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn();
+        const r = reactive(1);
+        const handle = syncWatch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                return cleanup;
+            },
+            {
+                immediate: true
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+        
+        handle.destroy();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls cleanup function during dispose in later execution", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn();
+        const r = reactive(1);
+        const handle = syncWatch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                return cleanup;
+            },
+            {
+                immediate: true
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+
+        handle.destroy();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(cleanup).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not trigger again once a cleanup function threw an exception", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn().mockImplementation(() => {
+            throw new Error("cleanup error");
+        });
+        const r = reactive(1);
+        syncWatch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                return cleanup;
+            },
+            {
+                immediate: true
+            }
+        );
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+
+        expect(() => r.value = 2).toThrowErrorMatchingInlineSnapshot(`[Error: cleanup error]`);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1); // not called again
+
+        // watch is dead
+        r.value = 3;
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
     });
 });

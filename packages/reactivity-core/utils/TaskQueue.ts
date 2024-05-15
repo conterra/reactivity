@@ -1,5 +1,5 @@
-import { CleanupHandle } from "./sync";
-import { reportTaskError } from "./utils";
+import { CleanupHandle } from "../types";
+import { reportTaskError } from "./reportTaskError";
 
 type TaskFn = () => void;
 

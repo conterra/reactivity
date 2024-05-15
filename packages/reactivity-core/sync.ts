@@ -1,43 +1,11 @@
-import { computed as rawComputed, effect as rawEffect } from "@preact/signals-core";
+import { effect as rawEffect } from "@preact/signals-core";
 import { untracked } from "./ReactiveImpl";
+import { CleanupFunc, CleanupHandle, EffectCallback, WatchOptions } from "./types";
+import { watchImpl } from "./watch";
 
 // Import required for docs
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { effect, watch } from "./async";
-import { shallowEqual } from "./utils";
-
-/**
- * A handle returned by various functions to dispose of a resource,
- * such as a watcher or an effect.
- *
- * @group Watching
- */
-export interface CleanupHandle {
-    /**
-     * Performs the cleanup action associated with the resource.
-     */
-    destroy(): void;
-}
-
-/**
- * A cleanup function returned from an effect.
- *
- * This function will be invoked before the effect is triggered again,
- * or when the effect is disposed.
- *
- * @group Watching
- */
-export type EffectCleanupFn = () => void;
-
-/**
- * The body of an effect.
- *
- * Instructions in this function are tracked: when any of its reactive
- * dependencies change, the effect will be triggered again.
- *
- * @group Watching
- */
-export type EffectFunc = (() => void) | (() => EffectCleanupFn);
 
 /**
  * Runs the callback function and tracks its reactive dependencies.
@@ -74,7 +42,7 @@ export type EffectFunc = (() => void) | (() => EffectCleanupFn);
  *
  * @group Watching
  */
-export function syncEffect(callback: EffectFunc): CleanupHandle {
+export function syncEffect(callback: EffectCallback): CleanupHandle {
     const destroy = rawEffect(callback);
     return { destroy };
 }
@@ -91,7 +59,7 @@ export function syncEffect(callback: EffectFunc): CleanupHandle {
  *
  * @group Watching
  */
-export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): CleanupHandle {
+export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => void): CleanupHandle {
     let execution = 0;
     let syncExecution = true;
     let handle: CleanupHandle | undefined = undefined;
@@ -117,20 +85,6 @@ export function syncEffectOnce(callback: EffectFunc, onInvalidate: () => void): 
     return handle;
 }
 
-/**
- * Options that can be passed to {@link syncWatch}.
- *
- * @group Watching
- */
-export interface WatchOptions {
-    /**
-     * Whether to call the watch callback once during setup.
-     *
-     * If this is `false`, the watch callback will only be invoked
-     * after at least a single value changed.
-     */
-    immediate?: boolean;
-}
 
 /**
  * Watches reactive values and executes a callback whenever those values change.
@@ -172,21 +126,8 @@ export interface WatchOptions {
  */
 export function syncWatch<const Values extends readonly unknown[]>(
     selector: () => Values,
-    callback: (values: Values) => void,
+    callback: (values: Values) => void | CleanupFunc,
     options?: WatchOptions
 ): CleanupHandle {
-    const computedArgs = rawComputed(selector);
-    const immediate = options?.immediate ?? false;
-    let oldValues: Values | undefined;
-    return syncEffect(() => {
-        const currentValues = computedArgs.value; // Tracked
-        untracked(() => {
-            const execute =
-                (!oldValues && immediate) || (oldValues && !shallowEqual(oldValues, currentValues));
-            oldValues = currentValues;
-            if (execute) {
-                callback(currentValues);
-            }
-        });
-    });
+    return watchImpl(syncEffect, selector, callback, options);
 }

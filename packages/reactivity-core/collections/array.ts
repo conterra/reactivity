@@ -1,4 +1,4 @@
-import { Reactive } from "../Reactive";
+import { Reactive } from "../types";
 import { reactive } from "../ReactiveImpl";
 
 /**

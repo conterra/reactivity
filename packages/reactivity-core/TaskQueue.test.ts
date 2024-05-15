@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { TaskQueue } from "./TaskQueue";
+import { TaskQueue } from "./utils/TaskQueue";
 
 it("dispatches queued tasks", async () => {
     const queue = new TaskQueue();

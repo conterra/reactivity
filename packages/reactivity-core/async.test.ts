@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
 import { effect, watch } from "./async";
-import * as utils from "./utils";
+import * as report from "./utils/reportTaskError";
 
 afterEach(() => {
     vi.restoreAllMocks();
@@ -179,6 +179,37 @@ describe("effect", () => {
 
         handle.destroy();
         expect(cleanUpSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not trigger again once a cleanup function threw an exception", async () => {
+        const errorSpy = mockErrorReport();
+
+        const spy = vi.fn();
+        const cleanup = vi.fn().mockImplementation(() => {
+            throw new Error("cleanup error");
+        });
+        const r = reactive(1);
+        effect(() => {
+            spy(r.value);
+            return cleanup;
+        });
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+        expect(errorSpy).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        await waitForMacroTask();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1); // not called again
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: cleanup error]`);
+
+        // effect is dead
+        r.value = 3;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -374,6 +405,89 @@ describe("watch", () => {
         await waitForMacroTask();
         expect(spy).toHaveBeenCalledTimes(2);
     });
+
+    it("calls cleanup function during dispose", () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn();
+        const r = reactive(1);
+        const handle = watch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                return cleanup;
+            },
+            {
+                immediate: true
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+        
+        handle.destroy();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls cleanup function during dispose in later execution", async () => {
+        const spy = vi.fn();
+        const cleanup = vi.fn();
+        const r = reactive(1);
+        const handle = watch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                return cleanup;
+            },
+            {
+                immediate: true
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+
+        handle.destroy();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(cleanup).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not trigger again once a cleanup function threw an exception", async () => {
+        const errorSpy = mockErrorReport();
+        const spy = vi.fn();
+        const cleanup = vi.fn().mockImplementation(() => {
+            throw new Error("cleanup error");
+        });
+        const r = reactive(1);
+        watch(
+            () => [r.value],
+            ([v1]) => {
+                spy(v1);
+                return cleanup;
+            },
+            {
+                immediate: true
+            }
+        );
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        await waitForMacroTask();
+        expect(cleanup).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1); // not called again
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.lastCall![0]).toMatchInlineSnapshot(`[Error: cleanup error]`);
+
+        // watch is dead
+        r.value = 3;
+        await waitForMacroTask();
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
 });
 
 function waitForMacroTask() {
@@ -381,6 +495,6 @@ function waitForMacroTask() {
 }
 
 function mockErrorReport() {
-    const errorSpy = vi.spyOn(utils, "reportTaskError").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(report, "reportTaskError").mockImplementation(() => {});
     return errorSpy;
 }

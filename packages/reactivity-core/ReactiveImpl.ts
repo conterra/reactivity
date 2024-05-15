@@ -12,7 +12,7 @@ import {
     ReadonlyReactive,
     RemoveBrand,
     Reactive
-} from "./Reactive";
+} from "./types";
 
 /**
  * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.

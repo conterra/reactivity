@@ -1,5 +1,10 @@
 # @conterra/reactivity-core
 
+## v0.4.0 (unreleased)
+
+-   Add support for cleanup functions returned from watch callbacks.
+-   Rename a few types (`EffectFunc` -> `EffectCallback`, `EffectCleanupFn` -> `CleanupFunc`)
+
 ## v0.3.2
 
 -   Switch to esbuild for building js code. There should be no difference to users of this package.
