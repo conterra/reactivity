@@ -38,6 +38,9 @@ importers:
       rimraf:
         specifier: ^5.0.7
         version: 5.0.7
+      rollup-plugin-esbuild:
+        specifier: ^6.1.1
+        version: 6.1.1(esbuild@0.21.3)(rollup@4.14.1)
       tsx:
         specifier: ^4.10.4
         version: 4.10.4
@@ -476,6 +479,15 @@ packages:
   '@preact/signals-core@1.6.0':
     resolution: {integrity: sha512-O/XGxwP85h1F7+ouqTMOIZ3+V1whfaV9ToIVcuyGriD4JkSD00cQo54BKdqjvBJxbenvp7ynfqRHEwI6e+NIhw==}
 
+  '@rollup/pluginutils@5.1.0':
+    resolution: {integrity: sha512-XTIWOPPcpvyKI6L1NHo0lFlCyznUEyPmPY1mc3KpPVDYulHSTvyeLNVW00QTLIAFNhR3kYnJTQHeGqU4M3n09g==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
   '@rollup/rollup-android-arm-eabi@4.14.1':
     resolution: {integrity: sha512-fH8/o8nSUek8ceQnT7K4EQbSiV7jgkHq81m9lWZFIXjJ7lJzpWXbQFpT/Zh6OZYnpFykvzC3fbEvEAFZu03dPA==}
     cpu: [arm]
@@ -835,6 +847,9 @@ packages:
   entities@4.5.0:
     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
     engines: {node: '>=0.12'}
+
+  es-module-lexer@1.5.2:
+    resolution: {integrity: sha512-l60ETUTmLqbVbVHv1J4/qj+M8nq7AwMzEcg3kmJDt9dCNrTk+yHcYFf/Kw75pMDwd9mPcIGCG5LcS20SxYRzFA==}
 
   esbuild@0.20.2:
     resolution: {integrity: sha512-WdOOppmUNU+IbZ0PaDiTst80zjnrOkyJNHoKupIcVyU8Lvla3Ugx94VzkQ32Ijqd7UhHJy75gNWDMUekcrSJ6g==}
@@ -1316,6 +1331,13 @@ packages:
     resolution: {integrity: sha512-nV6YcJo5wbLW77m+8KjH8aB/7/rxQy9SZ0HY5shnwULfS+9nmTtVXAJET5NdZmCzA4fPI/Hm1wo/Po/4mopOdg==}
     engines: {node: '>=14.18'}
     hasBin: true
+
+  rollup-plugin-esbuild@6.1.1:
+    resolution: {integrity: sha512-CehMY9FAqJD5OUaE/Mi1r5z0kNeYxItmRO2zG4Qnv2qWKF09J2lTy5GUzjJR354ZPrLkCj4fiBN41lo8PzBUhw==}
+    engines: {node: '>=14.18.0'}
+    peerDependencies:
+      esbuild: '>=0.18.0'
+      rollup: ^1.20.0 || ^2.0.0 || ^3.0.0 || ^4.0.0
 
   rollup@4.14.1:
     resolution: {integrity: sha512-4LnHSdd3QK2pa1J6dFbfm1HN0D7vSK/ZuZTsdyUAlA6Rr1yTouUTL13HaDOGJVgby461AhrNGBS7sCGXXtT+SA==}
@@ -1894,6 +1916,14 @@ snapshots:
 
   '@preact/signals-core@1.6.0': {}
 
+  '@rollup/pluginutils@5.1.0(rollup@4.14.1)':
+    dependencies:
+      '@types/estree': 1.0.5
+      estree-walker: 2.0.2
+      picomatch: 2.3.1
+    optionalDependencies:
+      rollup: 4.14.1
+
   '@rollup/rollup-android-arm-eabi@4.14.1':
     optional: true
 
@@ -2264,6 +2294,8 @@ snapshots:
   emoji-regex@9.2.2: {}
 
   entities@4.5.0: {}
+
+  es-module-lexer@1.5.2: {}
 
   esbuild@0.20.2:
     optionalDependencies:
@@ -2833,6 +2865,17 @@ snapshots:
   rimraf@5.0.7:
     dependencies:
       glob: 10.3.10
+
+  rollup-plugin-esbuild@6.1.1(esbuild@0.21.3)(rollup@4.14.1):
+    dependencies:
+      '@rollup/pluginutils': 5.1.0(rollup@4.14.1)
+      debug: 4.3.4
+      es-module-lexer: 1.5.2
+      esbuild: 0.21.3
+      get-tsconfig: 4.7.5
+      rollup: 4.14.1
+    transitivePeerDependencies:
+      - supports-color
 
   rollup@4.14.1:
     dependencies:
