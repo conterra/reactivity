@@ -64,6 +64,16 @@ importers:
         specifier: workspace:*
         version: link:../..
 
+  packages/reactivity-decorators:
+    dependencies:
+      '@conterra/reactivity-core':
+        specifier: workspace:^
+        version: link:../reactivity-core
+    devDependencies:
+      project-root:
+        specifier: workspace:*
+        version: link:../..
+
   playground:
     dependencies:
       '@conterra/reactivity-core':

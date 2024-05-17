@@ -1,0 +1,46 @@
+{
+    "name": "@conterra/reactivity-decorators",
+    "type": "module",
+    "version": "0.1.0",
+    "license": "Apache-2.0",
+    "description": "Decorators for simplified creation of reactive classes.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/conterra/reactivity",
+        "directory": "packages/reactivity-decorators"
+    },
+    "files": [
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "package.json",
+        "dist/**"
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./package.json": "./package.json"
+    },
+    "sideEffects": false,
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "pnpm run build:types && pnpm run build:js",
+        "build:types": "tsc -p tsconfig.prod.json",
+        "build:js": "esbuild index.ts --bundle --splitting --outdir=dist --format=esm --platform=neutral --packages=external --sourcemap --tsconfig=./tsconfig.prod.json",
+        "dev": "concurrently -c auto 'pnpm:dev:types' 'pnpm:dev:js'",
+        "dev:types": "tsc -p tsconfig.prod.json -w --preserveWatchOutput",
+        "dev:js": "pnpm build:js --watch",
+        "test": "vitest"
+    },
+    "peerDependencies": {
+        "@conterra/reactivity-core": "workspace:^"
+    },
+    "devDependencies": {
+        "project-root": "workspace:*"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
