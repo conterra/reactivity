@@ -1,6 +1,6 @@
 # @conterra/reactivity-core
 
-## v0.4.0 (unreleased)
+## v0.4.0
 
 -   Add support for cleanup functions returned from watch callbacks.
 -   Rename a few types (`EffectFunc` -> `EffectCallback`, `EffectCleanupFn` -> `CleanupFunc`)
