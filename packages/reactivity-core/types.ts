@@ -155,8 +155,10 @@ export interface WatchOptions {
     /**
      * Whether to call the watch callback once during setup.
      *
-     * If this is `false`, the watch callback will only be invoked
+     * If this is `false` (the default), the watch callback will only be invoked
      * after at least a single value changed.
+     * 
+     * If this is `true`, the callback will fire immediately.
      */
     immediate?: boolean;
 }
