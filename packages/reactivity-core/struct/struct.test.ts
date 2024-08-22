@@ -477,7 +477,7 @@ describe("reactiveStruct", () => {
         );
     });
     it("supports boolean values as computed properties", () => {
-        // For this test to pass, we had to prevent the return type of 
+        // For this test to pass, we had to prevent the return type of
         // the computed property being calculated to true | false.
         type MyType = {
             boolA: boolean;

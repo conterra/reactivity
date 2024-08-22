@@ -288,15 +288,10 @@ export function defineSharedEffectTests(
                 await expect(doMutation(() => (r.value += 1))).resolves.toBe(undefined);
             });
         });
-
-
     });
 }
 
-export function defineSharedWatchTests(
-    watchImpl: typeof syncWatch,
-    type: "sync" | "async"
-) {
+export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync" | "async") {
     describe("shared", () => {
         beforeEach(() => {
             errorSpy = mockErrorReport();
@@ -319,12 +314,12 @@ export function defineSharedWatchTests(
                 }
             );
             expect(spy).toBeCalledTimes(0);
-    
-            await doMutation(() => r1.value = 3);
+
+            await doMutation(() => (r1.value = 3));
             expect(spy).toBeCalledTimes(1);
             expect(spy).toBeCalledWith(3, 2);
         });
-    
+
         it("triggers initially if 'immediate' is true", async () => {
             const spy = vi.fn();
             const r1 = reactive(1);
@@ -337,12 +332,12 @@ export function defineSharedWatchTests(
                 { immediate: true }
             );
             expect(spy).toBeCalledTimes(1);
-    
-            await doMutation(() => r1.value = 3);
+
+            await doMutation(() => (r1.value = 3));
             expect(spy).toBeCalledTimes(2);
             expect(spy).toBeCalledWith(3, 2);
         });
-    
+
         it("ignores reactive reads in callback", async () => {
             const spy = vi.fn();
             const r1 = reactive(1);
@@ -358,11 +353,11 @@ export function defineSharedWatchTests(
                 }
             );
             expect(spy).toBeCalledTimes(1);
-    
-            await doMutation(() => r2.value = 4);
+
+            await doMutation(() => (r2.value = 4));
             expect(spy).toBeCalledTimes(1);
         });
-    
+
         it("can be disposed", async () => {
             const spy = vi.fn();
             const r1 = reactive(1);
@@ -376,12 +371,12 @@ export function defineSharedWatchTests(
                 }
             );
             expect(spy).toBeCalledTimes(1);
-    
+
             handle.destroy();
-            await doMutation(() => r1.value = 2);
+            await doMutation(() => (r1.value = 2));
             expect(spy).toBeCalledTimes(1);
         });
-    
+
         it("rethrows errors from the initial selector execution and does not continue running", async () => {
             const spy = vi.fn();
             const r = reactive(1);
@@ -396,12 +391,12 @@ export function defineSharedWatchTests(
                     }
                 );
             }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
-    
+
             // callback never invoked because of error during setup
-            await doMutation(() => r.value += 1);
+            await doMutation(() => (r.value += 1));
             expect(spy).toHaveBeenCalledTimes(0);
         });
-    
+
         it("keeps running even if some selector executions (other than the first) throw an error", async () => {
             const spy = vi.fn();
             const r = reactive(1);
@@ -421,21 +416,23 @@ export function defineSharedWatchTests(
                 }
             );
             expect(spy).toHaveBeenCalledOnce();
-    
+
             // value == 2 -> error and no additional callback execution
-            await expect(doMutation(() => (r.value += 1))).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+            await expect(
+                doMutation(() => (r.value += 1))
+            ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
             expect(spy).toHaveBeenCalledOnce();
-    
+
             // recovered, callback gets executed
-            await doMutation(() => r.value += 1);
+            await doMutation(() => (r.value += 1));
             expect(spy).toHaveBeenCalledTimes(2);
-    
+
             // clean destroy, callback no longer gets executed
             handle.destroy();
-            await doMutation(() => r.value += 1);
+            await doMutation(() => (r.value += 1));
             expect(spy).toHaveBeenCalledTimes(2);
         });
-    
+
         it("stops running if the immediate execution of the callback throws", async () => {
             const spy = vi.fn();
             const r = reactive(1);
@@ -450,12 +447,12 @@ export function defineSharedWatchTests(
                 );
             }).toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
             expect(spy).toHaveBeenCalledTimes(1);
-    
+
             // Not called again, watch is not running
-            await doMutation(() => r.value += 1);
+            await doMutation(() => (r.value += 1));
             expect(spy).toHaveBeenCalledTimes(1);
         });
-    
+
         it("keeps running if the later executions of the callback throw", async () => {
             const spy = vi.fn();
             const r = reactive(1);
@@ -469,20 +466,22 @@ export function defineSharedWatchTests(
                 }
             );
             expect(spy).toHaveBeenCalledTimes(0);
-    
-            await expect(doMutation(() => (r.value += 1))).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
+
+            await expect(
+                doMutation(() => (r.value += 1))
+            ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: boom]`);
             expect(spy).toHaveBeenCalledTimes(1);
-    
+
             // Recovers, called again
-            await doMutation(() => r.value += 1);
+            await doMutation(() => (r.value += 1));
             expect(spy).toHaveBeenCalledTimes(2);
-    
+
             // Clean shutdown works
             handle.destroy();
-            await doMutation(() => r.value += 1);
+            await doMutation(() => (r.value += 1));
             expect(spy).toHaveBeenCalledTimes(2);
         });
-    
+
         it("calls cleanup function during dispose", async () => {
             const spy = vi.fn();
             const cleanup = vi.fn();
@@ -499,11 +498,11 @@ export function defineSharedWatchTests(
             );
             expect(spy).toHaveBeenCalledTimes(1);
             expect(cleanup).toHaveBeenCalledTimes(0);
-            
+
             handle.destroy();
             expect(cleanup).toHaveBeenCalledTimes(1);
         });
-    
+
         it("calls cleanup function during dispose in later execution", async () => {
             const spy = vi.fn();
             const cleanup = vi.fn();
@@ -520,16 +519,16 @@ export function defineSharedWatchTests(
             );
             expect(spy).toHaveBeenCalledTimes(1);
             expect(cleanup).toHaveBeenCalledTimes(0);
-    
-            await doMutation(() => r.value = 2);
+
+            await doMutation(() => (r.value = 2));
             expect(spy).toHaveBeenCalledTimes(2);
             expect(cleanup).toHaveBeenCalledTimes(1);
-    
+
             handle.destroy();
             expect(spy).toHaveBeenCalledTimes(2);
             expect(cleanup).toHaveBeenCalledTimes(2);
         });
-    
+
         it("does not trigger again once a cleanup function threw an exception", async () => {
             const spy = vi.fn();
             const cleanup = vi.fn().mockImplementation(() => {
@@ -546,16 +545,18 @@ export function defineSharedWatchTests(
                     immediate: true
                 }
             );
-    
+
             expect(spy).toHaveBeenCalledTimes(1);
             expect(cleanup).toHaveBeenCalledTimes(0);
-    
-            await expect(doMutation(() => r.value = 2)).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: cleanup error]`);
+
+            await expect(
+                doMutation(() => (r.value = 2))
+            ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: cleanup error]`);
             expect(cleanup).toHaveBeenCalledTimes(1);
             expect(spy).toHaveBeenCalledTimes(1); // not called again
-    
+
             // watch is dead
-            await doMutation(() => r.value = 3);
+            await doMutation(() => (r.value = 3));
             expect(spy).toHaveBeenCalledTimes(1);
             expect(cleanup).toHaveBeenCalledTimes(1);
         });

@@ -14,7 +14,7 @@ describe("syncEffect", () => {
                 spy(r.value);
             });
             expect(spy).toBeCalledTimes(1);
-            
+
             r.value = 2;
             expect(spy).toBeCalledTimes(2);
         });

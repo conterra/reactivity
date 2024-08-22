@@ -126,7 +126,7 @@ export type CleanupFunc = () => void;
  *
  * Instructions in this function are tracked: when any of its reactive
  * dependencies change, the effect will be triggered again.
- * 
+ *
  * An effect may return a cleanup function that will be executed
  * before the effect is triggered again, or when the effect is being destroyed.
  *
@@ -136,9 +136,9 @@ export type EffectCallback = () => void | CleanupFunc;
 
 /**
  * A watch callback triggered if observed values change.
- * 
+ *
  * The body of a watch statement is _not_ tracked.
- * 
+ *
  * A watch callback may return a cleanup function that will be executed
  * before the callback is triggered again, or when the watch is being destroyed.
  *
@@ -157,7 +157,7 @@ export interface WatchOptions {
      *
      * If this is `false` (the default), the watch callback will only be invoked
      * after at least a single value changed.
-     * 
+     *
      * If this is `true`, the callback will fire immediately.
      */
     immediate?: boolean;

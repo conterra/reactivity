@@ -16,21 +16,21 @@
         "prettier:common": "prettier ./packages ./playground --ignore-path .eslintignore --cache"
     },
     "devDependencies": {
-        "@types/node": "^18.19.33",
-        "@typescript-eslint/eslint-plugin": "^7.9.0",
-        "@typescript-eslint/parser": "^7.9.0",
+        "@types/node": "^18.19.45",
+        "@typescript-eslint/eslint-plugin": "^7.18.0",
+        "@typescript-eslint/parser": "^7.18.0",
         "concurrently": "^8.2.2",
-        "esbuild": "^0.21.3",
+        "esbuild": "^0.23.1",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
-        "happy-dom": "^14.11.0",
-        "prettier": "^3.2.5",
-        "rimraf": "^5.0.7",
-        "tsx": "^4.10.4",
-        "typedoc": "^0.25.13",
-        "typescript": "~5.4.5",
-        "vite": "^5.2.11",
-        "vitest": "^1.6.0"
+        "happy-dom": "^15.0.0",
+        "prettier": "^3.3.3",
+        "rimraf": "^6.0.1",
+        "tsx": "^4.17.0",
+        "typedoc": "^0.26.6",
+        "typescript": "~5.5.4",
+        "vite": "^5.4.2",
+        "vitest": "^2.0.5"
     },
     "engines": {
         "node": ">= 20",

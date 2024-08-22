@@ -85,7 +85,6 @@ export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => voi
     return handle;
 }
 
-
 /**
  * Watches reactive values and executes a callback whenever those values change.
  *

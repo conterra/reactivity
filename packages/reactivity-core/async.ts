@@ -163,7 +163,7 @@ class AsyncEffect {
         if (this.isDestroyed) {
             return;
         }
-        
+
         this.effectHandle?.destroy();
         this.effectHandle = undefined;
         if (this.isExecuting) {

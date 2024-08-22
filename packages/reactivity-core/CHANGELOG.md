@@ -1,5 +1,9 @@
 # @conterra/reactivity-core
 
+## v0.5.0
+
+-   Update dependencies
+
 ## v0.4.0
 
 -   Add support for cleanup functions returned from watch callbacks.
