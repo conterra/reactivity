@@ -385,16 +385,17 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
         return cell!.value;
     }
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    splice(...args: any[]): T[] {
-        const newItems: any[] | undefined = args[2];
-        const removedCells: Reactive<T>[] = (this.#items.splice as any)(...args);
-        if ((newItems != null && newItems.length !== 0) || removedCells.length !== 0) {
+    splice(start: number, deleteCount?: number, ...items: T[]): T[] {
+        const removedCells: Reactive<T>[] = this.#items.splice(
+            start,
+            deleteCount ?? this.#items.length,
+            ...items.map((item) => reactive(item))
+        );
+        if ((items != null && items.length !== 0) || removedCells.length !== 0) {
             this.#triggerStructuralChange();
         }
         return removedCells.map((cell) => cell.value);
     }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     sort(compare: (a: T, b: T) => number): void {
         this.#items.sort((a, b) => compare(a.value, b.value));

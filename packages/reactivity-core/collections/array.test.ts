@@ -201,6 +201,27 @@ describe("basic usage", () => {
         expect(numbers).toEqual([3, 2, 1]);
     });
 
+    it("removes elements using splice()", () => {
+        const array = reactiveArray([1, 2, 3]);
+        const removed = array.splice(1, 1);
+        expect(array.getItems()).toEqual([1, 3]);
+        expect(removed).toEqual([2]);
+    });
+
+    it("removes all elements using splice()", () => {
+        const array = reactiveArray([1, 2, 3]);
+        const removed = array.splice(0);
+        expect(array.getItems()).toEqual([]);
+        expect(removed).toEqual([1, 2, 3]);
+    });
+
+    it("supports adding elements using splice()", () => {
+        const array = reactiveArray([1]);
+        const removed = array.splice(1, 0, 2, 3);
+        expect(removed.length).toBe(0);
+        expect(array.getItems()).toEqual([1, 2, 3]);
+    });
+
     it("supports iteration", () => {
         const array = reactiveArray([1, 2, 3]);
         expect(Array.from(array)).toMatchInlineSnapshot(`

@@ -1,5 +1,9 @@
 # @conterra/reactivity-core
 
+## v0.4.2
+
+-   Fix `reactiveArray.splice()`: new elements could not be inserted.
+
 ## v0.4.1
 
 Improved `watch` ergonomics:
