@@ -1,6 +1,6 @@
 # @conterra/reactivity-core
 
-## v0.4.1 (unreleased)
+## v0.4.1
 
 Improved `watch` ergonomics:
 
