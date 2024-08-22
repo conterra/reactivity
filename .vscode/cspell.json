@@ -1,8 +1,6 @@
 {
     "version": "0.2",
-    "ignorePaths": [
-        "node_modules"
-    ],
+    "ignorePaths": ["node_modules"],
     "language": "en",
     "dictionaries": ["Custom Words"],
     "dictionaryDefinitions": [

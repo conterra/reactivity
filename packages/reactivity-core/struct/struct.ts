@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { computed, getValue, isReactive, reactive } from "../ReactiveImpl";
 
@@ -120,6 +119,7 @@ type ReactiveStructConstructorParams<T, Def> = ConstructorArgs<
 /**
  * Makes the properties object optional if all properties are optional (i.e. if `{}` would be a valid value).
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type ConstructorArgs<Props> = {} extends Props ? [initialValues?: Props] : [initialValues: Props];
 
 /**
