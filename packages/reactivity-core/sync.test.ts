@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
-import { syncEffect, syncEffectOnce, syncWatch } from "./sync";
+import { syncEffect, syncEffectOnce, syncWatch, syncWatchValue } from "./sync";
 import { defineSharedEffectTests, defineSharedWatchTests } from "./test/sharedTests";
 
 describe("syncEffect", () => {
@@ -82,7 +82,7 @@ describe("syncEffectOnce", () => {
 });
 
 describe("syncWatch", () => {
-    defineSharedWatchTests(syncWatch, "sync");
+    defineSharedWatchTests(syncWatch, syncWatchValue, "sync");
 
     describe("specifics", () => {
         it("triggers without a delay", async () => {

@@ -7,21 +7,21 @@ import {
     WatchImmediateCallback,
     WatchOptions
 } from "./types";
-import { shallowEqual } from "./utils/shallowEqual";
 
 type EffectSignature = (callback: EffectCallback) => CleanupHandle;
 
-export function watchImpl<const Values extends readonly unknown[]>(
+export function watchImpl<T>(
     effectImpl: EffectSignature,
-    selector: () => Values,
-    callback: WatchImmediateCallback<Values>,
-    options?: WatchOptions<Values>
+    selector: () => T,
+    callback: WatchImmediateCallback<T>,
+    options?: WatchOptions<T>
 ): CleanupHandle {
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
-    const equal = options?.equal ?? shallowEqual;
+    const equal = options?.equal ?? trivialEquals;
 
-    let values: Values | undefined;
+    let firstExecution = true;
+    let value: T;
     let cleanup: CleanupFunc | void | undefined;
     function triggerCleanup() {
         const clean = cleanup;
@@ -39,10 +39,11 @@ export function watchImpl<const Values extends readonly unknown[]>(
     const effectHandle = effectImpl(() => {
         const next = computedArgs.value; // Tracked
         untracked(() => {
-            const prev = values;
-            const shouldExecute = (!prev && immediate) || (prev && !equal(prev, next));
-            if (shouldExecute || !values) {
-                values = next;
+            const prev = value;
+            const shouldExecute = (firstExecution && immediate) || (!firstExecution && !equal(prev, next));
+            if (shouldExecute || firstExecution) {
+                value = next;
+                firstExecution = false;
             }
             if (shouldExecute) {
                 triggerCleanup();
@@ -61,4 +62,8 @@ export function watchImpl<const Values extends readonly unknown[]>(
         }
     };
     return handle;
+}
+
+function trivialEquals(a: unknown, b: unknown) {
+    return a === b;
 }

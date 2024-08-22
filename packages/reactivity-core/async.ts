@@ -1,4 +1,4 @@
-import { TaskQueue } from "./utils/TaskQueue";
+import { untracked } from "./ReactiveImpl";
 import {
     CleanupFunc,
     CleanupHandle,
@@ -8,10 +8,11 @@ import {
     WatchOptions
 } from "./types";
 import { reportTaskError } from "./utils/reportTaskError";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { syncEffect, syncEffectOnce, syncWatch } from "./sync";
+import { shallowEqual } from "./utils/shallowEqual";
+import { TaskQueue } from "./utils/TaskQueue";
 import { watchImpl } from "./watch";
-import { untracked } from "./ReactiveImpl";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { syncEffect, syncEffectOnce, syncWatch, syncWatchValue } from "./sync";
 
 /**
  * Runs the callback function and tracks its reactive dependencies.
@@ -192,6 +193,83 @@ class AsyncEffect {
 }
 
 /**
+ * Watches a single reactive value and executes a callback whenever that value changes.
+ * 
+ * `watchValue` works like this:
+ *
+ * 1. The `selector` is a tracked function that shall return a value.
+ *    This value is usually obtained by accessing one or more reactive objects.
+ * 2. Whenever the value returned by `selector` changes, `callback`
+ *    will be executed with the new value (the old value is available as well).
+ *    The body of `callback` is not reactive.
+ *
+ * The values returned by the selector are compared using object identity by default (i.e. `===`).
+ * Note that you can provide a custom `equal` function to change this behavior.
+ * 
+ * Example:
+ * 
+ * ```ts
+ * import { reactive, watchValue } from "@conterra/reactivity-core";
+ * 
+ * const v1 = reactive(1);
+ * const v2 = reactive(2);
+ * 
+ * // Executes whenever the _sum_ of the two values changes.
+ * watchValue(() => v1.value + v2.value, (sum) => {
+ *     console.log("new sum", sum);
+ * });
+ * ```
+ * 
+ * `watchValue` returns a handle that can be used to unsubscribe from changes.
+ * That handle's `destroy()` function should be called to stop watching when you are no longer interested in updates:
+ *
+ * ```js
+ * const handle = watchValue(() => someReactive.value, () => {
+ *   // ...
+ * });
+ * // later:
+ * handle.destroy();
+ * ```
+ *
+ * > NOTE: You must *not* modify the parameters that get passed into `callback`.
+ *
+ * > NOTE: This function will slightly defer re-executions of the given `callback`.
+ * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.
+ * > This is done to avoid redundant executions as a result of many fine-grained changes.
+ * > 
+ * > If you need more control, take a look at {@link syncWatchValue}.
+ * 
+ * @param selector a function that returns the value to watch.
+ * @param callback a function that will be executed whenever the watched value changes.
+ * @param options additional options.
+ */
+export function watchValue<T> (
+    selector: () => T,
+    callback: WatchCallback<T>,
+    options?: WatchOptions<T> & { immediate?: false }
+): CleanupHandle;
+/**
+ * This overload is used when `immediate` is not set to `false`.
+ * 
+ * @param selector a function that returns the value to watch.
+ * @param callback a function that will be executed whenever the watched value changed.
+ * @param options additional options.
+ * @group Watching
+ */
+export function watchValue<T> (
+    selector: () => T,
+    callback: WatchImmediateCallback<T>,
+    options?: WatchOptions<T>
+): CleanupHandle;
+export function watchValue<T> (
+    selector: () => T,
+    callback: WatchImmediateCallback<T>,
+    options?: WatchOptions<T>
+): CleanupHandle {
+    return watchImpl(effect, selector, callback, options);
+}
+
+/**
  * Watches reactive values and executes a callback whenever those values change.
  *
  * `watch` works like this:
@@ -202,8 +280,9 @@ class AsyncEffect {
  *    will be executed with those values (the old values are available as well).
  *    The body of `callback` is not reactive.
  *
- * The arrays returned by the selector are compared using shallow equality: the callback
- * runs if the length of the array changes or if one of its entries has a different identity (determined via `!==`).
+ * The arrays returned by the selector are compared using shallow equality by default: the callback
+ * runs if the length of the array changes or if one of its entries has a different identity.
+ * Note that you can provide a custom `equal` function to change this behavior.
  *
  * Example:
  *
@@ -232,7 +311,7 @@ class AsyncEffect {
  * handle.destroy();
  * ```
  *
- * > NOTE: You must *not* modify the array that gets passed into `callback`.
+ * > NOTE: You must *not* modify the parameters that get passed into `callback`.
  *
  * > NOTE: This function will slightly defer re-executions of the given `callback`.
  * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.
@@ -240,6 +319,9 @@ class AsyncEffect {
  * >
  * > If you need more control, take a look at {@link syncWatch}.
  *
+ * @param selector a function that returns the values to watch.
+ * @param callback a function that will be executed whenever the watched values changed.
+ * @param options additional options.
  * @group Watching
  */
 export function watch<const Values extends readonly unknown[]>(
@@ -247,6 +329,14 @@ export function watch<const Values extends readonly unknown[]>(
     callback: WatchCallback<Values>,
     options?: WatchOptions<Values> & { immediate?: false }
 ): CleanupHandle;
+/**
+ * This overload is used when `immediate` is not set to `false`.
+ * 
+ * @param selector a function that returns the values to watch.
+ * @param callback a function that will be executed whenever the watched values changed.
+ * @param options additional options.
+ * @group Watching
+ */
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
     callback: WatchImmediateCallback<Values>,
@@ -257,7 +347,10 @@ export function watch<const Values extends readonly unknown[]>(
     callback: WatchImmediateCallback<Values>,
     options?: WatchOptions<Values>
 ): CleanupHandle {
-    return watchImpl(effect, selector, callback, options);
+    return watchImpl(effect, selector, callback, {
+        equal: shallowEqual,
+        ...options
+    });
 }
 
 const tasks = new TaskQueue();

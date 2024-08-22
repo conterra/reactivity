@@ -44,7 +44,7 @@ export {
     isReadonlyReactive,
     isReactive
 } from "./ReactiveImpl";
-export { syncEffect, syncEffectOnce, syncWatch } from "./sync";
-export { effect, watch } from "./async";
+export { syncEffect, syncEffectOnce, syncWatch, syncWatchValue } from "./sync";
+export { effect, watch, watchValue } from "./async";
 export * from "./collections";
 export * from "./struct";

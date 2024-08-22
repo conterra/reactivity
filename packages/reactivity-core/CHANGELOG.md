@@ -4,6 +4,9 @@
 
 Improved `watch` ergonomics:
 
+-   Introduce two new variants of `watch`: `watchValue` and `syncWatchValue`.
+    These variants support returning a single value from the selector instead of an array of values.
+    They behave the same as the existing `watch` functions in all other regards.
 -   All versions of `watch` now also pass the previous values to the callback (as second argument).
 -   Add support for a custom `equal` parameter.
     This can be used to skip callback invocations if the new value can be considered equal to the old one.

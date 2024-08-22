@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
-import { effect, watch } from "./async";
+import { effect, watch, watchValue } from "./async";
 import { defineSharedEffectTests, defineSharedWatchTests } from "./test/sharedTests";
 
 describe("effect", () => {
@@ -63,7 +63,7 @@ describe("effect", () => {
 });
 
 describe("watch", () => {
-    defineSharedWatchTests(watch, "async");
+    defineSharedWatchTests(watch, watchValue, "async");
 
     describe("specifics", () => {
         it("can be disposed while a callback is scheduled", async () => {

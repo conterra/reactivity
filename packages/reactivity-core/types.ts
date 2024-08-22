@@ -162,9 +162,9 @@ export type WatchImmediateCallback<T> = (value: T, oldValue: T | undefined) => v
  */
 export interface WatchOptions<T> {
     /**
-     * Whether to call the watch callback once during setup.
+     * Whether to call the watch callback once during setup (default: `false`).
      *
-     * If this is `false` (the default), the watch callback will only be invoked
+     * If this is `false`, the watch callback will only be invoked
      * after at least a single value changed.
      *
      * If this is `true`, the callback will fire immediately.
@@ -172,7 +172,7 @@ export interface WatchOptions<T> {
     immediate?: boolean;
 
     /**
-     * A function that returns true if the two values are considered equal.
+     * A function that returns `true` if the two values are considered equal.
      * If this function is provided, the watch callback will only be triggered if this function returns `false`.
      * 
      * By default, an implementation based on object identity is used.

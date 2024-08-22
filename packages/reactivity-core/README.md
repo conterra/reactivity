@@ -5,15 +5,15 @@
 ## Quick Example
 
 ```ts
-import { reactive, computed, watch } from "@conterra/reactivity-core";
+import { reactive, computed, watchValue } from "@conterra/reactivity-core";
 
 const firstName = reactive("John");
 const lastName = reactive("Doe");
 const fullName = computed(() => `${firstName.value} ${lastName.value}`);
 
-watch(
-    () => [fullName.value],
-    ([fullName]) => {
+watchValue(
+    () => fullName.value,
+    (fullName) => {
         console.log(fullName);
     },
     {
@@ -148,7 +148,7 @@ Instances of person are now reactive, since their state is actually stored in si
 ```ts
 import { effect } from "@conterra/reactivity-core";
 
-// Person from previous example
+// Person class from previous example
 const p = new Person();
 p.name = "E. Example";
 
@@ -210,23 +210,23 @@ effect(() => {
 If your effect callbacks become more complex, it may be difficult to control which signals are ultimately used.
 This can result in your effect running too often, because you're really only interested in _some_ changes and not all of them.
 
-In that case, you can use `watch()` to have more fine grain control:
+In that case, you can use `watchValue()` (or one of the other `watch` variants) to have more fine grained control:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const r1 = reactive(0);
 const r2 = reactive(1);
 const r3 = reactive(2);
 
-watch(
+watchValue(
     // (1)
     () => {
         const sum = r1.value + r2.value + r3.value;
-        return [sum];
+        return sum;
     },
     // (2)
-    ([sum]) => {
+    (sum) => {
         console.log(sum);
     },
     // (3)
@@ -234,32 +234,30 @@ watch(
 );
 ```
 
-`watch()` takes two functions and one (optional) options object:
+`watchValue()` takes two functions and one (optional) options object:
 
 -   **(1)**: The _selector_ function.
     This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded.
-    The function must return an array of values.
+    The function must return the value you want to watch and it should not have any side effects.
 -   **(2)**: The _callback_ function.
-    This function is called whenever the selector function returned different values, and it receives those values as its first argument.
-    The callback itself is _not_ reactive.
--   **(3)**: By default, the callback function will only be invoked after the watched values changed at least once.
-    By specifying `immediate: true`, the callback will also run for the initial values.
+    This function is called whenever the selector function returned a different value, and it receives that value as its first argument.
+    The callback itself is _not_ reactive and it may trigger arbitrary side effects.
+-   **(3)**: By default, the callback function will only be invoked after the watched value changed at least once.
+    By specifying `immediate: true`, the callback will also run for the initial value.
 
 In this example, the callback function will only re-run when the computed sum truly changed.
 
 ### Accessing previous values
 
-The callback function of `watch()` can access the previous values of the watched signals via its second argument:
+The callback function of `watchValue()` can access the previous value via its second argument:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const counter = reactive(0);
-watch(
-    () => {
-        return [counter.value];
-    },
-    ([count], [oldCount]) => {
+watchValue(
+    () => counter.value,
+    (count, oldCount) => {
         console.log(count, oldCount);
     }
 );
@@ -280,7 +278,7 @@ You can use this function to undo or cancel an action started by your callback.
 The following example fetches the user details for a given user id whenever that id changes:
 
 ```ts
-import { reactive, effect, watch } from "@conterra/reactivity-core";
+import { reactive, effect, watchValue } from "@conterra/reactivity-core";
 
 const userId = reactive("test-1");
 
@@ -295,10 +293,10 @@ effect(() => {
     };
 });
 
-// Same thing, using watch():
-watch(
-    () => [userId.value],
-    ([id]) => {
+// Same thing, using watchValue():
+watchValue(
+    () => userId.value,
+    (id) => {
         const controller = new AbortController();
         fetchUserDetails(id, controller.signal);
         return () => {
@@ -317,21 +315,42 @@ async function fetchUserDetails(id: string, signal: AbortSignal): Promise<void> 
 }
 ```
 
+#### Cheat sheet: variants of effect and watch
+
+The following table provides a quick overview of the different variants of `effect` and `watch`:
+
+| Function         | Kind of values                                     | Callback condition                                | Callback delay |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------- | -------------- |
+| `effect`         | N/A                                                | After _any_ used signal changes.                  | Slight delay.  |
+| `watchValue`     | Single value.                                      | After the watched value changed.                  | Slight delay.  |
+| `watch`          | Multiple values (via array with shallow equality). | After one ore more of the watched values changed. | Slight delay.  |
+| `syncEffect`     | N/A                                                | After _any_ used signal changed.                  | No delay.      |
+| `syncWatchValue` | Single value.                                      | After the watched value changed.                  | No delay.      |
+| `syncWatch`      | Multiple values (via array with shallow equality). | After one ore more of the watched values changed. | No delay.      |
+
+Note that `watchValue` and `watch` are almost the same.
+`watch` supports watching multiple values at once directly (but forces you to return an array) while `watchValue` only supports a single value.
+In truth, only their default `equal` functions are different: `watchValue` uses `===` while `watch` uses shallow array equality.
+
+More most circumstances, `watchValue`, `watch` or `effect` are the right choice.
+The `sync*` variants are useful when you need to run the callback immediately.
+For more details, see [Sync vs async effect / watch](#sync-vs-async-effect--watch).
+
 ### Complex values
 
 Up to this point, examples have used primitive values such as strings or integers.
 Signals support _any_ kind of `value`, for example:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const currentUser = reactive({
     name: "User 1"
 });
 
-watch(
-    () => [currentUser.value],
-    ([user]) => {
+watchValue(
+    () => currentUser.value,
+    (user) => {
         console.log(user.name);
     },
     { immediate: true }
@@ -354,7 +373,7 @@ For this reason, `reactive` and `computed` allow you to supply a custom equality
 This allows you to ignore certain updates by specifying that a value is _equal_ to another value:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const currentUser = reactive(
     {
@@ -365,12 +384,40 @@ const currentUser = reactive(
     }
 );
 
-watch(
-    () => [currentUser.value],
-    ([user]) => {
+watchValue(
+    () => currentUser.value,
+    (user) => {
         console.log(user.name);
     },
     { immediate: true }
+);
+
+// Assignment is ignored because the name is the same.
+currentUser.value = { name: "User 1" };
+```
+
+When you only need custom equality rules for a single `watch`, you can also use its `equal` option directly:
+
+```ts
+import { reactive, watchValue } from "@conterra/reactivity-core";
+
+// No custom equality here.
+const currentUser = reactive({
+    name: "User 1"
+});
+
+watchValue(
+    () => currentUser.value,
+    (user) => {
+        console.log(user.name);
+    },
+    {
+        immediate: true,
+        // Custom equality directly for the watch callback.
+        equal: (prev, next) => {
+            return prev.name === next.name;
+        }
+    }
 );
 
 // Assignment is ignored because the name is the same.

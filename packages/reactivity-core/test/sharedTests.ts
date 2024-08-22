@@ -1,7 +1,7 @@
 import { afterEach } from "node:test";
 import { MockInstance, beforeEach, describe, expect, it, vi } from "vitest";
 import { batch, reactive } from "../ReactiveImpl";
-import { type syncWatch, type syncEffect } from "../sync";
+import { type syncEffect, type syncWatch, type syncWatchValue } from "../sync";
 import * as report from "../utils/reportTaskError";
 
 let errorSpy!: MockInstance | undefined;
@@ -291,7 +291,11 @@ export function defineSharedEffectTests(
     });
 }
 
-export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync" | "async") {
+export function defineSharedWatchTests(
+    watchImpl: typeof syncWatch,
+    watchValueImpl: typeof syncWatchValue,
+    type: "sync" | "async"
+) {
     describe("shared", () => {
         beforeEach(() => {
             errorSpy = mockErrorReport();
@@ -359,7 +363,8 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
 
         it("supports custom equality", async () => {
             const spy = vi.fn();
-            const equalsIgnoreCase = ([a]: [string], [b]: [string]) => a.toLowerCase() === b.toLowerCase();
+            const equalsIgnoreCase = ([a]: [string], [b]: [string]) =>
+                a.toLowerCase() === b.toLowerCase();
 
             const str = reactive("foo");
             watchImpl(
@@ -375,8 +380,8 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
 
             await doMutation(() => (str.value = "FOO"));
             expect(spy).toHaveBeenCalledTimes(0); // "FOO" is ignored
-            
-            await doMutation(() => (str.value = "bar")); 
+
+            await doMutation(() => (str.value = "bar"));
             expect(spy).toHaveBeenCalledTimes(1); // "bar" is different
             expect(spy).toHaveBeenCalledWith("bar", "foo"); // sees "foo" not "FOO" since that execution was skipped
         });
@@ -437,6 +442,36 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
 
             await doMutation(() => (r2.value = 4));
             expect(spy).toBeCalledTimes(1);
+        });
+
+        it("supports single values", async () => {
+            const spy = vi.fn();
+            const r1 = reactive(1);
+            const r2 = reactive(2);
+            watchValueImpl(() => r1.value + r2.value, (sum, oldSum) => {
+                spy(sum, oldSum);
+            });
+            expect(spy).toBeCalledTimes(0);
+
+            await doMutation(() => {
+                batch(() => {
+                    r1.value = 2;
+                    r2.value = 1;
+                });
+            });
+            expect(spy).toBeCalledTimes(0);
+
+            await doMutation(() => {
+                r1.value = 3;
+            });
+            expect(spy).toBeCalledTimes(1);
+            expect(spy).toBeCalledWith(4, 3);
+
+            await doMutation(() => {
+                r2.value = 2;
+            });
+            expect(spy).toBeCalledTimes(2);
+            expect(spy).toBeCalledWith(5, 4);
         });
 
         it("can be disposed", async () => {
