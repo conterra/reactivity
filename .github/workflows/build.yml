@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:
@@ -43,6 +44,10 @@ jobs:
           pnpm build
           pnpm test
 
+      - name: Bulid documentation
+        run: |
+          pnpm build-docs
+
       - name: Determine release tag
         if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
         run: |
@@ -66,3 +71,35 @@ jobs:
         run: |
           cd packages/reactivity-core
           pnpm publish
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: dist/docs
+          retention-days: 1
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    concurrency: deploy-${{ github.ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load documentation artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: docs
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+          branch: gh-pages
+          target-folder: ${{ inputs.release && 'latest' || 'dev' }}
