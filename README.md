@@ -9,6 +9,9 @@ Framework agnostic library for building reactive applications.
 
 See the [README of the `@conterra/reactivity-core` package](./packages/reactivity-core/README.md).
 
+The API docs for the latest release are hosted [here](https://conterra.github.io/reactivity/latest/).
+Click [here](https://conterra.github.io/reactivity/dev/) for the API docs of the current main branch.
+
 ## Setup
 
 Install [pnpm](https://pnpm.io/), for example by running `npm install -g pnpm`.

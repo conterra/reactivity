@@ -1,6 +1,8 @@
 # @conterra/reactivity-core
 
-> UI framework independent reactivity library with support for all kinds of values
+UI framework independent reactivity library with support for all kinds of values.
+
+Click here to visit the [rendered API Documentation](https://conterra.github.io/reactivity/latest/).
 
 ## Quick Example
 
