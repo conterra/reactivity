@@ -320,6 +320,27 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
             expect(spy).toBeCalledWith(3, 2);
         });
 
+        it("ignores updates that return the same value", async () => {
+            const spy = vi.fn();
+            const r1 = reactive(1);
+            const r2 = reactive(2);
+            watchImpl(
+                () => [r1.value + r2.value],
+                ([sum]) => {
+                    spy(sum);
+                }
+            );
+            expect(spy).toBeCalledTimes(0);
+
+            await doMutation(() => {
+                batch(() => {
+                    r1.value = 2;
+                    r2.value = 1;
+                });
+            });
+            expect(spy).toBeCalledTimes(0);
+        });
+
         it("passes the previous values to the callback", async () => {
             const spy = vi.fn();
             const r = reactive(1);
@@ -334,6 +355,30 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
             await doMutation(() => (r.value = 2));
             expect(spy).toBeCalledTimes(1);
             expect(spy).toBeCalledWith(2, 1); // 1 is the original value
+        });
+
+        it("supports custom equality", async () => {
+            const spy = vi.fn();
+            const equalsIgnoreCase = ([a]: [string], [b]: [string]) => a.toLowerCase() === b.toLowerCase();
+
+            const str = reactive("foo");
+            watchImpl(
+                () => [str.value],
+                ([str], [oldStr]) => {
+                    spy(str, oldStr);
+                },
+                {
+                    equal: equalsIgnoreCase
+                }
+            );
+            expect(spy).toHaveBeenCalledTimes(0);
+
+            await doMutation(() => (str.value = "FOO"));
+            expect(spy).toHaveBeenCalledTimes(0); // "FOO" is ignored
+            
+            await doMutation(() => (str.value = "bar")); 
+            expect(spy).toHaveBeenCalledTimes(1); // "bar" is different
+            expect(spy).toHaveBeenCalledWith("bar", "foo"); // sees "foo" not "FOO" since that execution was skipped
         });
 
         it("triggers initially if 'immediate' is true", async () => {

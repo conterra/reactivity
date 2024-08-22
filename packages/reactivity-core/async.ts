@@ -245,17 +245,17 @@ class AsyncEffect {
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
     callback: WatchCallback<Values>,
-    options?: WatchOptions & { immediate?: false }
+    options?: WatchOptions<Values> & { immediate?: false }
 ): CleanupHandle;
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
     callback: WatchImmediateCallback<Values>,
-    options?: WatchOptions
+    options?: WatchOptions<Values>
 ): CleanupHandle;
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
     callback: WatchImmediateCallback<Values>,
-    options?: WatchOptions
+    options?: WatchOptions<Values>
 ): CleanupHandle {
     return watchImpl(effect, selector, callback, options);
 }

@@ -15,10 +15,11 @@ export function watchImpl<const Values extends readonly unknown[]>(
     effectImpl: EffectSignature,
     selector: () => Values,
     callback: WatchImmediateCallback<Values>,
-    options?: WatchOptions
+    options?: WatchOptions<Values>
 ): CleanupHandle {
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
+    const equal = options?.equal ?? shallowEqual;
 
     let values: Values | undefined;
     let cleanup: CleanupFunc | void | undefined;
@@ -36,17 +37,16 @@ export function watchImpl<const Values extends readonly unknown[]>(
     }
 
     const effectHandle = effectImpl(() => {
-        const currentValues = computedArgs.value; // Tracked
+        const next = computedArgs.value; // Tracked
         untracked(() => {
-            // prettier-ignore
-            const shouldExecute = 
-                (!values && immediate)
-                || (values && !shallowEqual(values, currentValues));
-            const prevValues = values;
-            values = currentValues;
+            const prev = values;
+            const shouldExecute = (!prev && immediate) || (prev && !equal(prev, next));
+            if (shouldExecute || !values) {
+                values = next;
+            }
             if (shouldExecute) {
                 triggerCleanup();
-                cleanup = callback(currentValues, prevValues);
+                cleanup = callback(next, prev);
             }
         });
     });
