@@ -5,6 +5,8 @@
 Improved `watch` ergonomics:
 
 -   All versions of `watch` now also pass the previous values to the callback (as second argument).
+-   Add support for a custom `equal` parameter.
+    This can be used to skip callback invocations if the new value can be considered equal to the old one.
 
 Other changes:
 
