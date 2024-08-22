@@ -152,6 +152,8 @@ export type WatchCallback<T> = (value: T, oldValue: T) => void | CleanupFunc;
 /**
  * Like {@link WatchCallback}, but the `oldValue` parameter may be `undefined` for the first invocation.
  * This is the case when `immediate: true` has been passed to the watch function, in which case there cannot be a previous value.
+ * 
+ * @group Watching
  */
 export type WatchImmediateCallback<T> = (value: T, oldValue: T | undefined) => void | CleanupFunc;
 
