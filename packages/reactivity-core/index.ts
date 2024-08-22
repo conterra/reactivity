@@ -27,6 +27,7 @@ export {
     type CleanupFunc,
     type EffectCallback,
     type WatchCallback,
+    type WatchImmediateCallback,
     type WatchOptions,
     type CleanupHandle
 } from "./types";

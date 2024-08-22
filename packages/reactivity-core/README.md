@@ -247,6 +247,29 @@ watch(
 
 In this example, the callback function will only re-run when the computed sum truly changed.
 
+### Accessing previous values
+
+The callback function of `watch()` can access the previous values of the watched signals via its second argument:
+
+```ts
+import { reactive, watch } from "@conterra/reactivity-core";
+
+const counter = reactive(0);
+watch(
+    () => {
+        return [counter.value];
+    },
+    ([count], [oldCount]) => {
+        console.log(count, oldCount);
+    }
+);
+
+counter.value += 1;
+// Prints 1 0
+```
+
+Note that the second argument will be undefined for the first execution if `immediate: true` has been set (because there is no previous value).
+
 ### Returning cleanup functions
 
 You can return a function from `effect` and `watch` callbacks.

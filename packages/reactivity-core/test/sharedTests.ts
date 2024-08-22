@@ -320,6 +320,22 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
             expect(spy).toBeCalledWith(3, 2);
         });
 
+        it("passes the previous values to the callback", async () => {
+            const spy = vi.fn();
+            const r = reactive(1);
+            watchImpl(
+                () => [r.value],
+                ([v], [ov]) => {
+                    spy(v, ov);
+                }
+            );
+            expect(spy).toBeCalledTimes(0);
+
+            await doMutation(() => (r.value = 2));
+            expect(spy).toBeCalledTimes(1);
+            expect(spy).toBeCalledWith(2, 1); // 1 is the original value
+        });
+
         it("triggers initially if 'immediate' is true", async () => {
             const spy = vi.fn();
             const r1 = reactive(1);
@@ -336,6 +352,26 @@ export function defineSharedWatchTests(watchImpl: typeof syncWatch, type: "sync"
             await doMutation(() => (r1.value = 3));
             expect(spy).toBeCalledTimes(2);
             expect(spy).toBeCalledWith(3, 2);
+        });
+
+        it("passes undefined as previous value for immediate executions", async () => {
+            const spy = vi.fn();
+            const r = reactive(1);
+            watchImpl(
+                () => [r.value],
+                ([v], old) => {
+                    spy(v, old);
+                },
+                {
+                    immediate: true
+                }
+            );
+            expect(spy).toBeCalledTimes(1);
+            expect(spy).toBeCalledWith(1, undefined);
+
+            await doMutation(() => (r.value = 2));
+            expect(spy).toBeCalledTimes(2);
+            expect(spy).toBeCalledWith(2, [1]);
         });
 
         it("ignores reactive reads in callback", async () => {

@@ -137,6 +137,9 @@ export type EffectCallback = () => void | CleanupFunc;
 /**
  * A watch callback triggered if observed values change.
  *
+ * It receives the current value of the watched signal(s) (returned by the selector)
+ * and the previous value (if available).
+ *
  * The body of a watch statement is _not_ tracked.
  *
  * A watch callback may return a cleanup function that will be executed
@@ -144,7 +147,13 @@ export type EffectCallback = () => void | CleanupFunc;
  *
  * @group Watching
  */
-export type WatchCallback = () => void | CleanupFunc;
+export type WatchCallback<T> = (value: T, oldValue: T) => void | CleanupFunc;
+
+/**
+ * Like {@link WatchCallback}, but the `oldValue` parameter may be `undefined` for the first invocation.
+ * This is the case when `immediate: true` has been passed to the watch function, in which case there cannot be a previous value.
+ */
+export type WatchImmediateCallback<T> = (value: T, oldValue: T | undefined) => void | CleanupFunc;
 
 /**
  * Options that can be passed to {@link syncWatch}.

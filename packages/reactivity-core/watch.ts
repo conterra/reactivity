@@ -1,6 +1,12 @@
 import { computed as rawComputed } from "@preact/signals-core";
 import { untracked } from "./ReactiveImpl";
-import { CleanupFunc, CleanupHandle, EffectCallback, WatchOptions } from "./types";
+import {
+    CleanupFunc,
+    CleanupHandle,
+    EffectCallback,
+    WatchImmediateCallback,
+    WatchOptions
+} from "./types";
 import { shallowEqual } from "./utils/shallowEqual";
 
 type EffectSignature = (callback: EffectCallback) => CleanupHandle;
@@ -8,19 +14,19 @@ type EffectSignature = (callback: EffectCallback) => CleanupHandle;
 export function watchImpl<const Values extends readonly unknown[]>(
     effectImpl: EffectSignature,
     selector: () => Values,
-    callback: (values: Values) => void | CleanupFunc,
+    callback: WatchImmediateCallback<Values>,
     options?: WatchOptions
 ): CleanupHandle {
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
 
-    let oldValues: Values | undefined;
-    let oldCleanup: CleanupFunc | void | undefined;
+    let values: Values | undefined;
+    let cleanup: CleanupFunc | void | undefined;
     function triggerCleanup() {
-        const cleanup = oldCleanup;
-        oldCleanup = undefined;
+        const clean = cleanup;
+        cleanup = undefined;
         try {
-            cleanup?.();
+            clean?.();
         } catch (e) {
             // Destroy a watch completely if a cleanup function throws.
             // This is consistent with the behavior of 'effect'.
@@ -33,13 +39,14 @@ export function watchImpl<const Values extends readonly unknown[]>(
         const currentValues = computedArgs.value; // Tracked
         untracked(() => {
             // prettier-ignore
-            const execute = 
-                (!oldValues && immediate)
-                || (oldValues && !shallowEqual(oldValues, currentValues));
-            oldValues = currentValues;
-            if (execute) {
+            const shouldExecute = 
+                (!values && immediate)
+                || (values && !shallowEqual(values, currentValues));
+            const prevValues = values;
+            values = currentValues;
+            if (shouldExecute) {
                 triggerCleanup();
-                oldCleanup = callback(currentValues);
+                cleanup = callback(currentValues, prevValues);
             }
         });
     });

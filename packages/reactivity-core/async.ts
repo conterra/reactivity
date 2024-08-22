@@ -1,5 +1,12 @@
 import { TaskQueue } from "./utils/TaskQueue";
-import { CleanupFunc, CleanupHandle, EffectCallback, WatchOptions } from "./types";
+import {
+    CleanupFunc,
+    CleanupHandle,
+    EffectCallback,
+    WatchCallback,
+    WatchImmediateCallback,
+    WatchOptions
+} from "./types";
 import { reportTaskError } from "./utils/reportTaskError";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { syncEffect, syncEffectOnce, syncWatch } from "./sync";
@@ -192,7 +199,7 @@ class AsyncEffect {
  * 1. The `selector` is a tracked function that shall return an array of values.
  *    Those values are usually obtained by accessing one or more reactive objects.
  * 2. Whenever the values inside the array returned by `selector` change, `callback`
- *    will be executed with those values.
+ *    will be executed with those values (the old values are available as well).
  *    The body of `callback` is not reactive.
  *
  * The arrays returned by the selector are compared using shallow equality: the callback
@@ -237,7 +244,17 @@ class AsyncEffect {
  */
 export function watch<const Values extends readonly unknown[]>(
     selector: () => Values,
-    callback: (values: Values) => void | CleanupFunc,
+    callback: WatchCallback<Values>,
+    options?: WatchOptions & { immediate?: false }
+): CleanupHandle;
+export function watch<const Values extends readonly unknown[]>(
+    selector: () => Values,
+    callback: WatchImmediateCallback<Values>,
+    options?: WatchOptions
+): CleanupHandle;
+export function watch<const Values extends readonly unknown[]>(
+    selector: () => Values,
+    callback: WatchImmediateCallback<Values>,
     options?: WatchOptions
 ): CleanupHandle {
     return watchImpl(effect, selector, callback, options);

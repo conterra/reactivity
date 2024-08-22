@@ -1,6 +1,12 @@
 # @conterra/reactivity-core
 
-## v0.5.0
+## v0.5.0 (unreleased)
+
+Improved `watch` ergonomics:
+
+-   All versions of `watch` now also pass the previous values to the callback (as second argument).
+
+Other changes:
 
 -   Update dependencies
 

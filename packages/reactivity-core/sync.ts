@@ -1,6 +1,12 @@
 import { effect as rawEffect } from "@preact/signals-core";
 import { untracked } from "./ReactiveImpl";
-import { CleanupFunc, CleanupHandle, EffectCallback, WatchOptions } from "./types";
+import {
+    CleanupHandle,
+    EffectCallback,
+    WatchCallback,
+    WatchImmediateCallback,
+    WatchOptions
+} from "./types";
 import { watchImpl } from "./watch";
 
 // Import required for docs
@@ -125,7 +131,17 @@ export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => voi
  */
 export function syncWatch<const Values extends readonly unknown[]>(
     selector: () => Values,
-    callback: (values: Values) => void | CleanupFunc,
+    callback: WatchCallback<Values>,
+    options?: WatchOptions & { immediate?: false }
+): CleanupHandle;
+export function syncWatch<const Values extends readonly unknown[]>(
+    selector: () => Values,
+    callback: WatchImmediateCallback<Values>,
+    options?: WatchOptions
+): CleanupHandle;
+export function syncWatch<const Values extends readonly unknown[]>(
+    selector: () => Values,
+    callback: WatchImmediateCallback<Values>,
     options?: WatchOptions
 ): CleanupHandle {
     return watchImpl(syncEffect, selector, callback, options);
