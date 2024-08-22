@@ -1,5 +1,6 @@
 import { afterEach } from "node:test";
 import { MockInstance, beforeEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from "../async";
 import { batch, reactive } from "../ReactiveImpl";
 import { type syncEffect, type syncWatch, type syncWatchValue } from "../sync";
 import * as report from "../utils/reportTaskError";
@@ -448,9 +449,12 @@ export function defineSharedWatchTests(
             const spy = vi.fn();
             const r1 = reactive(1);
             const r2 = reactive(2);
-            watchValueImpl(() => r1.value + r2.value, (sum, oldSum) => {
-                spy(sum, oldSum);
-            });
+            watchValueImpl(
+                () => r1.value + r2.value,
+                (sum, oldSum) => {
+                    spy(sum, oldSum);
+                }
+            );
             expect(spy).toBeCalledTimes(0);
 
             await doMutation(() => {
@@ -686,15 +690,11 @@ async function doMutationImpl(fn: () => void, type: "sync" | "async"): Promise<v
         let err: Error | undefined;
         errorSpy!.mockImplementationOnce((e) => (err = e));
         fn();
-        await waitForMacroTask();
+        await nextTick();
         if (err) {
             throw err;
         }
     }
-}
-
-function waitForMacroTask() {
-    return new Promise((resolve) => setTimeout(resolve, 4));
 }
 
 function mockErrorReport() {

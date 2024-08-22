@@ -13,6 +13,8 @@ Improved `watch` ergonomics:
 
 Other changes:
 
+-   Add a new helper function `nextTick` to wait for the execution of pending asynchronous callbacks.
+    This can be useful in tests.
 -   Update dependencies
 
 ## v0.4.0

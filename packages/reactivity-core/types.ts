@@ -152,7 +152,7 @@ export type WatchCallback<T> = (value: T, oldValue: T) => void | CleanupFunc;
 /**
  * Like {@link WatchCallback}, but the `oldValue` parameter may be `undefined` for the first invocation.
  * This is the case when `immediate: true` has been passed to the watch function, in which case there cannot be a previous value.
- * 
+ *
  * @group Watching
  */
 export type WatchImmediateCallback<T> = (value: T, oldValue: T | undefined) => void | CleanupFunc;
@@ -176,7 +176,7 @@ export interface WatchOptions<T> {
     /**
      * A function that returns `true` if the two values are considered equal.
      * If this function is provided, the watch callback will only be triggered if this function returns `false`.
-     * 
+     *
      * By default, an implementation based on object identity is used.
      */
     equal?(prev: T, next: T): boolean;

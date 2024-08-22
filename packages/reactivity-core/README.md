@@ -319,6 +319,10 @@ async function fetchUserDetails(id: string, signal: AbortSignal): Promise<void> 
 
 The following table provides a quick overview of the different variants of `effect` and `watch`:
 
+> NOTE: In most circumstances, `watchValue`, `watch` or `effect` are the right choice.
+> The `sync*` variants are useful when you need to run the callback immediately.
+> For more details, see [Sync vs async effect / watch](#sync-vs-async-effect--watch).
+
 | Function         | Kind of values                                     | Callback condition                                | Callback delay |
 | ---------------- | -------------------------------------------------- | ------------------------------------------------- | -------------- |
 | `effect`         | N/A                                                | After _any_ used signal changes.                  | Slight delay.  |
@@ -331,10 +335,6 @@ The following table provides a quick overview of the different variants of `effe
 Note that `watchValue` and `watch` are almost the same.
 `watch` supports watching multiple values at once directly (but forces you to return an array) while `watchValue` only supports a single value.
 In truth, only their default `equal` functions are different: `watchValue` uses `===` while `watch` uses shallow array equality.
-
-More most circumstances, `watchValue`, `watch` or `effect` are the right choice.
-The `sync*` variants are useful when you need to run the callback immediately.
-For more details, see [Sync vs async effect / watch](#sync-vs-async-effect--watch).
 
 ### Complex values
 

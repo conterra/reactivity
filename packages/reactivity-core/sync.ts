@@ -94,25 +94,25 @@ export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => voi
 
 /**
  * Watches a single reactive value and executes a callback whenever that value changes.
- * 
+ *
  * This function is the synchronous variant of {@link watchValue}.
  * It will re-execute after every fine grained change, even if those changes occur in immediate succession.
  * `syncWatchValue` should therefore be considered a low level primitive, for most use cases {@link watchValue} should be the right tool instead.
- * 
+ *
  * Example:
- * 
+ *
  * ```ts
  * import { reactive, syncWatchValue } from "@conterra/reactivity-core";
- * 
+ *
  * const v1 = reactive(1);
  * const v2 = reactive(2);
- * 
+ *
  * // Executes whenever the _sum_ of the two values changes.
  * syncWatchValue(() => v1.value + v2.value, (sum) => {
  *     console.log("new sum", sum);
  * });
  * ```
- * 
+ *
  * `syncWatchValue` returns a handle that can be used to unsubscribe from changes.
  * That handle's `destroy()` function should be called to stop watching when you are no longer interested in updates:
  *
@@ -125,31 +125,31 @@ export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => voi
  * ```
  *
  * > NOTE: You must *not* modify the parameters that get passed into `callback`.
- * 
+ *
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changes.
  * @param options additional options.
  * @group Watching
  */
-export function syncWatchValue<T> (
+export function syncWatchValue<T>(
     selector: () => T,
     callback: WatchCallback<T>,
     options?: WatchOptions<T> & { immediate?: false }
 ): CleanupHandle;
 /**
  * This overload is used when `immediate` is not set to `false`.
- * 
+ *
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changes.
  * @param options additional options.
  * @group Watching
  */
-export function syncWatchValue<T> (
+export function syncWatchValue<T>(
     selector: () => T,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle;
-export function syncWatchValue<T> (
+export function syncWatchValue<T>(
     selector: () => T,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
@@ -205,7 +205,7 @@ export function syncWatch<const Values extends readonly unknown[]>(
 ): CleanupHandle;
 /**
  * This overload is used when `immediate` is not set to `false`.
- * 
+ *
  * @param selector a function that returns the values to watch.
  * @param callback a function that will be executed whenever the watched values changed.
  * @param options additional options.

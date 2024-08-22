@@ -194,7 +194,7 @@ class AsyncEffect {
 
 /**
  * Watches a single reactive value and executes a callback whenever that value changes.
- * 
+ *
  * `watchValue` works like this:
  *
  * 1. The `selector` is a tracked function that shall return a value.
@@ -205,21 +205,21 @@ class AsyncEffect {
  *
  * The values returned by the selector are compared using object identity by default (i.e. `===`).
  * Note that you can provide a custom `equal` function to change this behavior.
- * 
+ *
  * Example:
- * 
+ *
  * ```ts
  * import { reactive, watchValue } from "@conterra/reactivity-core";
- * 
+ *
  * const v1 = reactive(1);
  * const v2 = reactive(2);
- * 
+ *
  * // Executes whenever the _sum_ of the two values changes.
  * watchValue(() => v1.value + v2.value, (sum) => {
  *     console.log("new sum", sum);
  * });
  * ```
- * 
+ *
  * `watchValue` returns a handle that can be used to unsubscribe from changes.
  * That handle's `destroy()` function should be called to stop watching when you are no longer interested in updates:
  *
@@ -236,32 +236,32 @@ class AsyncEffect {
  * > NOTE: This function will slightly defer re-executions of the given `callback`.
  * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.
  * > This is done to avoid redundant executions as a result of many fine-grained changes.
- * > 
+ * >
  * > If you need more control, take a look at {@link syncWatchValue}.
- * 
+ *
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changes.
  * @param options additional options.
  */
-export function watchValue<T> (
+export function watchValue<T>(
     selector: () => T,
     callback: WatchCallback<T>,
     options?: WatchOptions<T> & { immediate?: false }
 ): CleanupHandle;
 /**
  * This overload is used when `immediate` is not set to `false`.
- * 
+ *
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changed.
  * @param options additional options.
  * @group Watching
  */
-export function watchValue<T> (
+export function watchValue<T>(
     selector: () => T,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle;
-export function watchValue<T> (
+export function watchValue<T>(
     selector: () => T,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
@@ -331,7 +331,7 @@ export function watch<const Values extends readonly unknown[]>(
 ): CleanupHandle;
 /**
  * This overload is used when `immediate` is not set to `false`.
- * 
+ *
  * @param selector a function that returns the values to watch.
  * @param callback a function that will be executed whenever the watched values changed.
  * @param options additional options.
@@ -350,6 +350,19 @@ export function watch<const Values extends readonly unknown[]>(
     return watchImpl(effect, selector, callback, {
         equal: shallowEqual,
         ...options
+    });
+}
+
+/**
+ * Returns a promise that resolves after all _currently scheduled_ asynchronous callbacks have executed.
+ *
+ * This function is useful in tests to wait for the execution of side effects triggered by an asynchronous `watch` or an `effect`.
+ *
+ * @group Watching
+ */
+export function nextTick(): Promise<void> {
+    return new Promise((resolve) => {
+        dispatchCallback(resolve);
     });
 }
 

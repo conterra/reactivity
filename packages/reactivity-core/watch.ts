@@ -40,7 +40,8 @@ export function watchImpl<T>(
         const next = computedArgs.value; // Tracked
         untracked(() => {
             const prev = value;
-            const shouldExecute = (firstExecution && immediate) || (!firstExecution && !equal(prev, next));
+            const shouldExecute =
+                (firstExecution && immediate) || (!firstExecution && !equal(prev, next));
             if (shouldExecute || firstExecution) {
                 value = next;
                 firstExecution = false;

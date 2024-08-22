@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { reactive } from "./ReactiveImpl";
-import { effect, watch, watchValue } from "./async";
+import { effect, nextTick, watch, watchValue } from "./async";
 import { defineSharedEffectTests, defineSharedWatchTests } from "./test/sharedTests";
 
 describe("effect", () => {
@@ -20,7 +20,7 @@ describe("effect", () => {
             r.value = 1;
             expect(spy).toHaveBeenCalledTimes(1); // _not_ called again
 
-            await waitForMacroTask();
+            await nextTick();
             expect(spy).toHaveBeenCalledTimes(2); // called after delay
             expect(spy.mock.lastCall![0]).toBe(1);
         });
@@ -40,7 +40,7 @@ describe("effect", () => {
             r1.value = 2;
             r2.value = 21;
             r2.value = 22;
-            await waitForMacroTask();
+            await nextTick();
             expect(spy).toHaveBeenCalledTimes(2); // called after delay
             expect(spy.mock.lastCall).toEqual([2, 22]);
         });
@@ -56,7 +56,7 @@ describe("effect", () => {
             r.value = 2; // triggers execution
 
             handle.destroy();
-            await waitForMacroTask();
+            await nextTick();
             expect(spy).toHaveBeenCalledTimes(1); // not called again
         });
     });
@@ -79,7 +79,7 @@ describe("watch", () => {
             r1.value = 2; // ignored
             handle.destroy();
 
-            await waitForMacroTask();
+            await nextTick();
             expect(spy).toBeCalledTimes(0);
         });
 
@@ -97,12 +97,8 @@ describe("watch", () => {
             r1.value = 2;
             expect(spy).toBeCalledTimes(0);
 
-            await waitForMacroTask();
+            await nextTick();
             expect(spy).toBeCalledTimes(1);
         });
     });
 });
-
-function waitForMacroTask() {
-    return new Promise((resolve) => setTimeout(resolve, 10));
-}
