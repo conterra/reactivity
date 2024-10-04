@@ -65,7 +65,7 @@ export function syncEffect(callback: EffectCallback): CleanupHandle {
  * Note that `onInvalidate` will never be invoked more than once.
  *
  * @deprecated This function is no longer needed and will be removed in a future release.
- * 
+ *
  * @group Watching
  */
 export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => void): CleanupHandle {

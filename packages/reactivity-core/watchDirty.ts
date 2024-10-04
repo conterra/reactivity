@@ -2,12 +2,12 @@ import { effect as rawEffect } from "@preact/signals-core";
 import { CleanupHandle, ReadonlyReactive } from "./types";
 
 /**
- * **Experimental**. 
+ * **Experimental**.
  * Notifies the given `callback` whenever the `signal` might have changed,
  * without recomputing the signal's current value.
  *
  * This is a difficult to use, low level API that can be used to build higher level abstractions.
- * 
+ *
  * Things to keep in mind when using this function:
  * The `callback` should be cheap to invoke (as a signal might change often) and it **must not** throw an exception.
  * It should also not make use of any reactive values.
@@ -17,7 +17,10 @@ import { CleanupHandle, ReadonlyReactive } from "./types";
  *
  * @group Watching
  */
-export function subtleWatchDirty<T>(signal: ReadonlyReactive<T>, callback: () => void): CleanupHandle {
+export function subtleWatchDirty<T>(
+    signal: ReadonlyReactive<T>,
+    callback: () => void
+): CleanupHandle {
     // Uses the effect's internals to track signal invalidations.
     // The effect body is only called once!
     // See https://github.com/preactjs/signals/issues/593#issuecomment-2349672856
