@@ -1,5 +1,9 @@
-import { effect as reactivityEffect } from "@conterra/reactivity-core";
-import { Ref, ShallowRef, onScopeDispose, shallowRef, watchEffect } from "vue";
+import {
+    ReadonlyReactive,
+    computed as reactivityComputed,
+    subtleWatchDirty
+} from "@conterra/reactivity-core";
+import { Ref, customRef, onScopeDispose, watchEffect } from "vue";
 
 /**
  * This composable integrates reactive values into the vue reactivity system.
@@ -17,17 +21,31 @@ export function useReactiveSnapshot<T>(compute: () => T): Readonly<Ref<T>> {
      * 1. React to changes of reactive values (from reactivity-core) inside `compute`
      * 2. React to changes of *vue* values inside `compute`
      */
-    const snapshot = shallowRef() as ShallowRef<T>;
+    let signal!: ReadonlyReactive<T>;
+    let trigger!: () => void;
+    const ref = customRef<T>((track, trigger_) => {
+        trigger = trigger_;
+        return {
+            get() {
+                track();
+                return signal.value;
+            },
+            set() {
+                throw new Error("Cannot write to the reactive snapshot.");
+            }
+        };
+    });
     const dispose = watchEffect((onCleanup) => {
-        // *slightly* inefficient here to use effect, in case compute's dependencies change very often.
-        // in that case, snapshot.value would be updated more often than needed (need at most ~60 FPS).
-        // However, this is good enough for this example.
-        const handle = reactivityEffect(() => {
-            const value = compute();
-            snapshot.value = value;
-        });
+        // Setup the computed signal every time the vue dependencies change.
+        signal = reactivityComputed(compute);
+        signal.value;
+
+        // Watch for changes in the reactive signal (non-vue dependencies).
+        const handle = subtleWatchDirty(signal, trigger);
         onCleanup(() => handle.destroy());
+
+        trigger();
     });
     onScopeDispose(dispose);
-    return snapshot;
+    return ref;
 }
