@@ -29,7 +29,8 @@ export {
     type WatchCallback,
     type WatchImmediateCallback,
     type WatchOptions,
-    type CleanupHandle
+    type CleanupHandle,
+    type SubscribeFunc
 } from "./types";
 export {
     type EqualsFunc,
@@ -37,6 +38,7 @@ export {
     reactive,
     computed,
     external,
+    synchronized,
     batch,
     untracked,
     getValue,

@@ -69,6 +69,7 @@ export function effect(callback: EffectCallback): CleanupHandle {
     };
 }
 
+// TODO: Replace useEffectOnce with subtleWatchDirty (or a similar approach using raw effects).
 class AsyncEffect {
     private callback: EffectCallback;
     private cleanup: CleanupFunc | void | undefined;

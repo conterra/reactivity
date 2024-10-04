@@ -181,3 +181,13 @@ export interface WatchOptions<T> {
      */
     equal?(prev: T, next: T): boolean;
 }
+
+/**
+ * A function that can subscribe to some external data source (e.g. DOM APIs) for updates.
+ *
+ * The function must register the `callback` to be called whenever the data source changes.
+ * The function should return a cleanup function that de-registers the callback again.
+ *
+ * @group Watching
+ */
+export type SubscribeFunc = (callback: () => void) => CleanupFunc;

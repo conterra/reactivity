@@ -2,8 +2,9 @@
 
 ## v0.4.3 (Unreleased)
 
+-   Introduce `synchronized`, a new kind of signal designed to integrate foreign data sources.
 -   Introduce `subtleWatchDirty`, a function that allows one to watch for signal changes without triggering the re-evaluation of the signal.
--   Add missing `forEach()` method to `ReactiveSet` and `ReactiveMap`.
+-   Add missing `forEach` method to `ReactiveSet` and `ReactiveMap`.
 -   Deprecate `syncEffectOnce` (use `subtleWatchDirty` instead).
 
 ## v0.4.2

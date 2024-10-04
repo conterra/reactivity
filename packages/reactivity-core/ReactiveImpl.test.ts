@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { batch, computed, external, reactive } from "./ReactiveImpl";
+import { batch, computed, external, reactive, synchronized } from "./ReactiveImpl";
 import { syncEffect } from "./sync";
 
 describe("reactive", () => {
@@ -295,3 +295,166 @@ describe("external", () => {
         expect(count).toBe(2);
     });
 });
+
+describe("synchronized", () => {
+    it("always accesses the data source when not watched", () => {
+        const getter = vi.fn().mockReturnValue(123);
+        const sync = synchronized(getter, () => {
+            throw new Error("not called");
+        });
+        expect(getter).toHaveBeenCalledTimes(0);
+
+        expect(sync.value).toBe(123);
+        expect(getter).toHaveBeenCalledTimes(1);
+
+        expect(sync.value).toBe(123);
+        expect(getter).toHaveBeenCalledTimes(2); // NOT cached
+    });
+
+    it("subscribes to the data source when watched", () => {
+        const getter = vi.fn().mockReturnValue(123);
+        const unsubscribe = vi.fn();
+        const subscribe = vi.fn().mockReturnValue(unsubscribe);
+
+        const sync = synchronized(getter, subscribe);
+        expect(getter).toHaveBeenCalledTimes(0);
+        expect(subscribe).toHaveBeenCalledTimes(0);
+
+        const { destroy } = syncEffect(() => sync.value);
+        expect(getter).toHaveBeenCalledTimes(1);
+        expect(subscribe).toHaveBeenCalledTimes(1);
+
+        const { destroy: destroy2 } = syncEffect(() => sync.value);
+        expect(getter).toHaveBeenCalledTimes(1); // cached
+        expect(subscribe).toHaveBeenCalledTimes(1); // not called again for second active effect
+
+        destroy2();
+        expect(unsubscribe).toHaveBeenCalledTimes(0);
+
+        destroy();
+        expect(unsubscribe).toHaveBeenCalledTimes(1);
+
+        sync.value;
+        expect(getter).toHaveBeenCalledTimes(2); // called again
+    });
+
+    it("notifies watchers when the data source changes", () => {
+        const ds = new DataSource(0);
+        const getter = vi.fn(() => ds.value);
+        const sync = synchronized(getter, (cb) => ds.subscribe(cb));
+
+        // not subscribed yet
+        expect(ds.listener).toBe(undefined);
+
+        // setup effect
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(sync.value);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenLastCalledWith(0);
+        expect(ds.listener).toBeDefined();
+        expect(getter).toHaveBeenCalledTimes(1);
+
+        // data is cached
+        sync.value;
+        expect(getter).toHaveBeenCalledTimes(1);
+
+        // update data source
+        ds.value = 1;
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenLastCalledWith(1);
+        expect(getter).toHaveBeenCalledTimes(2);
+    });
+
+    // See this comment:
+    // https://github.com/tc39/proposal-signals/issues/237#issuecomment-2346834056
+    //
+    // The values here are different from the linked comment (some got lost).
+    // This is because preact-signals probes the first dependency of `result`
+    // and re-evaluates `sync` one additional time.
+    //
+    // This is probably not a show stopper because the signal just re-validates more often than necessary.
+    // It would be more of a problem if it would cache too aggressively.
+    it("has weird behavior if the data source has side effects", () => {
+        let count = 0;
+        const sync = synchronized(
+            () => count++,
+            () => () => {}
+        );
+        const dep1 = computed(() => sync.value);
+        const dep2 = computed(() => sync.value);
+        const result = computed(() => `${dep1.value},${dep1.value},${dep2.value},${dep2.value}`);
+        expect(result.value).toMatchInlineSnapshot(`"0,2,3,5"`);
+
+        const { destroy } = syncEffect(() => {
+            expect(result.value).toMatchInlineSnapshot(`"6,6,6,6"`);
+        });
+        destroy();
+
+        expect(result.value).toMatchInlineSnapshot(`"10,12,13,15"`);
+    });
+
+    it("does not cache computes across many levels", () => {
+        const getter = vi.fn().mockReturnValue(1);
+        const sync = synchronized(getter, () => {
+            throw new Error("not called");
+        });
+
+        const c1 = computed(() => sync.value);
+        const c2 = computed(() => c1.value);
+        const c3 = computed(() => c2.value);
+        const c4 = computed(() => c3.value + c2.value);
+        expect(c4.value).toBe(2);
+        expect(getter.mock.calls.length).toMatchInlineSnapshot(`2`);
+
+        // High number of re-computations probably due to re-validation of
+        // dependencies (see previous test).
+        // As long as the value is correct, this is not a major problem.
+        getter.mockReturnValue(2);
+        expect(c4.value).toBe(4);
+        expect(getter.mock.calls.length).toMatchInlineSnapshot(`8`);
+
+        getter.mockReturnValue(3);
+        expect(c4.value).toBe(6);
+        expect(getter.mock.calls.length).toMatchInlineSnapshot(`14`);
+    });
+});
+
+class DataSource {
+    #listener: (() => void) | undefined;
+    #value: number;
+
+    constructor(value = 0) {
+        this.#value = value;
+    }
+
+    get listener() {
+        return this.#listener;
+    }
+
+    get value() {
+        return this.#value;
+    }
+
+    set value(value: number) {
+        if (value !== this.#value) {
+            this.#value = value;
+            this.#listener?.();
+        }
+    }
+
+    subscribe(listener: () => void) {
+        if (this.#listener) {
+            throw new Error("Already subscribed");
+        }
+
+        this.#listener = listener;
+        return () => {
+            if (this.#listener !== listener) {
+                throw new Error("Invalid unsubscribe call");
+            }
+            this.#listener = undefined;
+        };
+    }
+}

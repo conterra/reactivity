@@ -1,5 +1,6 @@
 import {
-    Signal,
+    ReadonlySignal as RawReadonlySignal,
+    Signal as RawSignal,
     batch as rawBatch,
     computed as rawComputed,
     signal as rawSignal,
@@ -9,9 +10,10 @@ import {
     AddBrand,
     AddWritableBrand,
     ExternalReactive,
+    Reactive,
     ReadonlyReactive,
     RemoveBrand,
-    Reactive
+    SubscribeFunc
 } from "./types";
 
 /**
@@ -164,6 +166,67 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
 }
 
 /**
+ * Creates a signal that synchronizes with a foreign data source.
+ *
+ * This kind of signal is useful when integrating another library (DOM APIs, etc.) that does not
+ * use the reactivity system provided by this library.
+ * The major advantage of this API is that it will automatically subscribe to the foreign data source while the signal is actually being used.
+ *
+ * Principles:
+ * - The `getter` function should return the current value from the foreign data source.
+ *   It should be cheap to call and should not have side effects.
+ *   Ideally it performs some caching on its own, but this is not strictly needed.
+ * - The `subscribe` function should implement whatever logic is necessary to listen for changes.
+ *   It receives a callback function that should be called whenever the value changes.
+ *   `subscribe` should return a cleanup function to unsubscribe - it will be called automatically when appropriate.
+ * - When the signal is not watched in some way, accesses to the `getter` are not cached.
+ * - When the signal is being watched (e.g. by an effect), the signal will automatically subscribe to the foreign data source
+ *   and cache the current value until it is informed about a change.
+ * 
+ * Example:
+ * 
+ * ```ts
+ * import { synchronized, watchValue } from "@conterra/reactivity-core";
+ * 
+ * const abortController = new AbortController();
+ * const abortSignal = abortController.signal;
+ * const aborted = synchronized(
+ *     () => abortSignal.aborted,
+ *     (callback) => {
+ *         abortSignal.addEventListener("abort", callback);
+ *         return () => {
+ *             abortSignal.removeEventListener("abort", callback);
+ *         };
+ *     }
+ * );
+ * 
+ * watchValue(
+ *     () => aborted.value,
+ *     (aborted) => {
+ *         console.log("Aborted:", aborted);
+ *     },
+ *     {
+ *         immediate: true
+ *     }
+ * );
+ * 
+ * setTimeout(() => {
+ *     abortController.abort();
+ * }, 1000);
+ * 
+ * // Prints:
+ * // Aborted: false
+ * // Aborted: true
+ * ```
+ *
+ * @group Primitives
+ */
+export function synchronized<T>(getter: () => T, subscribe: SubscribeFunc): ReadonlyReactive<T> {
+    const impl = new SynchronizedReactiveImpl(getter, subscribe);
+    return impl as AddBrand<typeof impl>;
+}
+
+/**
  * Executes a set of reactive updates implemented in `callback`.
  * Effects are delayed until the batch has completed.
  *
@@ -268,9 +331,9 @@ const CUSTOM_EQUALS = Symbol("equals");
 abstract class ReactiveImpl<T>
     implements RemoveBrand<ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>>
 {
-    private [REACTIVE_SIGNAL]: Signal<T>;
+    private [REACTIVE_SIGNAL]: RawSignal<T>;
 
-    constructor(signal: Signal<T>) {
+    constructor(signal: RawSignal<T>) {
         this[REACTIVE_SIGNAL] = signal;
     }
 
@@ -328,6 +391,94 @@ class WritableReactiveImpl<T> extends ReactiveImpl<T> {
         }
         this[REACTIVE_SIGNAL].value = value;
     }
+}
+
+const INVALIDATE_SIGNAL = Symbol("invalidate_signal");
+const IS_WATCHED = Symbol("is_watched");
+const HAS_SCHEDULED_INVALIDATE = Symbol("has_scheduled_invalidate");
+
+/**
+ * Custom signal implementation for "synchronized" values, i.e. values from a foreign source.
+ * The signal automatically subscribes to the foreign source once it becomes watched (it also unsubscribes automatically).
+ *
+ * Although the implementation is based on a `computed` signal, there may not be any caching involved, depending on the state of the signal.
+ *
+ * 1. The signal is not watched: the "computed" is always out of date.
+ *    This is achieved by immediately invalidating the signal itself from within its own body.
+ *    To the raw signal, this looks like a dependency cycle (which is allowed in this case).
+ * 2. The signal is watched: the value is cached until an update event is received; at which point the foreign data source is accessed again.
+ *
+ * See also https://github.com/tc39/proposal-signals/issues/237
+ */
+class SynchronizedReactiveImpl<T> extends ReactiveImpl<T> {
+    [INVALIDATE_SIGNAL] = rawSignal(false);
+    [IS_WATCHED] = false;
+    [HAS_SCHEDULED_INVALIDATE] = false;
+
+    constructor(getter: () => T, subscribe: SubscribeFunc) {
+        const rawSignal = rawComputedWithSubscriptionHook(
+            () => {
+                this[INVALIDATE_SIGNAL].value;
+                if (!this[IS_WATCHED]) {
+                    this.#invalidate();
+                }
+                return rawUntracked(() => getter());
+            },
+            () => {
+                this[IS_WATCHED] = true;
+                const unsubscribe = subscribe(this.#invalidate);
+                return () => {
+                    this[IS_WATCHED] = false;
+                    unsubscribe();
+                    this.#invalidate();
+                };
+            }
+        );
+        super(rawSignal);
+    }
+
+    #invalidate = () => {
+        this[INVALIDATE_SIGNAL].value = !this[INVALIDATE_SIGNAL].peek();
+    };
+}
+
+// Mangled member names. See https://github.com/preactjs/signals/blob/main/mangle.json.
+const _SUBSCRIBE = "S";
+const _UNSUBSCRIBE = "U";
+
+type RawSignalInternals<T> = RawReadonlySignal<T> & {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [_SUBSCRIBE](node: any): void;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [_UNSUBSCRIBE](node: any): void;
+};
+
+// Overrides the subscribe/unsubscribe methods of a signal to allow for custom subscription hooks.
+function rawComputedWithSubscriptionHook<T>(
+    compute: () => T,
+    subscribe: () => () => void
+): RawReadonlySignal<T> {
+    const signal = rawComputed(compute) as RawSignalInternals<T>;
+    const origSubscribe = signal[_SUBSCRIBE];
+    const origUnsubscribe = signal[_UNSUBSCRIBE];
+
+    let subscriptions = 0;
+    let cleanup: (() => void) | undefined;
+    signal[_SUBSCRIBE] = function patchedSubscribe(node: unknown) {
+        origSubscribe.call(this, node);
+        if (subscriptions++ === 0) {
+            cleanup = subscribe();
+        }
+    };
+    signal[_UNSUBSCRIBE] = function patchedUnsubscribe(node: unknown) {
+        origUnsubscribe.call(this, node);
+        if (--subscriptions === 0) {
+            cleanup?.();
+            cleanup = undefined;
+        }
+    };
+    return signal;
 }
 
 function computeWithEquals<T>(compute: () => T, equals: EqualsFunc<T>) {
