@@ -37,6 +37,13 @@ export interface ReactiveSet<V> extends Iterable<V> {
     delete(value: V): boolean;
 
     /**
+     * Executes the given callback for every entry of the set.
+     *
+     * See also [Set.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/forEach).
+     */
+    forEach(callback: (value: V, key: V) => void): void;
+
+    /**
      * Returns an iterator over the `[value, value]` entries in this set.
      *
      * > NOTE: This is actually in the JS Standard..
@@ -108,6 +115,10 @@ export class ReactiveSetImpl<V> implements ReactiveSet<V> {
 
     delete(value: V): boolean {
         return this.#impl.delete(value);
+    }
+
+    forEach(callback: (value: V, key: V) => void): void {
+        this.#impl.forEach((_value, key) => callback(key, key));
     }
 
     entries(): IterableIterator<[value: V, value: V]> {

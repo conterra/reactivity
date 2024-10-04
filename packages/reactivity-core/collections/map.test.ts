@@ -1,4 +1,4 @@
-import { it, expect, describe } from "vitest";
+import { it, expect, describe, vi } from "vitest";
 import { ReactiveMap, reactiveMap } from "./map";
 import { batch, computed } from "../ReactiveImpl";
 import { syncEffect } from "../sync";
@@ -43,6 +43,34 @@ describe("basic API", () => {
         const map = reactiveMap<string, number>();
         const removed = map.delete("foo");
         expect(removed).toBe(false);
+    });
+
+    it("supports iteration via forEach", () => {
+        const map = reactiveMap<string, number>([
+            ["foo", 1],
+            ["bar", 2]
+        ]);
+        map.set("baz", 3);
+
+        const cb = vi.fn();
+        map.forEach(cb);
+
+        expect(cb.mock.calls).toMatchInlineSnapshot(`
+          [
+            [
+              1,
+              "foo",
+            ],
+            [
+              2,
+              "bar",
+            ],
+            [
+              3,
+              "baz",
+            ],
+          ]
+        `);
     });
 
     it("supports iteration", () => {

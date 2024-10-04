@@ -43,6 +43,13 @@ export interface ReactiveMap<K, V> extends Iterable<[key: K, value: V]> {
     delete(key: K): boolean;
 
     /**
+     * Executes the given callback for every entry of the map.
+     *
+     * See also [Map.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/forEach).
+     */
+    forEach(callback: (value: V, key: K) => void): void;
+
+    /**
      * Returns an iterator over the `[key, value]` entries in this map.
      */
     entries(): IterableIterator<[key: K, value: V]>;
@@ -106,6 +113,14 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     get size(): number {
         this.#subscribeToStructureChange();
         return this.#map.size;
+    }
+
+    forEach(callback: (value: V, key: K) => void): void {
+        this.#subscribeToStructureChange();
+        const entries = this.#map.entries();
+        for (const [key, cell] of entries) {
+            callback(cell.value, key);
+        }
     }
 
     entries(): IterableIterator<[K, V]> {

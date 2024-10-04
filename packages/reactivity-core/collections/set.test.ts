@@ -1,4 +1,4 @@
-import { it, expect, describe } from "vitest";
+import { it, expect, describe, vi } from "vitest";
 import { reactiveSet } from "./set";
 
 describe("basic API", () => {
@@ -29,6 +29,31 @@ describe("basic API", () => {
         const set = reactiveSet<string>();
         const removed = set.delete("foo");
         expect(removed).toBe(false);
+    });
+
+    it("supports iteration via forEach", () => {
+        const set = reactiveSet<string>(["foo", "bar"]);
+        set.add("baz");
+
+        const cb = vi.fn();
+        set.forEach(cb);
+
+        expect(cb.mock.calls).toMatchInlineSnapshot(`
+        [
+          [
+            "foo",
+            "foo",
+          ],
+          [
+            "bar",
+            "bar",
+          ],
+          [
+            "baz",
+            "baz",
+          ],
+        ]
+      `);
     });
 
     it("supports iteration", () => {
