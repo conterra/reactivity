@@ -1,5 +1,10 @@
 # @conterra/reactivity-core
 
+## v0.4.3 (Unreleased)
+
+-   Introduce `subtleWatchDirty`, a function that allows one to watch for signal changes without triggering the re-evaluation of the signal.
+-   Deprecate `syncEffectOnce` (use `subtleWatchDirty` instead).
+
 ## v0.4.2
 
 -   Fix `reactiveArray.splice()`: new elements could not be inserted.
