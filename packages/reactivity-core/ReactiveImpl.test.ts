@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { batch, computed, external, reactive, synchronized } from "./ReactiveImpl";
-import { syncEffect } from "./sync";
+import { syncEffect, syncWatchValue } from "./sync";
 
 describe("reactive", () => {
     it("supports setting an initial value", () => {
@@ -396,34 +396,74 @@ describe("synchronized", () => {
     });
 
     it("does not cache computes across many levels", () => {
-        const getter = vi.fn().mockReturnValue(1);
-        const sync = synchronized(getter, () => {
-            throw new Error("not called");
-        });
+        const source = new DataSource(1);
+        const sync = synchronized(
+            () => source.value,
+            () => {
+                throw new Error("not called");
+            }
+        );
 
         const c1 = computed(() => sync.value);
         const c2 = computed(() => c1.value);
         const c3 = computed(() => c2.value);
         const c4 = computed(() => c3.value + c2.value);
         expect(c4.value).toBe(2);
-        expect(getter.mock.calls.length).toMatchInlineSnapshot(`2`);
+        expect(source.getterCalled).toMatchInlineSnapshot(`2`);
 
         // High number of re-computations probably due to re-validation of
         // dependencies (see previous test).
         // As long as the value is correct, this is not a major problem.
-        getter.mockReturnValue(2);
+        source.value = 2;
         expect(c4.value).toBe(4);
-        expect(getter.mock.calls.length).toMatchInlineSnapshot(`8`);
+        expect(source.getterCalled).toMatchInlineSnapshot(`8`);
 
-        getter.mockReturnValue(3);
+        source.value = 3;
         expect(c4.value).toBe(6);
-        expect(getter.mock.calls.length).toMatchInlineSnapshot(`14`);
+        expect(source.getterCalled).toMatchInlineSnapshot(`14`);
+    });
+
+    it("does cache computes across many levels if the synchronized signal is watched", () => {
+        const source = new DataSource(1);
+        const sync = synchronized(
+            () => source.value,
+            (callback) => {
+                const handle = source.subscribe(callback);
+                return () => handle();
+            }
+        );
+
+        const c1 = computed(() => sync.value);
+        const c2 = computed(() => c1.value);
+        const c3 = computed(() => c2.value);
+        const c4 = computed(() => c3.value + c2.value);
+
+        const watchHandle = syncWatchValue(
+            () => c4.value,
+            () => {}
+        );
+        expect(c4.value).toBe(2);
+        expect(c4.value).toBe(2);
+        expect(source.getterCalled).toMatchInlineSnapshot(`1`);
+
+        source.value = 2;
+        expect(c4.value).toBe(4);
+        expect(c4.value).toBe(4);
+        expect(source.getterCalled).toMatchInlineSnapshot(`2`);
+
+        source.value = 3;
+        expect(c4.value).toBe(6);
+        expect(c4.value).toBe(6);
+        expect(source.getterCalled).toMatchInlineSnapshot(`3`);
+        
+        watchHandle.destroy();
     });
 });
 
 class DataSource {
     #listener: (() => void) | undefined;
     #value: number;
+    getterCalled = 0;
 
     constructor(value = 0) {
         this.#value = value;
@@ -434,6 +474,7 @@ class DataSource {
     }
 
     get value() {
+        this.getterCalled++;
         return this.#value;
     }
 

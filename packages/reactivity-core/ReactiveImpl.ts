@@ -171,6 +171,8 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * This kind of signal is useful when integrating another library (DOM APIs, etc.) that does not
  * use the reactivity system provided by this library.
  * The major advantage of this API is that it will automatically subscribe to the foreign data source while the signal is actually being used.
+ * It will also automatically unsubscribe when the signal is no longer used.
+ * A signal is considered "used" when it is used by some kind of active effect or watch.
  *
  * Principles:
  * - The `getter` function should return the current value from the foreign data source.
@@ -191,10 +193,18 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * const abortController = new AbortController();
  * const abortSignal = abortController.signal;
  * const aborted = synchronized(
+ * 
+ *     // getter which returns the current value from the foreign source
  *     () => abortSignal.aborted,
+ * 
+ *     // Subscribe function: Automatically called when the signal is used
  *     (callback) => {
+ *         // Subscribe to changes in the AbortSignal 
  *         abortSignal.addEventListener("abort", callback);
+ * 
+ *         // Cleanup function is called automatically when the signal is no longer used
  *         return () => {
+ *             // unsubscribe from changes in the AbortSignal 
  *             abortSignal.removeEventListener("abort", callback);
  *         };
  *     }
