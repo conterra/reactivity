@@ -12,7 +12,8 @@ import { shallowEqual } from "./utils/shallowEqual";
 import { TaskQueue } from "./utils/TaskQueue";
 import { watchImpl } from "./watch";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { syncEffect, syncEffectOnce, syncWatch, syncWatchValue } from "./sync";
+import { syncEffect, syncWatch, syncWatchValue } from "./sync";
+import { createWatcher, RawWatcher } from "./watchDirty";
 
 /**
  * Runs the callback function and tracks its reactive dependencies.
@@ -69,12 +70,19 @@ export function effect(callback: EffectCallback): CleanupHandle {
     };
 }
 
-// TODO: Replace useEffectOnce with subtleWatchDirty (or a similar approach using raw effects).
 class AsyncEffect {
+    /** The user-defined effect body. */
     private callback: EffectCallback;
+
+    /** The cleanup function returned by an earlier effect execution (if any). */
     private cleanup: CleanupFunc | void | undefined;
-    private effectHandle: CleanupHandle | undefined;
+
+    /** The watcher that implements notifications when signals change. */
+    private watcher: RawWatcher | undefined;
+
+    /** The currently scheduled execution for a new execution of the effect (if any). */
     private scheduledExecution: CleanupHandle | undefined;
+
     private isDestroyed = false;
 
     // True during first run of the effect
@@ -85,6 +93,7 @@ class AsyncEffect {
 
     constructor(callback: EffectCallback) {
         this.callback = callback;
+        this.watcher = createWatcher(this.scheduleExecution);
         this.execute();
         this.initialExecution = false;
     }
@@ -98,8 +107,8 @@ class AsyncEffect {
         try {
             this.triggerCleanup();
         } finally {
-            this.effectHandle?.destroy();
-            this.effectHandle = undefined;
+            this.watcher?.destroy();
+            this.watcher = undefined;
             this.scheduledExecution?.destroy();
             this.scheduledExecution = undefined;
         }
@@ -108,49 +117,46 @@ class AsyncEffect {
     // Runs the actual effect body (once).
     // When the reactive dependencies change, an async callback is dispatched,
     // which will run the effect again at a later time.
-    //
-    // NOTE: this implementation is not very efficient because it will continuously recreate
-    // new syncEffects behind the scenes (this will probably fine for now).
-    //
-    // A better implementation would allow us to
-    // 1) create a computed signal and
-    // 2) listen to that signal's invalidation, __without__ computing the new value.
-    //
-    // There is currently no API for that in @preact/signals-core (subscribing to a signal implies computing its value).
     private execute() {
+        const watcher = this.watcher;
+        if (!watcher) {
+            return;
+        }
+
         this.isExecuting = true;
+        const stop = watcher.start();
         try {
-            const effectHandle = syncEffectOnce(
-                () => {
-                    if (this.initialExecution) {
-                        this.triggerCallback();
-                    } else {
-                        try {
-                            this.triggerCallback();
-                        } catch (e) {
-                            // Don't let the error escape in later executions;
-                            // we need to return normally so we get triggered again.
-                            // This is done to preserve consistent behavior w.r.t. syncEffect
-                            reportTaskError(e);
-                        }
-                    }
-                },
-                () => this.scheduleExecution()
-            );
-            if (this.isDestroyed) {
-                // Effect may have been destroyed in the execution of `triggerCallback()`
-                effectHandle.destroy();
+            // The branch here is for consistent behavior with the raw (sync) effect.
+            if (this.initialExecution) {
+                // Invoke right here to transport the (possible) exception to the caller.
+                try {
+                    this.triggerCallback();
+                } catch (e) {
+                    this.destroy();
+                    throw e;
+                }
             } else {
-                this.effectHandle = effectHandle;
+                // We're called from a scheduled task, log the error here and continue.
+                try {
+                    this.triggerCallback();
+                } catch (e) {
+                    reportTaskError(e);
+                }
             }
         } finally {
+            stop();
             this.isExecuting = false;
+        }
+
+        // May have been destroyed in its own execution; make sure to invoke the last cleanup function
+        if (this.isDestroyed) {
+            this.triggerCleanup();
         }
     }
 
     private triggerCallback() {
-        this.triggerCleanup();
         if (!this.isDestroyed) {
+            this.triggerCleanup();
             this.cleanup = this.callback();
         }
     }
@@ -168,13 +174,10 @@ class AsyncEffect {
         }
     }
 
-    private scheduleExecution() {
+    private scheduleExecution = () => {
         if (this.isDestroyed) {
             return;
         }
-
-        this.effectHandle?.destroy();
-        this.effectHandle = undefined;
         if (this.isExecuting) {
             // effect triggers itself
             throw new Error("Cycle detected");
@@ -190,7 +193,7 @@ class AsyncEffect {
                 this.scheduledExecution = undefined;
             }
         });
-    }
+    };
 }
 
 /**

@@ -21,16 +21,9 @@ export function subtleWatchDirty<T>(
     signal: ReadonlyReactive<T>,
     callback: () => void
 ): CleanupHandle {
-    // Uses the effect's internals to track signal invalidations.
-    // The effect body is only called once!
-    // See https://github.com/preactjs/signals/issues/593#issuecomment-2349672856
-    let start!: () => () => void;
-    const destroy = rawEffect(function (this: RawEffectInternals) {
-        this[_NOTIFY] = callback.bind(undefined); // hide 'this'
-        start = this[_START].bind(this);
-    });
+    const watcher = createWatcher(callback);
 
-    const end = start();
+    const end = watcher.start();
     try {
         signal.value; // Tracked
     } catch (ignored) {
@@ -41,7 +34,32 @@ export function subtleWatchDirty<T>(
     }
 
     return {
-        destroy
+        destroy: watcher.destroy
+    };
+}
+
+/** @internal */
+export interface RawWatcher extends CleanupHandle {
+    /**
+     * Starts a tracking context. Use the returned callback to end the context.
+     * When a signal used in the tracking context changes, the `onNotify` callback is called.
+     */
+    start(): () => void;
+}
+
+/** @internal */
+export function createWatcher(onNotify: () => void): RawWatcher {
+    // Uses the effect's internals to track signal invalidations.
+    // The effect body is only called once!
+    // See https://github.com/preactjs/signals/issues/593#issuecomment-2349672856
+    let start!: () => () => void;
+    const destroy = rawEffect(function (this: RawEffectInternals) {
+        this[_NOTIFY] = onNotify.bind(undefined); // hide 'this'
+        start = this[_START].bind(this);
+    });
+    return {
+        destroy,
+        start
     };
 }
 
