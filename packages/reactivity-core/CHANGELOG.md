@@ -6,6 +6,7 @@
 -   Introduce `subtleWatchDirty`, a function that allows one to watch for signal changes without triggering the re-evaluation of the signal.
 -   Add missing `forEach` method to `ReactiveSet` and `ReactiveMap`.
 -   Deprecate `syncEffectOnce` (use `subtleWatchDirty` instead).
+-   Refactor the implementation of `watch`, `watchValue` and `effect` (async variants). This should not have any impact on users of the library.
 
 ## v0.4.2
 
