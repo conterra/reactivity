@@ -1,11 +1,11 @@
 import {
-    ReadonlySignal as RawReadonlySignal,
     Signal as RawSignal,
     batch as rawBatch,
     computed as rawComputed,
     signal as rawSignal,
     untracked as rawUntracked
 } from "@preact/signals-core";
+import { rawComputedWithSubscriptionHook } from "./hacks";
 import {
     AddBrand,
     AddWritableBrand,
@@ -184,32 +184,32 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * - When the signal is not watched in some way, accesses to the `getter` are not cached.
  * - When the signal is being watched (e.g. by an effect), the signal will automatically subscribe to the foreign data source
  *   and cache the current value until it is informed about a change.
- * 
+ *
  * Example:
- * 
+ *
  * ```ts
  * import { synchronized, watchValue } from "@conterra/reactivity-core";
- * 
+ *
  * const abortController = new AbortController();
  * const abortSignal = abortController.signal;
  * const aborted = synchronized(
- * 
+ *
  *     // getter which returns the current value from the foreign source
  *     () => abortSignal.aborted,
- * 
+ *
  *     // Subscribe function: Automatically called when the signal is used
  *     (callback) => {
- *         // Subscribe to changes in the AbortSignal 
+ *         // Subscribe to changes in the AbortSignal
  *         abortSignal.addEventListener("abort", callback);
- * 
+ *
  *         // Cleanup function is called automatically when the signal is no longer used
  *         return () => {
- *             // unsubscribe from changes in the AbortSignal 
+ *             // unsubscribe from changes in the AbortSignal
  *             abortSignal.removeEventListener("abort", callback);
  *         };
  *     }
  * );
- * 
+ *
  * watchValue(
  *     () => aborted.value,
  *     (aborted) => {
@@ -219,11 +219,11 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  *         immediate: true
  *     }
  * );
- * 
+ *
  * setTimeout(() => {
  *     abortController.abort();
  * }, 1000);
- * 
+ *
  * // Prints:
  * // Aborted: false
  * // Aborted: true
@@ -450,45 +450,6 @@ class SynchronizedReactiveImpl<T> extends ReactiveImpl<T> {
     #invalidate = () => {
         this[INVALIDATE_SIGNAL].value = !this[INVALIDATE_SIGNAL].peek();
     };
-}
-
-// Mangled member names. See https://github.com/preactjs/signals/blob/main/mangle.json.
-const _SUBSCRIBE = "S";
-const _UNSUBSCRIBE = "U";
-
-type RawSignalInternals<T> = RawReadonlySignal<T> & {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [_SUBSCRIBE](node: any): void;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [_UNSUBSCRIBE](node: any): void;
-};
-
-// Overrides the subscribe/unsubscribe methods of a signal to allow for custom subscription hooks.
-function rawComputedWithSubscriptionHook<T>(
-    compute: () => T,
-    subscribe: () => () => void
-): RawReadonlySignal<T> {
-    const signal = rawComputed(compute) as RawSignalInternals<T>;
-    const origSubscribe = signal[_SUBSCRIBE];
-    const origUnsubscribe = signal[_UNSUBSCRIBE];
-
-    let subscriptions = 0;
-    let cleanup: (() => void) | undefined;
-    signal[_SUBSCRIBE] = function patchedSubscribe(node: unknown) {
-        origSubscribe.call(this, node);
-        if (subscriptions++ === 0) {
-            cleanup = subscribe();
-        }
-    };
-    signal[_UNSUBSCRIBE] = function patchedUnsubscribe(node: unknown) {
-        origUnsubscribe.call(this, node);
-        if (--subscriptions === 0) {
-            cleanup?.();
-            cleanup = undefined;
-        }
-    };
-    return signal;
 }
 
 function computeWithEquals<T>(compute: () => T, equals: EqualsFunc<T>) {

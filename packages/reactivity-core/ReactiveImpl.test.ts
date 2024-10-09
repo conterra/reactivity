@@ -455,7 +455,7 @@ describe("synchronized", () => {
         expect(c4.value).toBe(6);
         expect(c4.value).toBe(6);
         expect(source.getterCalled).toMatchInlineSnapshot(`3`);
-        
+
         watchHandle.destroy();
     });
 });

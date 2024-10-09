@@ -48,6 +48,5 @@ export {
 } from "./ReactiveImpl";
 export { syncEffect, syncEffectOnce, syncWatch, syncWatchValue } from "./sync";
 export { effect, watch, watchValue, nextTick } from "./async";
-export { subtleWatchDirty } from "./watchDirty";
 export * from "./collections";
 export * from "./struct";

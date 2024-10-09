@@ -13,7 +13,7 @@ import { TaskQueue } from "./utils/TaskQueue";
 import { watchImpl } from "./watch";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { syncEffect, syncWatch, syncWatchValue } from "./sync";
-import { createWatcher, RawWatcher } from "./watchDirty";
+import { createWatcher, RawWatcher } from "./hacks";
 
 /**
  * Runs the callback function and tracks its reactive dependencies.
@@ -75,7 +75,7 @@ class AsyncEffect {
     private callback: EffectCallback;
 
     /** The cleanup function returned by an earlier effect execution (if any). */
-    private cleanup: CleanupFunc | void | undefined;
+    private cleanup: CleanupFunc | undefined;
 
     /** The watcher that implements notifications when signals change. */
     private watcher: RawWatcher | undefined;
@@ -157,7 +157,10 @@ class AsyncEffect {
     private triggerCallback() {
         if (!this.isDestroyed) {
             this.triggerCleanup();
-            this.cleanup = this.callback();
+            const cleanup = this.callback();
+            if (typeof cleanup === "function") {
+                this.cleanup = cleanup;
+            }
         }
     }
 
