@@ -1,6 +1,6 @@
 # @conterra/reactivity-core
 
-## v0.4.3 (Unreleased)
+## v0.4.3
 
 -   Introduce `synchronized`, a new kind of signal designed to integrate foreign data sources.
 -   Add missing `forEach` method to `ReactiveSet` and `ReactiveMap`.
