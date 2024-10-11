@@ -9,14 +9,18 @@ import { CleanupHandle } from "./types";
 export interface RawWatcher extends CleanupHandle {
     /**
      * Starts a tracking context. Use the returned callback to end the context.
-     * When a signal used in the tracking context changes, the `onNotify` callback is called.
      */
     start(): () => void;
 }
 
 /**
+ * Creates a watcher that calls the `onNotify` callback when a signal
+ * used within the watcher's tracking context changes.
+ * 
+ * The tracking context is started by calling the `start` on the returned
+ * watcher.
+ * 
  * WARNING: The `onNotify` callback is very aggressive: it gets called _within_ a batch().
- *
  * @internal
  */
 export function createWatcher(onNotify: () => void): RawWatcher {
