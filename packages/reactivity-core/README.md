@@ -1116,6 +1116,68 @@ No matter how long it takes, the callback executed by the effect will already ha
 If you must use an asynchronous function directly in a reactive context, keep in mind that only the code until the first `await` statement will actually become reactive.
 However, because this is confusing and error prone, it is best to avoid it altogether.
 
+### Self-destructing effects or watches
+
+The different variants of `watch` and `effect` support a `ctx` parameter, which can be used to cancel the object from within its own callback.
+This can be useful to wait for a certain condition, while ensuring that the callback does not trigger again after the condition is met.
+
+For example:
+
+```ts
+import { reactive, ReadonlyReactive, watchValue } from "@conterra/reactivity-core";
+
+// Waits for the signal to be at least 2.
+function waitForTwo(signal: ReadonlyReactive<number>): Promise<void> {
+    return new Promise((resolve) => {
+        const handle = watchValue(
+            () => signal.value,
+            (value, _oldValue, ctx) => {
+                console.log("intermediate value", value);
+
+                // resolve the promise when the condition is met
+                if (value >= 2) {
+                    // may result in error: handle.destroy();
+                    // this always works:
+                    ctx.destroy();
+                    resolve();
+                }
+            },
+            {
+                // run immediately to check the initial value as well
+                immediate: true
+            }
+        );
+    });
+}
+
+const signal = reactive(0);
+waitForTwo(signal).then(() => {
+    console.log("done");
+});
+
+setTimeout(() => {
+    signal.value += 1;
+    setTimeout(() => {
+        signal.value += 1;
+        setTimeout(() => {
+            // 3 is not printed by the watch callback since it has been destroyed
+            signal.value += 1;
+        }, 250);
+    }, 250);
+}, 250);
+
+// Prints:
+// intermediate value 0
+// intermediate value 1
+// intermediate value 2
+// done
+```
+
+In the example above, the watch callback resolves the promise (and destroys itself) when the signal reaches 2.
+The watch callback not only checks _new_ values, but also the initial value due to `immediate: true`.
+A subtle bug could be introduced by calling `handle.destroy()` here, since it is not available during the initial execution of the watch callback (the callback runs _inside_ `watchValue` which has not returned yet).
+`ctx.destroy()` on the other hand can always be used.
+
 ## License
 
 Apache-2.0 (see `LICENSE` file)

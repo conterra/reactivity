@@ -3,6 +3,7 @@ import {
     CleanupFunc,
     CleanupHandle,
     EffectCallback,
+    EffectContext,
     WatchCallback,
     WatchImmediateCallback,
     WatchOptions
@@ -70,67 +71,69 @@ export function effect(callback: EffectCallback): CleanupHandle {
     };
 }
 
-class AsyncEffect {
+class AsyncEffect implements EffectContext {
     /** The user-defined effect body. */
-    private callback: EffectCallback;
+    #callback: EffectCallback;
 
     /** The cleanup function returned by an earlier effect execution (if any). */
-    private cleanup: CleanupFunc | undefined;
+    #cleanup: CleanupFunc | undefined;
 
     /** The watcher that implements notifications when signals change. */
-    private watcher: RawWatcher | undefined;
+    #watcher: RawWatcher | undefined;
 
     /** The currently scheduled execution for a new execution of the effect (if any). */
-    private scheduledExecution: CleanupHandle | undefined;
+    #scheduledExecution: CleanupHandle | undefined;
 
-    private isDestroyed = false;
+    /** True when .destroy() was called on the effect (from user or by ourselves). */
+    #isDestroyed = false;
 
-    // True during first run of the effect
-    private initialExecution = true;
+    /** True during first run of the effect */
+    #initialExecution = true;
 
-    // True while running the effect
-    private isExecuting = false;
+    /** True while running the effect */
+    #isExecuting = false;
 
     constructor(callback: EffectCallback) {
-        this.callback = callback;
-        this.watcher = createWatcher(this.scheduleExecution);
-        this.execute();
-        this.initialExecution = false;
+        this.#callback = callback;
+        this.#watcher = createWatcher(this.#scheduleExecution);
+        this.#execute();
+        this.#initialExecution = false;
     }
 
-    destroy() {
-        if (this.isDestroyed) {
+    // NOTE: Bound `this` makes cleanup handle easier to work with.
+    destroy = (): void => {
+        if (this.#isDestroyed) {
             return;
         }
 
-        this.isDestroyed = true;
+        this.#isDestroyed = true;
         try {
-            this.triggerCleanup();
+            this.#triggerCleanup();
         } finally {
-            this.watcher?.destroy();
-            this.watcher = undefined;
-            this.scheduledExecution?.destroy();
-            this.scheduledExecution = undefined;
+            this.#watcher?.destroy();
+            this.#watcher = undefined;
+            this.#scheduledExecution?.destroy();
+            this.#scheduledExecution = undefined;
         }
-    }
+    };
 
     // Runs the actual effect body (once).
     // When the reactive dependencies change, an async callback is dispatched,
     // which will run the effect again at a later time.
-    private execute() {
-        const watcher = this.watcher;
+    #execute() {
+        const watcher = this.#watcher;
         if (!watcher) {
             return;
         }
 
-        this.isExecuting = true;
+        this.#isExecuting = true;
         const stop = watcher.start();
         try {
             // The branch here is for consistent behavior with the raw (sync) effect.
-            if (this.initialExecution) {
+            if (this.#initialExecution) {
                 // Invoke right here to transport the (possible) exception to the caller.
                 try {
-                    this.triggerCallback();
+                    this.#triggerCallback();
                 } catch (e) {
                     this.destroy();
                     throw e;
@@ -138,35 +141,35 @@ class AsyncEffect {
             } else {
                 // We're called from a scheduled task, log the error here and continue.
                 try {
-                    this.triggerCallback();
+                    this.#triggerCallback();
                 } catch (e) {
                     reportTaskError(e);
                 }
             }
         } finally {
             stop();
-            this.isExecuting = false;
+            this.#isExecuting = false;
         }
 
         // May have been destroyed in its own execution; make sure to invoke the last cleanup function
-        if (this.isDestroyed) {
-            this.triggerCleanup();
+        if (this.#isDestroyed) {
+            this.#triggerCleanup();
         }
     }
 
-    private triggerCallback() {
-        if (!this.isDestroyed) {
-            this.triggerCleanup();
-            const cleanup = this.callback();
+    #triggerCallback() {
+        if (!this.#isDestroyed) {
+            this.#triggerCleanup();
+            const cleanup = this.#callback(this);
             if (typeof cleanup === "function") {
-                this.cleanup = cleanup;
+                this.#cleanup = cleanup;
             }
         }
     }
 
-    private triggerCleanup() {
-        const cleanup = this.cleanup;
-        this.cleanup = undefined;
+    #triggerCleanup() {
+        const cleanup = this.#cleanup;
+        this.#cleanup = undefined;
         try {
             if (cleanup) {
                 untracked(cleanup);
@@ -177,23 +180,23 @@ class AsyncEffect {
         }
     }
 
-    private scheduleExecution = () => {
-        if (this.isDestroyed) {
+    #scheduleExecution = () => {
+        if (this.#isDestroyed) {
             return;
         }
-        if (this.isExecuting) {
+        if (this.#isExecuting) {
             // effect triggers itself
             throw new Error("Cycle detected");
         }
 
-        if (this.scheduledExecution) {
+        if (this.#scheduledExecution) {
             return;
         }
-        this.scheduledExecution = dispatchCallback(() => {
+        this.#scheduledExecution = dispatchCallback(() => {
             try {
-                this.execute();
+                this.#execute();
             } finally {
-                this.scheduledExecution = undefined;
+                this.#scheduledExecution = undefined;
             }
         });
     };

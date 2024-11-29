@@ -1,5 +1,41 @@
 # @conterra/reactivity-core
 
+## v0.4.4 (Unreleased)
+
+-   Introduce new `ctx` parameter to `watch` and `effect` and variants.
+    `ctx` can be used to cancel the watch or effect from its own callback, even in its initial execution.
+    In the following examples, the `handle` has not been returned yet, so calling `.destroy()` on it would not work.
+
+    `effect`:
+
+    ```js
+    const handle = effect((ctx) => {
+        // Would throw an error if called in the effect's first execution. `handle` has not been returned yet!
+        // handle.destroy();
+
+        // This will always work:
+        ctx.destroy();
+    });
+    ```
+
+    `watch`:
+
+    ```js
+    const count = reactive(0);
+    const handle = watchValue(
+        () => count.value,
+        (count, _oldCount, ctx) => {
+            if (count == 0) {
+                // handle.destroy() -> error
+                ctx.destroy();
+            }
+        },
+        {
+            immediate: true
+        }
+    );
+    ```
+
 ## v0.4.3
 
 -   Introduce `synchronized`, a new kind of signal designed to integrate foreign data sources.

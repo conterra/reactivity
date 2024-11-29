@@ -132,7 +132,36 @@ export type CleanupFunc = () => void;
  *
  * @group Watching
  */
-export type EffectCallback = () => void | CleanupFunc;
+export type EffectCallback = (ctx: EffectContext) => void | CleanupFunc;
+
+/**
+ * The context object is available in callback invocations of {@link watch}, {@link effect} etc.
+ *
+ * @group Watching
+ */
+export interface EffectContext {
+    /**
+     * Destroys the current watch or effect from inside the triggered callback.
+     *
+     * This is mostly equivalent to destroying the handle returned by {@link watch} or {@link effect}.
+     * However, this method can be called safely from _within_ the callback, even before the handle has been returned.
+     *
+     * Example:
+     *
+     * ```js
+     * const handle = effect((ctx) => {
+     *    if (someCondition) {
+     *        // Would throw an error if called in the effect's first execution. `handle` has not been returned yet!
+     *        // handle.destroy();
+     *
+     *        // This will always work:
+     *        ctx.destroy();
+     *    }
+     * });
+     * ```
+     */
+    destroy(): void;
+}
 
 /**
  * A watch callback triggered if observed values change.
@@ -147,7 +176,7 @@ export type EffectCallback = () => void | CleanupFunc;
  *
  * @group Watching
  */
-export type WatchCallback<T> = (value: T, oldValue: T) => void | CleanupFunc;
+export type WatchCallback<T> = (value: T, oldValue: T, ctx: WatchContext) => void | CleanupFunc;
 
 /**
  * Like {@link WatchCallback}, but the `oldValue` parameter may be `undefined` for the first invocation.
@@ -155,7 +184,20 @@ export type WatchCallback<T> = (value: T, oldValue: T) => void | CleanupFunc;
  *
  * @group Watching
  */
-export type WatchImmediateCallback<T> = (value: T, oldValue: T | undefined) => void | CleanupFunc;
+export type WatchImmediateCallback<T> = (
+    value: T,
+    oldValue: T | undefined,
+    ctx: WatchContext
+) => void | CleanupFunc;
+
+/**
+ * Currently just an alias for {@link EffectContext}.
+ *
+ * Future versions may add additional properties or methods.
+ *
+ * @group Watching
+ */
+export type WatchContext = EffectContext;
 
 /**
  * Options that can be passed to {@link syncWatch}.

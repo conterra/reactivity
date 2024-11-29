@@ -16,10 +16,10 @@ export interface RawWatcher extends CleanupHandle {
 /**
  * Creates a watcher that calls the `onNotify` callback when a signal
  * used within the watcher's tracking context changes.
- * 
+ *
  * The tracking context is started by calling the `start` on the returned
  * watcher.
- * 
+ *
  * WARNING: The `onNotify` callback is very aggressive: it gets called _within_ a batch().
  * @internal
  */
