@@ -26,8 +26,10 @@ export {
     type ExternalReactive,
     type CleanupFunc,
     type EffectCallback,
+    type EffectContext,
     type WatchCallback,
     type WatchImmediateCallback,
+    type WatchContext,
     type WatchOptions,
     type CleanupHandle,
     type SubscribeFunc
