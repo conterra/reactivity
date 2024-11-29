@@ -289,6 +289,57 @@ export function defineSharedEffectTests(
                 await expect(doMutation(() => (r.value += 1))).resolves.toBe(undefined);
             });
         });
+
+        describe("effect context", () => {
+            it("supports self-destruction in initial run", async () => {
+                const spy = vi.fn();
+                const r = reactive(1);
+                effectImpl((ctx) => {
+                    r.value;
+                    spy();
+                    ctx.destroy();
+                });
+                expect(spy).toHaveBeenCalledTimes(1);
+
+                // Effect is no longer running.
+                await doMutation(() => (r.value = 2));
+                expect(spy).toHaveBeenCalledTimes(1);
+            });
+
+            it("supports self-destruction in later run", async () => {
+                const spy = vi.fn();
+                const r = reactive(1);
+                effectImpl((ctx) => {
+                    r.value;
+                    spy();
+                    if (r.value > 1) {
+                        ctx.destroy();
+                    }
+                });
+                expect(spy).toHaveBeenCalledTimes(1);
+
+                // Triggers effect
+                await doMutation(() => (r.value = 2));
+                expect(spy).toHaveBeenCalledTimes(2);
+
+                // Effect is no longer running
+                await doMutation(() => (r.value = 3));
+                expect(spy).toHaveBeenCalledTimes(2);
+            });
+
+            it("invokes cleanup function during self-destruction", async () => {
+                const spy = vi.fn();
+                const cleanup = vi.fn();
+                const r = reactive(1);
+                effectImpl((ctx) => {
+                    spy(r.value);
+                    ctx.destroy();
+                    return cleanup;
+                });
+                expect(spy).toHaveBeenCalledTimes(1);
+                expect(cleanup).toHaveBeenCalledTimes(1);
+            });
+        });
     });
 }
 
@@ -679,6 +730,58 @@ export function defineSharedWatchTests(
             await doMutation(() => (r.value = 3));
             expect(spy).toHaveBeenCalledTimes(1);
             expect(cleanup).toHaveBeenCalledTimes(1);
+        });
+
+        describe("watch context", () => {
+            it("supports self-destruction in initial run", async () => {
+                const spy = vi.fn();
+                const cleanup = vi.fn();
+                const r = reactive(1);
+                watchImpl(
+                    () => [r.value],
+                    (current, _old, ctx) => {
+                        spy(current);
+                        ctx.destroy();
+                        return cleanup;
+                    },
+                    {
+                        immediate: true
+                    }
+                );
+                expect(spy).toHaveBeenCalledTimes(1);
+                expect(cleanup).toHaveBeenCalledTimes(1);
+
+                // Effect is no longer running.
+                await doMutation(() => (r.value = 2));
+                expect(spy).toHaveBeenCalledTimes(1);
+                expect(cleanup).toHaveBeenCalledTimes(1);
+            });
+
+            it("supports self-destruction in later run", async () => {
+                const spy = vi.fn();
+                const cleanup = vi.fn();
+                const r = reactive(1);
+                watchImpl(
+                    () => [r.value],
+                    ([current], _old, ctx) => {
+                        spy(current);
+                        if (current > 1) {
+                            ctx.destroy();
+                        }
+                        return cleanup;
+                    },
+                    {
+                        immediate: true
+                    }
+                );
+                expect(spy).toHaveBeenCalledTimes(1);
+                expect(cleanup).toHaveBeenCalledTimes(0);
+
+                // Triggers watch and destroy()
+                await doMutation(() => (r.value = 2));
+                expect(spy).toHaveBeenCalledTimes(2);
+                expect(cleanup).toHaveBeenCalledTimes(2);
+            });
         });
     });
 }

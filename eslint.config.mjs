@@ -20,7 +20,18 @@ export default tseslint.config(
                 }
             ],
             "semi": ["error", "always"],
-            "@typescript-eslint/no-unused-vars": "warn",
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                {
+                    "args": "all",
+                    "argsIgnorePattern": "^_",
+                    "caughtErrors": "all",
+                    "caughtErrorsIgnorePattern": "^_",
+                    "destructuredArrayIgnorePattern": "^_",
+                    "varsIgnorePattern": "^_",
+                    "ignoreRestSiblings": true
+                }
+            ],
 
             // Needed for side effects with signals
             "@typescript-eslint/no-unused-expressions": "off"

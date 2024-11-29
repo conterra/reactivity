@@ -3,6 +3,7 @@ import { untracked } from "./ReactiveImpl";
 import {
     CleanupHandle,
     EffectCallback,
+    EffectContext,
     WatchCallback,
     WatchImmediateCallback,
     WatchOptions
@@ -50,8 +51,27 @@ import { effect, watch, watchValue } from "./async";
  * @group Watching
  */
 export function syncEffect(callback: EffectCallback): CleanupHandle {
-    const destroy = rawEffect(callback);
-    return { destroy };
+    let isDestroyed = false;
+    let destroy: (() => void) | undefined = undefined;
+    const context: EffectContext = {
+        destroy() {
+            if (isDestroyed) {
+                return;
+            }
+
+            isDestroyed = true;
+            destroy?.(); // undefined on effect's first run
+        }
+    };
+    destroy = rawEffect(() => {
+        return callback(context);
+    });
+
+    // Handle immediate self-destruction
+    if (isDestroyed) {
+        destroy();
+    }
+    return context;
 }
 
 /**
@@ -70,28 +90,20 @@ export function syncEffect(callback: EffectCallback): CleanupHandle {
  */
 export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => void): CleanupHandle {
     let execution = 0;
-    let syncExecution = true;
-    let handle: CleanupHandle | undefined = undefined;
-    handle = syncEffect(() => {
+    return syncEffect((ctx) => {
         const thisExecution = execution++;
         if (thisExecution === 0) {
-            return callback();
+            return callback(ctx);
         } else if (thisExecution === 1) {
             untracked(() => {
                 try {
                     onInvalidate();
                 } finally {
-                    if (syncExecution) {
-                        Promise.resolve().then(() => handle?.destroy());
-                    } else {
-                        handle?.destroy();
-                    }
+                    ctx.destroy();
                 }
             });
         }
     });
-    syncExecution = false;
-    return handle;
 }
 
 /**
