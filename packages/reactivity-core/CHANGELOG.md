@@ -1,6 +1,6 @@
 # @conterra/reactivity-core
 
-## v0.4.4 (Unreleased)
+## v0.4.4
 
 -   Introduce new `ctx` parameter to `watch` and `effect` and variants.
     `ctx` can be used to cancel the watch or effect from its own callback, even in its initial execution.
