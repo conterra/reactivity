@@ -68,7 +68,7 @@ importers:
   packages/reactivity-core:
     dependencies:
       '@preact/signals-core':
-        specifier: ^1.8.0
+        specifier: 1.8.0
         version: 1.8.0
     devDependencies:
       project-root:
