@@ -1,0 +1,40 @@
+{
+    "name": "@conterra/reactivity-events",
+    "type": "module",
+    "version": "0.4.4",
+    "license": "Apache-2.0",
+    "description": "Framework agnostic library for building reactive applications.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/conterra/reactivity",
+        "directory": "packages/reactivity-events"
+    },
+    "files": [
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "package.json",
+        "dist/**"
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./package.json": "./package.json"
+    },
+    "sideEffects": false,
+    "scripts": {
+        "clean": "rimraf dist",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "@conterra/reactivity-core": "workspace:^"
+    },
+    "devDependencies": {
+        "project-root": "workspace:*"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
