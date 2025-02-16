@@ -42,7 +42,8 @@
         "overrides": {
             "rollup@>=4.0.0 <4.22.4": ">=4.22.4",
             "cross-spawn@<7.0.5": ">=7.0.5",
-            "@eslint/plugin-kit@<0.2.3": ">=0.2.3"
+            "@eslint/plugin-kit@<0.2.3": ">=0.2.3",
+            "esbuild@<0.25.0": ">=0.25.0"
         }
     }
 }
