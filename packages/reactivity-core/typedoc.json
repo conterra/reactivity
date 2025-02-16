@@ -1,6 +1,6 @@
 {
     // project-root is a dev dependency (link to the project root)
     "extends": ["project-root/typedoc.base.json"],
-    "entryPoints": ["./index.ts"],
+    "entryPoints": ["./src/index.ts"],
     "groupOrder": ["Primitives", "Watching", "Collections", "Struct", "*"]
 }
