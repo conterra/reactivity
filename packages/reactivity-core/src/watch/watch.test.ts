@@ -334,9 +334,7 @@ function defineSharedWatchTests(
             expect(spy).toHaveBeenCalledOnce();
 
             // value == 2 -> error and no additional callback execution
-            await expect(
-                doMutation(() => (r.value += 1))
-            ).rejects.toThrow(`boom`);
+            await expect(doMutation(() => (r.value += 1))).rejects.toThrow(`boom`);
             expect(spy).toHaveBeenCalledOnce();
 
             // recovered, callback gets executed
@@ -383,9 +381,7 @@ function defineSharedWatchTests(
             );
             expect(spy).toHaveBeenCalledTimes(0);
 
-            await expect(
-                doMutation(() => (r.value += 1))
-            ).rejects.toThrow(`boom`);
+            await expect(doMutation(() => (r.value += 1))).rejects.toThrow(`boom`);
             expect(spy).toHaveBeenCalledTimes(1);
 
             // Recovers, called again
@@ -465,9 +461,7 @@ function defineSharedWatchTests(
             expect(spy).toHaveBeenCalledTimes(1);
             expect(cleanup).toHaveBeenCalledTimes(0);
 
-            await expect(
-                doMutation(() => (r.value = 2))
-            ).rejects.toThrowError(`cleanup error`);
+            await expect(doMutation(() => (r.value = 2))).rejects.toThrowError(`cleanup error`);
             expect(cleanup).toHaveBeenCalledTimes(1);
             expect(spy).toHaveBeenCalledTimes(1); // not called again
 

@@ -14,7 +14,7 @@ export function setupDoMutation() {
 
 /**
  * Mutates signals within the given `fn` and waits for the effects to happen.
- * 
+ *
  * Throws any error by mocking the shared `reportTasksError` function.
  */
 export async function doMutation(fn: () => void, type: "sync" | "async"): Promise<void> {

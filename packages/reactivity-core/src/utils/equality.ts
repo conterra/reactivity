@@ -6,5 +6,8 @@ export function shallowEqual(oldValue: readonly unknown[], newValue: readonly un
     if (oldValue === newValue) {
         return true;
     }
-    return oldValue.length === newValue.length && oldValue.every((v, i) => defaultEquals(v, newValue[i]));
+    return (
+        oldValue.length === newValue.length &&
+        oldValue.every((v, i) => defaultEquals(v, newValue[i]))
+    );
 }

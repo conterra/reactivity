@@ -1,11 +1,6 @@
 import { createWatcher, RawWatcher } from "../hacks";
 import { untracked } from "../signals";
-import {
-    CleanupFunc,
-    CleanupHandle,
-    EffectCallback,
-    EffectContext
-} from "../types";
+import { CleanupFunc, CleanupHandle, EffectCallback, EffectContext } from "../types";
 import { reportTaskError } from "../utils/reportTaskError";
 import { dispatchAsyncCallback } from "./dispatch";
 

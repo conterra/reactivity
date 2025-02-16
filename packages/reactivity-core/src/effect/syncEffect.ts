@@ -1,9 +1,5 @@
 import { effect as rawEffect } from "@preact/signals-core";
-import {
-    CleanupHandle,
-    EffectCallback,
-    EffectContext
-} from "../types";
+import { CleanupHandle, EffectCallback, EffectContext } from "../types";
 
 // Import required for docs
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
