@@ -1,5 +1,5 @@
 import { Reactive } from "../types";
-import { reactive } from "../ReactiveImpl";
+import { reactive } from "../signals";
 
 /**
  * A reactive map.

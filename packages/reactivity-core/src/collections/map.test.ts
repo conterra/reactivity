@@ -1,7 +1,7 @@
 import { it, expect, describe, vi } from "vitest";
 import { ReactiveMap, reactiveMap } from "./map";
-import { batch, computed } from "../ReactiveImpl";
-import { syncEffect } from "../sync";
+import { batch, computed } from "../signals";
+import { syncEffect } from "../effect/syncEffect";
 
 describe("basic API", () => {
     it("can be constructed with initial data", () => {

@@ -1,5 +1,5 @@
 import { computed as rawComputed, ReadonlySignal as RawReadonlySignal } from "@preact/signals-core";
-import { untracked } from "./ReactiveImpl";
+import { untracked } from "../signals";
 import {
     CleanupFunc,
     CleanupHandle,
@@ -7,12 +7,12 @@ import {
     WatchContext,
     WatchImmediateCallback,
     WatchOptions
-} from "./types";
-import { defaultEquals } from "./utils/equality";
+} from "../types";
+import { defaultEquals } from "../utils/equality";
 
-type EffectSignature = (callback: EffectCallback) => CleanupHandle;
+export type EffectSignature = (callback: EffectCallback) => CleanupHandle;
 
-export function watchImpl<T>(
+export function createWatcher<T>(
     effectImpl: EffectSignature,
     selector: () => T,
     callback: WatchImmediateCallback<T>,
@@ -21,10 +21,14 @@ export function watchImpl<T>(
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
     const equal = options?.equal ?? defaultEquals;
-    return new WatchImpl(effectImpl, callback, computedArgs, equal, immediate);
+    return new Watcher(effectImpl, callback, computedArgs, equal, immediate);
 }
 
-class WatchImpl<T> implements WatchContext, CleanupHandle {
+/**
+ * Watches a computed signal and executes a callback whenever that signal's value changes.
+ * Supports both async and sync dispatch via the `effectImpl` parameter.
+ */
+class Watcher<T> implements WatchContext, CleanupHandle {
     /** User callback. */
     #callback: WatchImmediateCallback<T>;
 

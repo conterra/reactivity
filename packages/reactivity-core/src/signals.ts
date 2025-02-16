@@ -9,36 +9,15 @@ import { rawComputedWithSubscriptionHook } from "./hacks";
 import {
     AddBrand,
     AddWritableBrand,
+    EqualsFunc,
     ExternalReactive,
     Reactive,
+    ReactiveOptions,
     ReadonlyReactive,
     RemoveBrand,
     SubscribeFunc
 } from "./types";
 import { defaultEquals } from "./utils/equality";
-
-/**
- * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.
- *
- * @group Primitives
- */
-export type EqualsFunc<T> = (a: T, b: T) => boolean;
-
-/**
- * Options that can be passed when creating a new signal.
- *
- * @group Primitives
- */
-export interface ReactiveOptions<T> {
-    /**
-     * Shall return `true` if the two values are considered equal.
-     *
-     * Reactive assignments using a new value equal to the current value
-     * will be ignored.
-     * By default, `Object.is` is used to compare values.
-     */
-    equal?: EqualsFunc<T>;
-}
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.

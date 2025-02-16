@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { batch, computed, external, reactive, synchronized } from "./ReactiveImpl";
-import { syncEffect, syncWatchValue } from "./sync";
+import { batch, computed, external, reactive, synchronized } from "./signals";
+import { syncEffect } from "./effect/syncEffect";
+import { syncWatchValue } from "./watch/watch";
 
 describe("reactive", () => {
     it("supports setting an initial value", () => {

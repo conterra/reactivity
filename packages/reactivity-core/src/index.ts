@@ -24,6 +24,8 @@ export {
     type ReadonlyReactive,
     type Reactive,
     type ExternalReactive,
+    type EqualsFunc,
+    type ReactiveOptions,
     type CleanupFunc,
     type EffectCallback,
     type EffectContext,
@@ -35,8 +37,6 @@ export {
     type SubscribeFunc
 } from "./types";
 export {
-    type EqualsFunc,
-    type ReactiveOptions,
     reactive,
     computed,
     external,
@@ -47,8 +47,10 @@ export {
     peekValue,
     isReadonlyReactive,
     isReactive
-} from "./ReactiveImpl";
-export { syncEffect, syncWatch, syncWatchValue } from "./sync";
-export { effect, watch, watchValue, nextTick } from "./async";
+} from "./signals";
+export { syncWatch, syncWatchValue, watch, watchValue } from "./watch/watch";
+export { effect } from "./effect/asyncEffect";
+export { syncEffect } from "./effect/syncEffect";
+export { nextTick } from "./effect/dispatch";
 export * from "./collections";
 export * from "./struct";

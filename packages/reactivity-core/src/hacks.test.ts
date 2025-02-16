@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { batch, reactive, synchronized } from "./ReactiveImpl";
+import { batch, reactive, synchronized } from "./signals";
 import { createWatcher, rawComputedWithSubscriptionHook } from "./hacks";
-import { syncWatchValue } from "./sync";
+import { syncWatchValue } from "./watch/watch";
 
 describe("Watcher", () => {
     it("does not trigger the notify callback if nothing happens", () => {
