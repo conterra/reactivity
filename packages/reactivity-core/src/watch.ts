@@ -8,6 +8,7 @@ import {
     WatchImmediateCallback,
     WatchOptions
 } from "./types";
+import { defaultEquals } from "./utils/equality";
 
 type EffectSignature = (callback: EffectCallback) => CleanupHandle;
 
@@ -19,7 +20,7 @@ export function watchImpl<T>(
 ): CleanupHandle {
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
-    const equal = options?.equal ?? trivialEquals;
+    const equal = options?.equal ?? defaultEquals;
     return new WatchImpl(effectImpl, callback, computedArgs, equal, immediate);
 }
 
@@ -111,8 +112,4 @@ class WatchImpl<T> implements WatchContext, CleanupHandle {
             throw e;
         }
     }
-}
-
-function trivialEquals(a: unknown, b: unknown) {
-    return a === b;
 }

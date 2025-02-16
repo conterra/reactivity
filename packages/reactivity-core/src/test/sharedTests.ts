@@ -397,6 +397,28 @@ export function defineSharedWatchTests(
             expect(spy).toBeCalledTimes(0);
         });
 
+        it("does not consider NaN values differently", async () => {
+            const spy = vi.fn();
+            const r = reactive(1);
+            watchImpl(
+                () => {
+                    r.value;
+                    return [NaN]; // NaN !== NaN but Object.is(NaN, NaN)
+                },
+                ([v]) => {
+                    spy(v);
+                }
+            );
+            expect(spy).toBeCalledTimes(0);
+
+            await doMutation(() => {
+                batch(() => {
+                    r.value = 2;
+                });
+            });
+            expect(spy).toBeCalledTimes(0); // still NaN
+        });
+
         it("passes the previous values to the callback", async () => {
             const spy = vi.fn();
             const r = reactive(1);

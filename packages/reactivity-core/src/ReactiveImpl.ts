@@ -15,6 +15,7 @@ import {
     RemoveBrand,
     SubscribeFunc
 } from "./types";
+import { defaultEquals } from "./utils/equality";
 
 /**
  * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.
@@ -34,7 +35,7 @@ export interface ReactiveOptions<T> {
      *
      * Reactive assignments using a new value equal to the current value
      * will be ignored.
-     * By default, `===` is used to compare values.
+     * By default, `Object.is` is used to compare values.
      */
     equal?: EqualsFunc<T>;
 }
@@ -383,11 +384,11 @@ class ComputedReactiveImpl<T> extends ReactiveImpl<T> {
 }
 
 class WritableReactiveImpl<T> extends ReactiveImpl<T> {
-    [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
+    [CUSTOM_EQUALS]: EqualsFunc<T>;
 
     constructor(initialValue: T, equals: EqualsFunc<T> | undefined) {
         super(rawSignal(initialValue));
-        this[CUSTOM_EQUALS] = equals;
+        this[CUSTOM_EQUALS] = equals ?? defaultEquals;
     }
 
     get value() {

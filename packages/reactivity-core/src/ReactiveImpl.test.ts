@@ -43,6 +43,30 @@ describe("reactive", () => {
         expect(r.value.foo).toBe(2);
     });
 
+    it("triggers effect on change", () => {
+        const r = reactive(0);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(r.value);
+        });
+        expect(spy).toBeCalledTimes(1);
+
+        r.value = 1;
+        expect(spy).toBeCalledTimes(2);
+    });
+
+    it("does not consider NaNs as different values", () => {
+        const r = reactive(NaN);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(r.value);
+        });
+        expect(spy).toBeCalledTimes(1);
+
+        r.value = NaN;
+        expect(spy).toBeCalledTimes(1);
+    });
+
     it("supports formatting as a string", () => {
         const r = reactive(0);
         expect(r.toString()).toMatchInlineSnapshot(`"Reactive[value=0]"`);

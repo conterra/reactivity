@@ -336,7 +336,7 @@ The following table provides a quick overview of the different variants of `effe
 
 Note that `watchValue` and `watch` are almost the same.
 `watch` supports watching multiple values at once directly (but forces you to return an array) while `watchValue` only supports a single value.
-In truth, only their default `equal` functions are different: `watchValue` uses `===` while `watch` uses shallow array equality.
+In truth, only their default `equal` functions are different: `watchValue` uses `Object.is` while `watch` uses shallow array equality.
 
 ### Complex values
 
@@ -362,7 +362,7 @@ watchValue(
 currentUser.value = { name: "User 2" };
 ```
 
-You should keep in mind that, by default, change detection is based on JavaScript's default comparison (i.e. `===`).
+You should keep in mind that, by default, change detection is based on JavaScript's default comparison (i.e. `Object.is`).
 This means that objects or arrays (or any other reference type) may trigger changes even if their contents are equivalent (equal _content_ but different _identity_).
 For example, the following change would trigger the `watch()` of the previous example, even though the `name` is the same:
 

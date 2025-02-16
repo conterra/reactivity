@@ -9,7 +9,7 @@ import {
     WatchOptions
 } from "./types";
 import { reportTaskError } from "./utils/reportTaskError";
-import { shallowEqual } from "./utils/shallowEqual";
+import { shallowEqual } from "./utils/equality";
 import { TaskQueue } from "./utils/TaskQueue";
 import { watchImpl } from "./watch";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -213,7 +213,7 @@ class AsyncEffect implements EffectContext {
  *    will be executed with the new value (the old value is available as well).
  *    The body of `callback` is not reactive.
  *
- * The values returned by the selector are compared using object identity by default (i.e. `===`).
+ * The values returned by the selector are compared using object identity by default (i.e. `Object.is`).
  * Note that you can provide a custom `equal` function to change this behavior.
  *
  * Example:

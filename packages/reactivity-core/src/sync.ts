@@ -1,5 +1,4 @@
 import { effect as rawEffect } from "@preact/signals-core";
-import { untracked } from "./ReactiveImpl";
 import {
     CleanupHandle,
     EffectCallback,
@@ -8,7 +7,7 @@ import {
     WatchImmediateCallback,
     WatchOptions
 } from "./types";
-import { shallowEqual } from "./utils/shallowEqual";
+import { shallowEqual } from "./utils/equality";
 import { watchImpl } from "./watch";
 
 // Import required for docs
