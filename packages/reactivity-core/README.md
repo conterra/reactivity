@@ -1,4 +1,4 @@
-# @conterra/reactivity-core
+# @conterra/reactivity-core ![NPM Version](https://img.shields.io/npm/v/%40conterra%2Freactivity-core)
 
 UI framework independent reactivity library with support for all kinds of values.
 
@@ -73,13 +73,13 @@ r.value = "bar";
 
 `effect(callback)` works like this:
 
--   First, it will execute the given `callback` immediately.
--   During the execution, it tracks all signals whose values were accessed by `callback`.
-    This also works indirectly, for example if you call one or more functions which internally use signals.
--   When _any_ of those signals are updated, the effect will re-execute `callback`.
--   These re-executions will happen indefinitely: either until the signals no longer change or until the effect has been destroyed.
-    Effects can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
--   For an alternative API that doesn't trigger on _every_ change, see [watch()](#effect-vs-watch).
+- First, it will execute the given `callback` immediately.
+- During the execution, it tracks all signals whose values were accessed by `callback`.
+  This also works indirectly, for example if you call one or more functions which internally use signals.
+- When _any_ of those signals are updated, the effect will re-execute `callback`.
+- These re-executions will happen indefinitely: either until the signals no longer change or until the effect has been destroyed.
+  Effects can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
+- For an alternative API that doesn't trigger on _every_ change, see [watch()](#effect-vs-watch).
 
 Signals can be composed by deriving values from them via `computed()`.
 `computed()` takes a callback function as its argument.
@@ -238,14 +238,14 @@ watchValue(
 
 `watchValue()` takes two functions and one (optional) options object:
 
--   **(1)**: The _selector_ function.
-    This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded.
-    The function must return the value you want to watch and it should not have any side effects.
--   **(2)**: The _callback_ function.
-    This function is called whenever the selector function returned a different value, and it receives that value as its first argument.
-    The callback itself is _not_ reactive and it may trigger arbitrary side effects.
--   **(3)**: By default, the callback function will only be invoked after the watched value changed at least once.
-    By specifying `immediate: true`, the callback will also run for the initial value.
+- **(1)**: The _selector_ function.
+  This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded.
+  The function must return the value you want to watch and it should not have any side effects.
+- **(2)**: The _callback_ function.
+  This function is called whenever the selector function returned a different value, and it receives that value as its first argument.
+  The callback itself is _not_ reactive and it may trigger arbitrary side effects.
+- **(3)**: By default, the callback function will only be invoked after the watched value changed at least once.
+  By specifying `immediate: true`, the callback will also run for the initial value.
 
 In this example, the callback function will only re-run when the computed sum truly changed.
 
@@ -607,10 +607,10 @@ console.log(fullName.value); // Jane Doe
 
 The `define` function can be used to
 
--   make properties read-only
--   declare non-reactive properties
--   create computed properties
--   add methods to the reactive object
+- make properties read-only
+- declare non-reactive properties
+- create computed properties
+- add methods to the reactive object
 
 The following example shows declaring an extended `Person`:
 
@@ -719,22 +719,22 @@ While step 1 is rather trivial, step 2 turns out to contain lots of complexity i
 Many frameworks have found different solutions for keeping the UI synchronized with the application's state (e.g. React, Vue, Flux architecture, store libraries such as Zustand/VueX/Pinia, etc.).
 These solutions often come with some trade-offs:
 
--   They are often tied to an UI framework (e.g. React).
--   They may impose unusual programming paradigms (e.g. a centralized store instead of a graph of objects) that may be different to integrate with technologies like TypeScript.
--   They may only support reactivity for _some_ objects.
-    For example, Vue's reactivity system is based on wrapping objects with proxies; this is incompatible with some legitimate objects - a fact that can be both surprising and difficult to debug.
--   They may only support reactivity _locally_.
-    For example, a store library may support reactivity _within_ a single store, but referring to values from multiple stores may be difficult.
+- They are often tied to an UI framework (e.g. React).
+- They may impose unusual programming paradigms (e.g. a centralized store instead of a graph of objects) that may be different to integrate with technologies like TypeScript.
+- They may only support reactivity for _some_ objects.
+  For example, Vue's reactivity system is based on wrapping objects with proxies; this is incompatible with some legitimate objects - a fact that can be both surprising and difficult to debug.
+- They may only support reactivity _locally_.
+  For example, a store library may support reactivity _within_ a single store, but referring to values from multiple stores may be difficult.
 
 This library implements a different set of trade-offs, based on [signals](https://github.com/preactjs/signals):
 
--   The implementation is not tied to any UI technology.
-    It can be used with any UI Framework, or none, or multiple UI Frameworks at the same time.
--   All kinds of values are supported.
-    Updating the current value in a reactive "box" will notify all interested parties (such as effects, watchers or computed objects).
-    However, values that have not been prepared for reactivity will not be deeply reactive: when authoring a class, one has to use the reactive primitives or collections provided by this package.
--   State can be kept in objects and classes (this pairs nicely with TypeScript).
-    The state rendered by the user interface can be gathered from an arbitrary set of objects.
+- The implementation is not tied to any UI technology.
+  It can be used with any UI Framework, or none, or multiple UI Frameworks at the same time.
+- All kinds of values are supported.
+  Updating the current value in a reactive "box" will notify all interested parties (such as effects, watchers or computed objects).
+  However, values that have not been prepared for reactivity will not be deeply reactive: when authoring a class, one has to use the reactive primitives or collections provided by this package.
+- State can be kept in objects and classes (this pairs nicely with TypeScript).
+  The state rendered by the user interface can be gathered from an arbitrary set of objects.
 
 ## API
 
@@ -958,9 +958,9 @@ s1.value = 1; // _does_ cause the effect to trigger again
 
 `untracked()` works everywhere dependencies are tracked:
 
--   inside `computed()`
--   in effect callbacks
--   in the `selector` argument of `watch()`
+- inside `computed()`
+- in effect callbacks
+- in the `selector` argument of `watch()`
 
 ### Effects triggering often when working with collections
 

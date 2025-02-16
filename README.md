@@ -9,8 +9,10 @@ Framework agnostic library for building reactive applications.
 
 See the [README of the `@conterra/reactivity-core` package](./packages/reactivity-core/README.md).
 
-The API docs for the latest release are hosted [here](https://conterra.github.io/reactivity/latest/).
-Click [here](https://conterra.github.io/reactivity/dev/) for the API docs of the current main branch.
+View API docs:
+
+- [Latest release](https://conterra.github.io/reactivity/latest/)
+- [Current main brach](https://conterra.github.io/reactivity/dev/)
 
 ## Setup
 

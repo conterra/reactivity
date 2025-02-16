@@ -5,7 +5,7 @@
         "target": "ES2022",
         "lib": ["DOM", "DOM.Iterable", "ES2022"],
         "module": "ES2022",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "moduleDetection": "force",
         "jsx": "preserve",
         "allowJs": false,
