@@ -1,5 +1,9 @@
 # @conterra/reactivity-core
 
+## v0.5.0 (TBD)
+
+- Remove deprecated `syncEffectOnce`
+
 ## v0.4.4
 
 - Introduce new `ctx` parameter to `watch` and `effect` and variants.

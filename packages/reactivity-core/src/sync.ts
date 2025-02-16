@@ -75,38 +75,6 @@ export function syncEffect(callback: EffectCallback): CleanupHandle {
 }
 
 /**
- * A variant of {@link syncEffect} that only executes the main `callback` once.
- *
- * As soon as one or more reactive dependencies of `callback` have changed, `onInvalidate` will be invoked.
- *
- * This gives users of this API the ability to listen for values that _might_ have changed without doing much work.
- * Typically, `onInvalidate` will be very cheap (e.g. schedule a new render).
- *
- * Note that `onInvalidate` will never be invoked more than once.
- *
- * @deprecated This function is no longer needed and will be removed in a future release.
- *
- * @group Watching
- */
-export function syncEffectOnce(callback: EffectCallback, onInvalidate: () => void): CleanupHandle {
-    let execution = 0;
-    return syncEffect((ctx) => {
-        const thisExecution = execution++;
-        if (thisExecution === 0) {
-            return callback(ctx);
-        } else if (thisExecution === 1) {
-            untracked(() => {
-                try {
-                    onInvalidate();
-                } finally {
-                    ctx.destroy();
-                }
-            });
-        }
-    });
-}
-
-/**
  * Watches a single reactive value and executes a callback whenever that value changes.
  *
  * This function is the synchronous variant of {@link watchValue}.
