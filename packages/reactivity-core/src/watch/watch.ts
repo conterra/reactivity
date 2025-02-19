@@ -1,6 +1,6 @@
 import { effect } from "../effect/asyncEffect";
 import { syncEffect } from "../effect/syncEffect";
-import { CleanupHandle, WatchCallback, WatchImmediateCallback, WatchOptions } from "../types";
+import { CleanupHandle, ReactiveGetter, WatchCallback, WatchImmediateCallback, WatchOptions } from "../types";
 import { shallowEqual } from "../utils/equality";
 import { createWatcher } from "./Watcher";
 
@@ -44,7 +44,7 @@ import { createWatcher } from "./Watcher";
  * @group Watching
  */
 export function syncWatchValue<T>(
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchCallback<T>,
     options?: WatchOptions<T> & { immediate?: false }
 ): CleanupHandle;
@@ -57,12 +57,12 @@ export function syncWatchValue<T>(
  * @group Watching
  */
 export function syncWatchValue<T>(
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle;
 export function syncWatchValue<T>(
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle {
@@ -111,7 +111,7 @@ export function syncWatchValue<T>(
  * @group Watching
  */
 export function syncWatch<const Values extends unknown[]>(
-    selector: () => Values,
+    selector: ReactiveGetter<Values>,
     callback: WatchCallback<Values>,
     options?: WatchOptions<Values> & { immediate?: false }
 ): CleanupHandle;
@@ -124,12 +124,12 @@ export function syncWatch<const Values extends unknown[]>(
  * @group Watching
  */
 export function syncWatch<const Values extends unknown[]>(
-    selector: () => Values,
+    selector: ReactiveGetter<Values>,
     callback: WatchImmediateCallback<Values>,
     options?: WatchOptions<Values>
 ): CleanupHandle;
 export function syncWatch<const Values extends unknown[]>(
-    selector: () => Values,
+    selector: ReactiveGetter<Values>,
     callback: WatchImmediateCallback<Values>,
     options?: WatchOptions<Values>
 ): CleanupHandle {
@@ -191,7 +191,7 @@ export function syncWatch<const Values extends unknown[]>(
  * @param options additional options.
  */
 export function watchValue<T>(
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchCallback<T>,
     options?: WatchOptions<T> & { immediate?: false }
 ): CleanupHandle;
@@ -204,12 +204,12 @@ export function watchValue<T>(
  * @group Watching
  */
 export function watchValue<T>(
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle;
 export function watchValue<T>(
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle {
@@ -272,7 +272,7 @@ export function watchValue<T>(
  * @group Watching
  */
 export function watch<const Values extends unknown[]>(
-    selector: () => Values,
+    selector: ReactiveGetter<Values>,
     callback: WatchCallback<Values>,
     options?: WatchOptions<Values> & { immediate?: false }
 ): CleanupHandle;
@@ -285,12 +285,12 @@ export function watch<const Values extends unknown[]>(
  * @group Watching
  */
 export function watch<const Values extends unknown[]>(
-    selector: () => Values,
+    selector: ReactiveGetter<Values>,
     callback: WatchImmediateCallback<Values>,
     options?: WatchOptions<Values>
 ): CleanupHandle;
 export function watch<const Values extends unknown[]>(
-    selector: () => Values,
+    selector: ReactiveGetter<Values>,
     callback: WatchImmediateCallback<Values>,
     options?: WatchOptions<Values>
 ): CleanupHandle {

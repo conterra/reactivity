@@ -12,6 +12,7 @@ import {
     EqualsFunc,
     ExternalReactive,
     Reactive,
+    ReactiveGetter,
     ReactiveOptions,
     ReadonlyReactive,
     RemoveBrand,
@@ -79,7 +80,7 @@ export function reactive<T>(
  *
  * @group Primitives
  */
-export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
+export function computed<T>(compute: ReactiveGetter<T>, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
     const impl = new ComputedReactiveImpl(compute, options?.equal);
     return impl as AddBrand<typeof impl>;
 }
@@ -307,7 +308,7 @@ export function isReadonlyReactive<T>(
 }
 
 /**
- * Returns `true` if `maybeReactive` is any kind of writable signal.
+ * Returns `true` if `maybeReactive` is any kind of *writable* signal.
  *
  * @group Primitives
  */

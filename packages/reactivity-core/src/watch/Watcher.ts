@@ -4,6 +4,7 @@ import {
     CleanupFunc,
     CleanupHandle,
     EffectCallback,
+    ReactiveGetter,
     WatchContext,
     WatchImmediateCallback,
     WatchOptions
@@ -14,7 +15,7 @@ export type EffectSignature = (callback: EffectCallback) => CleanupHandle;
 
 export function createWatcher<T>(
     effectImpl: EffectSignature,
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle {

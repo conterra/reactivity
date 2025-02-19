@@ -24,6 +24,7 @@ export {
     type ReadonlyReactive,
     type Reactive,
     type ExternalReactive,
+    type ReactiveGetter,
     type EqualsFunc,
     type ReactiveOptions,
     type CleanupFunc,
