@@ -9,35 +9,16 @@ import { rawComputedWithSubscriptionHook } from "./hacks";
 import {
     AddBrand,
     AddWritableBrand,
+    EqualsFunc,
     ExternalReactive,
     Reactive,
+    ReactiveGetter,
+    ReactiveOptions,
     ReadonlyReactive,
     RemoveBrand,
     SubscribeFunc
 } from "./types";
-
-/**
- * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.
- *
- * @group Primitives
- */
-export type EqualsFunc<T> = (a: T, b: T) => boolean;
-
-/**
- * Options that can be passed when creating a new signal.
- *
- * @group Primitives
- */
-export interface ReactiveOptions<T> {
-    /**
-     * Shall return `true` if the two values are considered equal.
-     *
-     * Reactive assignments using a new value equal to the current value
-     * will be ignored.
-     * By default, `===` is used to compare values.
-     */
-    equal?: EqualsFunc<T>;
-}
+import { defaultEquals } from "./utils/equality";
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.
@@ -99,7 +80,7 @@ export function reactive<T>(
  *
  * @group Primitives
  */
-export function computed<T>(compute: () => T, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
+export function computed<T>(compute: ReactiveGetter<T>, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
     const impl = new ComputedReactiveImpl(compute, options?.equal);
     return impl as AddBrand<typeof impl>;
 }
@@ -327,7 +308,7 @@ export function isReadonlyReactive<T>(
 }
 
 /**
- * Returns `true` if `maybeReactive` is any kind of writable signal.
+ * Returns `true` if `maybeReactive` is any kind of *writable* signal.
  *
  * @group Primitives
  */
@@ -383,11 +364,11 @@ class ComputedReactiveImpl<T> extends ReactiveImpl<T> {
 }
 
 class WritableReactiveImpl<T> extends ReactiveImpl<T> {
-    [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
+    [CUSTOM_EQUALS]: EqualsFunc<T>;
 
     constructor(initialValue: T, equals: EqualsFunc<T> | undefined) {
         super(rawSignal(initialValue));
-        this[CUSTOM_EQUALS] = equals;
+        this[CUSTOM_EQUALS] = equals ?? defaultEquals;
     }
 
     get value() {

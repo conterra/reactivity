@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { computed, getValue, isReactive, reactive } from "../ReactiveImpl";
+import { computed, getValue, isReactive, reactive } from "../signals";
 
 /**
  * A property of a reactive struct.

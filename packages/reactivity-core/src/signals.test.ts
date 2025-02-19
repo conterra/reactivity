@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { batch, computed, external, reactive, synchronized } from "./ReactiveImpl";
-import { syncEffect, syncWatchValue } from "./sync";
+import { batch, computed, external, reactive, synchronized } from "./signals";
+import { syncEffect } from "./effect/syncEffect";
+import { syncWatchValue } from "./watch/watch";
 
 describe("reactive", () => {
     it("supports setting an initial value", () => {
@@ -41,6 +42,30 @@ describe("reactive", () => {
 
         r.value = { foo: 2 };
         expect(r.value.foo).toBe(2);
+    });
+
+    it("triggers effect on change", () => {
+        const r = reactive(0);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(r.value);
+        });
+        expect(spy).toBeCalledTimes(1);
+
+        r.value = 1;
+        expect(spy).toBeCalledTimes(2);
+    });
+
+    it("does not consider NaNs as different values", () => {
+        const r = reactive(NaN);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(r.value);
+        });
+        expect(spy).toBeCalledTimes(1);
+
+        r.value = NaN;
+        expect(spy).toBeCalledTimes(1);
     });
 
     it("supports formatting as a string", () => {

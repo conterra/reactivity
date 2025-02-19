@@ -1,29 +1,35 @@
 import { computed as rawComputed, ReadonlySignal as RawReadonlySignal } from "@preact/signals-core";
-import { untracked } from "./ReactiveImpl";
+import { untracked } from "../signals";
 import {
     CleanupFunc,
     CleanupHandle,
     EffectCallback,
+    ReactiveGetter,
     WatchContext,
     WatchImmediateCallback,
     WatchOptions
-} from "./types";
+} from "../types";
+import { defaultEquals } from "../utils/equality";
 
-type EffectSignature = (callback: EffectCallback) => CleanupHandle;
+export type EffectSignature = (callback: EffectCallback) => CleanupHandle;
 
-export function watchImpl<T>(
+export function createWatcher<T>(
     effectImpl: EffectSignature,
-    selector: () => T,
+    selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle {
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
-    const equal = options?.equal ?? trivialEquals;
-    return new WatchImpl(effectImpl, callback, computedArgs, equal, immediate);
+    const equal = options?.equal ?? defaultEquals;
+    return new Watcher(effectImpl, callback, computedArgs, equal, immediate);
 }
 
-class WatchImpl<T> implements WatchContext, CleanupHandle {
+/**
+ * Watches a computed signal and executes a callback whenever that signal's value changes.
+ * Supports both async and sync dispatch via the `effectImpl` parameter.
+ */
+class Watcher<T> implements WatchContext, CleanupHandle {
     /** User callback. */
     #callback: WatchImmediateCallback<T>;
 
@@ -111,8 +117,4 @@ class WatchImpl<T> implements WatchContext, CleanupHandle {
             throw e;
         }
     }
-}
-
-function trivialEquals(a: unknown, b: unknown) {
-    return a === b;
 }

@@ -99,6 +99,41 @@ export interface ExternalReactive<T> extends ReadonlyReactive<T> {
 }
 
 /**
+ * A function that returns a value that may change over time.
+ * 
+ * The function should be implemented in terms of signals (directly or indirectly).
+ * 
+ * Functions of this kind are designed to run in a reactive context.
+ * They will typically be invoked repeatedly if any of their dependencies change.
+ * 
+ * @group Primitives
+ */
+export type ReactiveGetter<T> = () => T;
+
+/**
+ * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.
+ *
+ * @group Primitives
+ */
+export type EqualsFunc<T> = (a: T, b: T) => boolean;
+
+/**
+ * Options that can be passed when creating a new signal.
+ *
+ * @group Primitives
+ */
+export interface ReactiveOptions<T> {
+    /**
+     * Shall return `true` if the two values are considered equal.
+     *
+     * Reactive assignments using a new value equal to the current value
+     * will be ignored.
+     * By default, `Object.is` is used to compare values.
+     */
+    equal?: EqualsFunc<T>;
+}
+
+/**
  * A handle returned by various functions to dispose of a resource,
  * such as a watcher or an effect.
  *
@@ -221,7 +256,7 @@ export interface WatchOptions<T> {
      *
      * By default, an implementation based on object identity is used.
      */
-    equal?(prev: T, next: T): boolean;
+    equal?: EqualsFunc<T>;
 }
 
 /**
