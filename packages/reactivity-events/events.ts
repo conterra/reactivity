@@ -143,8 +143,11 @@ function invokeListeners(listeners: Set<RawListener>, ...args: unknown[]) {
     // Copy to allow (de-) registration of handlers during emit.
     // This is convenient for correctness but may been further optimization
     // if events are emitted frequently.
-    const copy = [...listeners];
-    for (const listener of copy) {
+    if (!listeners.size) {
+        return;
+    }
+    
+    for (const listener of Array.from(listeners)) {
         if (listener.removed) {
             continue;
         }
@@ -153,6 +156,7 @@ function invokeListeners(listeners: Set<RawListener>, ...args: unknown[]) {
             listener.removed = true;
             listeners.delete(listener);
         }
+
         listener.callback(...args);
     }
 }
