@@ -10,7 +10,7 @@
       This is due to the underlying implementation in `@preact/signals-core`, which compares values using `===`.
 - Relax type signature of `watch` and `syncWatch`: the array of values is no longer `readonly` (but it still must not be modified at runtime).
 - Remove deprecated `syncEffectOnce`
-- Export `reportCallbackError` from this package.
+- Export `reportCallbackError` and `dispatchAsyncCallback` from this package.
 
 ## v0.4.4
 
