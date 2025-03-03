@@ -24,6 +24,12 @@ Install dependencies:
 $ pnpm install
 ```
 
+Build all packages:
+
+```bash
+$ pnpm build
+```
+
 ## Tests
 
 ```bash
@@ -40,6 +46,14 @@ Watch TypeScript errors:
 
 ```bash
 $ pnpm watch-types
+```
+
+When developing features across package boundaries, use the `dev` script your dependencies.
+This way, they will be rebuilt automatically:
+
+```bash
+$ cd packages/reactivity-core
+$ pnpm dev
 ```
 
 ## Playground
