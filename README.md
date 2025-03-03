@@ -51,7 +51,7 @@ Watch TypeScript errors:
 $ pnpm watch-types
 ```
 
-When developing features across package boundaries, use the `dev` script your dependencies.
+When developing features across package boundaries, use the `dev` script in your dependencies.
 This way, they will be rebuilt automatically:
 
 ```bash
