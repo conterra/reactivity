@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "clean": "pnpm -r run --parallel clean",
+        "dev": "pnpm -r run --parallel dev",
         "build": "pnpm -r run --aggregate-output build",
         "build-docs": "typedoc",
         "test": "pnpm -r run --aggregate-output test run",

@@ -80,7 +80,10 @@ export function reactive<T>(
  *
  * @group Primitives
  */
-export function computed<T>(compute: ReactiveGetter<T>, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
+export function computed<T>(
+    compute: ReactiveGetter<T>,
+    options?: ReactiveOptions<T>
+): ReadonlyReactive<T> {
     const impl = new ComputedReactiveImpl(compute, options?.equal);
     return impl as AddBrand<typeof impl>;
 }

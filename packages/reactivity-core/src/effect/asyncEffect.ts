@@ -1,8 +1,8 @@
 import { createWatcher, RawWatcher } from "../hacks";
 import { untracked } from "../signals";
 import { CleanupFunc, CleanupHandle, EffectCallback, EffectContext } from "../types";
-import { reportTaskError } from "../utils/reportTaskError";
-import { dispatchAsyncCallback } from "./dispatch";
+import { reportCallbackError } from "../utils/reportCallbackError";
+import { dispatchAsyncCallback } from "../utils/dispatch";
 
 // Imported for docs
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -138,7 +138,7 @@ class AsyncEffect implements EffectContext {
                 try {
                     this.#triggerCallback();
                 } catch (e) {
-                    reportTaskError(e);
+                    reportCallbackError(e);
                 }
             }
         } finally {

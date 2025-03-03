@@ -1,12 +1,12 @@
 import { CleanupHandle } from "../types";
-import { TaskQueue } from "../utils/TaskQueue";
+import { TaskQueue } from "./TaskQueue";
 
 const TASKS = new TaskQueue();
 
 /**
  * Dispatches a callback to be invoked in a future task.
  *
- * @internal
+ * @group Watching
  */
 export function dispatchAsyncCallback(callback: () => void): CleanupHandle {
     return TASKS.enqueue(callback);

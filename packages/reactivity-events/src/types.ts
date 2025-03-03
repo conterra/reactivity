@@ -1,5 +1,9 @@
-// FIXME: think about typescript API
-export declare const EVENT_TYPES: unique symbol;
+/**
+ * A marker symbol that can be used for compile time annotations, see {@link EventSource}.
+ *
+ * @group TypeScript support
+ */
+export const EVENT_TYPES = Symbol("event-types");
 
 /**
  * A type that supports events.
@@ -15,15 +19,17 @@ export declare const EVENT_TYPES: unique symbol;
  *         "click": ClickEvent;
  *     };
  * }
- * 
+ *
  * const example = new EventExample();
  * emit(example, "click", { x: 10, y: 20 });
  * ```
+ *
+ * @group TypeScript support
  */
 export interface EventSource<EventTypes> {
     /**
      * Declares the event types supported by the given object.
-     * 
+     *
      * Note that the event types are a compile time feature,
      * they are not needed at runtime.
      */
@@ -32,12 +38,16 @@ export interface EventSource<EventTypes> {
 
 /**
  * Returns a union of all event names of the given event source.
+ *
+ * @group Helpers
  */
 export type EventNames<Source extends EventSource<unknown>> = keyof Source[typeof EVENT_TYPES] &
     (string | symbol);
 
 /**
  * The type of the event with the given name.
+ *
+ * @group Helpers
  */
 export type EventType<
     Source extends EventSource<unknown>,
@@ -45,14 +55,18 @@ export type EventType<
 > = Source[typeof EVENT_TYPES][EventName];
 
 /**
- * The signature of the event listener for the given event.
+ * The signature of the event listener callback for the given event.
+ *
+ * @group Helpers
  */
-export type EventListener<T extends EventSource<unknown>, EventName extends EventNames<T>> = (
+export type EventCallback<T extends EventSource<unknown>, EventName extends EventNames<T>> = (
     ...args: EventArgs<EventType<T, EventName>>
 ) => void;
 
 /**
  * Helper type to compute function signatures.
  * Either an empty array (void event) or an array with exactly one object (other events).
+ *
+ * @group Helpers
  */
 export type EventArgs<EventType> = EventType extends void ? [] : [event: EventType];

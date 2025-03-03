@@ -7,9 +7,10 @@
   `ReactiveGetter<T>` is a simply type alias for `() => T`.
 - Use `Object.is` instead of `===` for cleaner comparisons (e.g. around NaN)
     - Note that this does not resolve all issues around NaN: a computed signal returning `NaN` will still be considered a change.
-      This is due to the underlying implementation in @preact/signals-core, which compares values using `===`.
+      This is due to the underlying implementation in `@preact/signals-core`, which compares values using `===`.
 - Relax type signature of `watch` and `syncWatch`: the array of values is no longer `readonly` (but it still must not be modified at runtime).
 - Remove deprecated `syncEffectOnce`
+- Export `reportCallbackError` from this package.
 
 ## v0.4.4
 

@@ -1,12 +1,18 @@
-import { expect, it } from "vitest";
-import { EVENT_TYPES } from "./source";
-import { emit, on } from "./events";
-import { reactive } from "@conterra/reactivity-core";
+import * as core from "@conterra/reactivity-core";
+import { batch, nextTick, reactive } from "@conterra/reactivity-core";
+import { afterEach } from "node:test";
+import { expect, it, vi } from "vitest";
+import { emit, on, onSync } from "./events";
+import { EVENT_TYPES } from "./types";
+
+afterEach(() => {
+    vi.restoreAllMocks();
+});
 
 it("should support typed events", () => {
     const emitter = new ClickEmitter();
     const observed: ClickEvent[] = [];
-    on(emitter, "click", (event) => {
+    onSync(emitter, "click", (event) => {
         observed.push(event);
     });
     emit(emitter, "click", { x: 1, y: 2 });
@@ -20,7 +26,7 @@ it("should support typed events", () => {
 it("supports unsubscribing from events", () => {
     const emitter = new ClickEmitter();
     const observed: ClickEvent[] = [];
-    const handle = on(emitter, "click", (event) => {
+    const handle = onSync(emitter, "click", (event) => {
         observed.push(event);
     });
 
@@ -34,12 +40,12 @@ it("supports unsubscribing during emit", () => {
     const observed: string[] = [];
 
     // Relies on internals: insertion order is iteration order during emit
-    on(emitter, "event", () => {
+    onSync(emitter, "event", () => {
         observed.push("1");
         otherHandle.destroy();
     });
 
-    const otherHandle = on(emitter, "event", () => {
+    const otherHandle = onSync(emitter, "event", () => {
         observed.push("2");
     });
     emit(emitter, "event");
@@ -52,10 +58,10 @@ it("supports subscribing during emit", () => {
     const observed: string[] = [];
 
     let registered = false;
-    on(emitter, "event", () => {
+    onSync(emitter, "event", () => {
         observed.push("outer");
         if (!registered) {
-            on(emitter, "event", () => {
+            onSync(emitter, "event", () => {
                 observed.push("inner");
             });
             registered = true;
@@ -75,7 +81,7 @@ it("supports subscribing for a single event", () => {
     const emitter = new VoidEmitter();
 
     let events = 0;
-    on(
+    onSync(
         emitter,
         "event",
         () => {
@@ -94,7 +100,7 @@ it("should not call a once handler twice, event when emits are nested", () => {
 
     let events = 0;
     let nestedEmit = false;
-    on(
+    onSync(
         emitter,
         "event",
         () => {
@@ -119,9 +125,13 @@ it("supports reactive changes of the event source", () => {
     const currentSource = reactive(source1);
 
     const observed: string[] = [];
-    on(() => currentSource.value, "event", (event) => {
-        observed.push(event);
-    });
+    onSync(
+        () => currentSource.value,
+        "event",
+        (event) => {
+            observed.push(event);
+        }
+    );
 
     // Only source1 is active
     emit1();
@@ -134,6 +144,75 @@ it("supports reactive changes of the event source", () => {
     emit1();
     emit2();
     expect(observed).toEqual(["2"]);
+});
+
+it("does not emit during an active batch", () => {
+    const emitter = new VoidEmitter();
+    const spy = vi.fn();
+    onSync(emitter, "event", spy);
+
+    batch(() => {
+        emit(emitter, "event");
+
+        // This is important because batches appear as reactive "transactions",
+        // running user code in the event handler would allow that code to observe
+        // intermediate (and inconsistent) states.
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    // Event handlers run after the batch has completed.
+    expect(spy).toHaveBeenCalledOnce();
+});
+
+it("does not throw exceptions from event handlers", () => {
+    let err;
+    vi.spyOn(core, "reportCallbackError").mockImplementation((e) => {
+        err = e;
+    });
+
+    const emitter = new VoidEmitter();
+    const spy1 = vi.fn(() => {
+        throw new Error("boom!");
+    });
+    const spy2 = vi.fn();
+    onSync(emitter, "event", spy1);
+    onSync(emitter, "event", spy2);
+
+    emit(emitter, "event");
+    expect(spy1).toHaveBeenCalledOnce();
+    expect(spy2).toHaveBeenCalledOnce();
+    expect(err).toMatchInlineSnapshot(`[Error: boom!]`);
+});
+
+it("supports async execution", async () => {
+    const emitter = new VoidEmitter();
+
+    const spy = vi.fn();
+    on(emitter, "event", spy);
+
+    emit(emitter, "event");
+    expect(spy).not.toHaveBeenCalled();
+
+    await nextTick();
+    expect(spy).toHaveBeenCalledOnce();
+});
+
+it("reports errors from async event handlers", async () => {
+    let err;
+    vi.spyOn(core, "reportCallbackError").mockImplementation((e) => {
+        err = e;
+    });
+
+    const emitter = new VoidEmitter();
+    const spy1 = vi.fn(() => {
+        throw new Error("boom!");
+    });
+    on(emitter, "event", spy1);
+
+    emit(emitter, "event");
+    await nextTick();
+    expect(spy1).toHaveBeenCalledOnce();
+    expect(err).toMatchInlineSnapshot(`[Error: boom!]`);
 });
 
 interface ClickEvent {

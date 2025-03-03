@@ -1,0 +1,6 @@
+{
+    // project-root is a dev dependency (link to the project root)
+    "extends": ["project-root/typedoc.base.json"],
+    "entryPoints": ["./src/index.ts"],
+    "groupOrder": ["Event handling", "TypeScript support", "Helpers", "*"]
+}
