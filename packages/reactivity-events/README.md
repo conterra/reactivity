@@ -70,7 +70,11 @@ Similar to `watch` / `watchSync` in `@conterra/reactivity-core`, there are two v
 
 ### Reactive event sources
 
-`on` and `onSync` support not only support plain objects, event sources may also be a _signals_ or _getter functions_ implemented using signals.
+`on` and `onSync` support multiple kinds of event source parameters:
+
+- A plain object (like `view` in the example above).
+- A signal.
+- A function returning an event source, implemented using signals.
 
 In the following examples, the signal `currentEventEmitter` points to the active event emitter (either `emitter1` or `emitter2`).
 The subscription configured by `on` automatically switches between the two emitters whenever the signal changes.
@@ -248,7 +252,7 @@ For example:
 
 ```ts
 import { batch, reactive } from "@conterra/reactivity-core";
-import { emit, EVENT_TYPES, on } from "@conterra/reactivity-events";
+import { emit, EVENT_TYPES, onSync } from "@conterra/reactivity-events";
 
 class EventEmitter {
     declare [EVENT_TYPES]: {
@@ -274,7 +278,7 @@ class EventEmitter {
 }
 
 const emitter = new EventEmitter();
-on(emitter, "changed", () => {
+onSync(emitter, "changed", () => {
     console.log("on change");
 });
 emitter.changeValues();
@@ -283,3 +287,5 @@ emitter.changeValues();
 // batch end
 // on change
 ```
+
+Try removing the `batch` call to see the difference.
