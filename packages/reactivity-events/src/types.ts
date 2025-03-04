@@ -3,7 +3,7 @@
  *
  * @group TypeScript support
  */
-export const EVENT_TYPES = Symbol("event-types");
+export const EVENT_TYPES: unique symbol = Symbol("event-types");
 
 /**
  * A type that supports events.

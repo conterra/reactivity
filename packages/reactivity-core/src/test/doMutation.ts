@@ -4,7 +4,7 @@ import * as report from "../utils/reportCallbackError";
 
 let ERROR_SPY!: MockInstance | undefined;
 
-export function setupDoMutation() {
+export function setupDoMutation(): void {
     ERROR_SPY = vi.spyOn(report, "reportCallbackError").mockImplementation(() => {});
     onTestFinished(() => {
         ERROR_SPY?.mockRestore();

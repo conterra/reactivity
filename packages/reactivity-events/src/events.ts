@@ -158,7 +158,7 @@ export function emit<T extends EventSource<unknown>, EventName extends EventName
     source: T,
     eventName: EventName,
     ...args: EventArgs<EventType<T, EventName>>
-) {
+): void {
     const subscriptions = getEventBus(source)?.subscribers.get(eventName);
     if (!subscriptions || !subscriptions.size) {
         return;

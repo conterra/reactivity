@@ -9,7 +9,7 @@ import { Subscription } from "./internals";
 
 type SyncDispatchItem = [subscription: Subscription, args: unknown[]];
 
-export function dispatch(subscriber: Subscription, args: unknown[]) {
+export function dispatch(subscriber: Subscription, args: unknown[]): void {
     if (subscriber.sync) {
         // Can't call the subscriber's callback here because we might currently be in a batch.
         // The signal manipulation triggers an effect which then invokes the scheduled callbacks (once the batch is complete).
