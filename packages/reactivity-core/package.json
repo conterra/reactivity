@@ -31,8 +31,7 @@
         "build:js": "esbuild ./src/index.ts --bundle --splitting --outdir=dist --format=esm --platform=neutral --packages=external --sourcemap --tsconfig=./tsconfig.prod.json",
         "dev": "concurrently -c auto 'pnpm:dev:types' 'pnpm:dev:js'",
         "dev:types": "tsc -p tsconfig.prod.json -w --preserveWatchOutput",
-        "dev:js": "pnpm build:js --watch",
-        "test": "vitest"
+        "dev:js": "pnpm build:js --watch"
     },
     "dependencies": {
         "@preact/signals-core": "1.8.0"

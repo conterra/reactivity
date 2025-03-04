@@ -8,7 +8,7 @@
         "dev": "pnpm -r run --parallel dev",
         "build": "pnpm -r run --aggregate-output build",
         "build-docs": "typedoc",
-        "test": "pnpm -r run --aggregate-output test run",
+        "test": "pnpm vitest",
         "check-types": "tsc",
         "watch-types": "pnpm check-types -w",
         "lint": "eslint .",

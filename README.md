@@ -41,8 +41,8 @@ $ pnpm test
 ```
 
 ```bash
-$ cd packages/reactivity-core
-$ pnpm test # watch mode
+# Runs tests for a specific package (or file path)
+$ pnpm test packages/reactivity-core
 ```
 
 Watch TypeScript errors:
