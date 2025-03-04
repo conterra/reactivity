@@ -26,13 +26,15 @@ export interface SubscribeOptions {
 /**
  * Listens for the given event on the specified event source.
  *
- * The `emitter` parameter can be a plain object, a signal, or a reactive function that returns the event source.
+ * The `source` parameter can be a plain object, a signal, or a reactive function that returns the event source.
  *
  * The function returns a cleanup handle that should be used to stop listening for the event.
  *
  * Example:
  *
  * ```ts
+ * import { on } from "@conterra/reactivity-events";
+ *
  * const view = ...;
  * const handle = on(view, "click", (event) => {
  *     console.log("Clicked at", event.x, event.y);
@@ -58,7 +60,7 @@ export interface SubscribeOptions {
  *
  * @group Event handling
  */
-export function on<T extends EventSource<unknown>, EventName extends EventNames<T>>(
+export function on<T extends EventSource<object>, EventName extends EventNames<T>>(
     source: T | Reactive<T> | (() => T),
     eventName: EventName,
     callback: EventCallback<T, EventName>,
@@ -73,13 +75,15 @@ export function on<T extends EventSource<unknown>, EventName extends EventNames<
 /**
  * Listens for the given event on the specified event source.
  *
- * The `emitter` parameter can be a plain object, a signal, or a reactive function that returns the event source.
+ * The `source` parameter can be a plain object, a signal, or a reactive function that returns the event source.
  *
  * The function returns a cleanup handle that should be used to stop listening for the event.
  *
  * Example:
  *
  * ```ts
+ * import { on } from "@conterra/reactivity-events";
+ *
  * const view = ...;
  * const handle = on(view, "click", (event) => {
  *     console.log("Clicked at", event.x, event.y);
@@ -100,7 +104,7 @@ export function on<T extends EventSource<unknown>, EventName extends EventNames<
  *
  * @group Event handling
  */
-export function onSync<T extends EventSource<unknown>, EventName extends EventNames<T>>(
+export function onSync<T extends EventSource<object>, EventName extends EventNames<T>>(
     source: T | Reactive<T> | (() => T),
     eventName: EventName,
     callback: EventCallback<T, EventName>,
@@ -112,7 +116,7 @@ export function onSync<T extends EventSource<unknown>, EventName extends EventNa
     });
 }
 
-function onImpl<T extends EventSource<unknown>, EventName extends EventNames<T>>(
+function onImpl<T extends EventSource<object>, EventName extends EventNames<T>>(
     source: T | Reactive<T> | (() => T),
     eventName: EventName,
     callback: EventCallback<T, EventName>,
@@ -141,6 +145,8 @@ function onImpl<T extends EventSource<unknown>, EventName extends EventNames<T>>
  * Example:
  *
  * ```ts
+ * import { on, emit } from "@conterra/reactivity-events";
+ *
  * const myObject = ...;
  * // Register event listener
  * on(myObject, "click", (event) => console.log(event));
@@ -154,18 +160,18 @@ function onImpl<T extends EventSource<unknown>, EventName extends EventNames<T>>
  *
  * @group Event handling
  */
-export function emit<T extends EventSource<unknown>, EventName extends EventNames<T>>(
+export function emit<T extends EventSource<object>, EventName extends EventNames<T>>(
     source: T,
     eventName: EventName,
     ...args: EventArgs<EventType<T, EventName>>
 ): void {
-    const subscriptions = getEventBus(source)?.subscribers.get(eventName);
-    if (!subscriptions || !subscriptions.size) {
-        return;
-    }
-
     // untracked: prevent accidentally using event handler side effects in a reactive context
     untracked(() => {
+        const subscriptions = getEventBus(source)?.subscribers.get(eventName);
+        if (!subscriptions || !subscriptions.size) {
+            return;
+        }
+
         if (!subscriptions.size) {
             return;
         }

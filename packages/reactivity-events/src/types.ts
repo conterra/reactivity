@@ -14,6 +14,8 @@ export const EVENT_TYPES: unique symbol = Symbol("event-types");
  * to declare them without ever initializing them:
  *
  * ```ts
+ * import { type EVENT_TYPES } from "@conterra/reactivity-events";
+ *
  * class EventExample {
  *     declare [EVENT_TYPES]: {
  *         "click": ClickEvent;
@@ -24,24 +26,28 @@ export const EVENT_TYPES: unique symbol = Symbol("event-types");
  * emit(example, "click", { x: 10, y: 20 });
  * ```
  *
+ * TODO: interface variant
+ *
  * @group TypeScript support
  */
-export interface EventSource<EventTypes> {
+export interface EventSource<EventTypes extends object> {
     /**
      * Declares the event types supported by the given object.
      *
      * Note that the event types are a compile time feature,
      * they are not needed at runtime.
      */
-    [EVENT_TYPES]: EventTypes | undefined;
+    [EVENT_TYPES]?: EventTypes | undefined;
 }
+
+type DeclaredEvents<Source> = Source extends EventSource<infer EventTypes> ? EventTypes : never;
 
 /**
  * Returns a union of all event names of the given event source.
  *
  * @group Helpers
  */
-export type EventNames<Source extends EventSource<unknown>> = keyof Source[typeof EVENT_TYPES] &
+export type EventNames<Source extends EventSource<object>> = keyof DeclaredEvents<Source> &
     (string | symbol);
 
 /**
@@ -50,16 +56,16 @@ export type EventNames<Source extends EventSource<unknown>> = keyof Source[typeo
  * @group Helpers
  */
 export type EventType<
-    Source extends EventSource<unknown>,
+    Source extends EventSource<object>,
     EventName extends EventNames<Source>
-> = Source[typeof EVENT_TYPES][EventName];
+> = DeclaredEvents<Source>[EventName];
 
 /**
  * The signature of the event listener callback for the given event.
  *
  * @group Helpers
  */
-export type EventCallback<T extends EventSource<unknown>, EventName extends EventNames<T>> = (
+export type EventCallback<T extends EventSource<object>, EventName extends EventNames<T>> = (
     ...args: EventArgs<EventType<T, EventName>>
 ) => void;
 
@@ -69,4 +75,4 @@ export type EventCallback<T extends EventSource<unknown>, EventName extends Even
  *
  * @group Helpers
  */
-export type EventArgs<EventType> = EventType extends void ? [] : [event: EventType];
+export type EventArgs<T> = [T] extends [void] ? [] : [event: T];

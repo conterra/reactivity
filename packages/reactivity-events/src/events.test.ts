@@ -3,13 +3,13 @@ import { batch, nextTick, reactive } from "@conterra/reactivity-core";
 import { afterEach } from "node:test";
 import { expect, it, vi } from "vitest";
 import { emit, on, onSync } from "./events";
-import { EVENT_TYPES } from "./types";
+import { type EVENT_TYPES } from "./types";
 
 afterEach(() => {
     vi.restoreAllMocks();
 });
 
-it("should support typed events", () => {
+it("supports typed events", () => {
     const emitter = new ClickEmitter();
     const observed: ClickEvent[] = [];
     onSync(emitter, "click", (event) => {
@@ -21,6 +21,30 @@ it("should support typed events", () => {
         { x: 1, y: 2 },
         { x: 3, y: 4 }
     ]);
+});
+
+it("supports interface/impl separation", () => {
+    // No TypeScript error
+    const emitter = new EmitterApiImpl();
+    on(emitter, "click", () => {});
+    emit(emitter, "click");
+});
+
+it("supports emit from methods", () => {
+    const emitter = new EmitterFromClass();
+    let called = 0;
+    onSync(emitter, "click", () => {
+        called++;
+    });
+    emitter.click();
+    expect(called).toBe(1);
+
+    const emitter2 = new EmitterFromSubClass();
+    onSync(emitter2, "click2", () => {
+        called++;
+    });
+    emitter2.click();
+    expect(called).toBe(2);
 });
 
 it("supports unsubscribing from events", () => {
@@ -236,4 +260,54 @@ class VoidEmitter {
     declare [EVENT_TYPES]: {
         "event": void;
     };
+}
+
+interface EmitterApi {
+    [EVENT_TYPES]?: {
+        "click": void;
+    };
+}
+
+class EmitterApiImpl implements EmitterApi {
+    // Repetition is currently necessary to avoid TypeScript error
+    declare [EVENT_TYPES]: EmitterApi[typeof EVENT_TYPES];
+
+    constructor() {}
+}
+
+class EmitterFromClass {
+    declare [EVENT_TYPES]: {
+        "click": { x: number };
+    };
+
+    // TODO: Find a way to get rid of the `this` type
+    click(this: EmitterFromClass) {
+        // Not a typescript error
+        emit(this, "click", { x: 1 });
+
+        on(this, "click", (event) => {
+            event.x;
+        });
+    }
+}
+
+class EmitterFromSubClass extends EmitterFromClass {
+    declare [EVENT_TYPES]: {
+        "click": { x: number };
+        "click2": { x: number };
+    };
+
+    // TODO: Find a way to get rid of the `this` type
+    click(this: EmitterFromSubClass) {
+        // Not a typescript error
+        emit(this, "click", { x: 1 });
+        emit(this, "click2", { x: 1 });
+
+        on(this, "click", (event) => {
+            event.x;
+        });
+        on(this, "click2", (event) => {
+            event.x;
+        });
+    }
 }
