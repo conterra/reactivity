@@ -1,9 +1,11 @@
-export { type SubscribeOptions, on, onSync, emit } from "./events";
 export {
-    type EventSource,
-    type EventNames,
-    type EventType,
-    type EventCallback,
+    emit,
+    emitter,
+    on,
+    onSync,
     type EventArgs,
-    EVENT_TYPES
-} from "./types";
+    type EventCallback,
+    type EventEmitter,
+    type EventSource,
+    type SubscribeOptions
+} from "./events";
