@@ -9,8 +9,8 @@ Framework agnostic library for building reactive applications.
 
 Packages developed in this repository:
 
-- [`@conterra/reactivity-core`](./packages/reactivity-core/README.md): Core reactivity library.
-- [`@conterra/reactivity-events`](./packages/reactivity-events/README.md): Emitting and subscribing to events.
+- [`@conterra/reactivity-core`](./packages/reactivity-core): Core reactivity library.
+- [`@conterra/reactivity-events`](./packages/reactivity-events): Emitting and subscribing to events.
 
 View API docs:
 
