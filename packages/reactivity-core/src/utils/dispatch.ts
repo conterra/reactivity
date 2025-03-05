@@ -6,7 +6,7 @@ const TASKS = new TaskQueue();
 /**
  * Dispatches a callback to be invoked in a future task.
  *
- * @group Watching
+ * @group Utilities
  */
 export function dispatchAsyncCallback(callback: () => void): CleanupHandle {
     return TASKS.enqueue(callback);
@@ -17,7 +17,7 @@ export function dispatchAsyncCallback(callback: () => void): CleanupHandle {
  *
  * This function is useful in tests to wait for the execution of side effects triggered by an asynchronous `watch` or an `effect`.
  *
- * @group Watching
+ * @group Utilities
  */
 export function nextTick(): Promise<void> {
     return new Promise((resolve) => {
