@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { reactive } from "../signals";
 import { effect } from "./asyncEffect";
-import { nextTick } from "./dispatch";
+import { nextTick } from "../utils/dispatch";
 import { defineSharedEffectTests } from "./sharedTests";
 
 defineSharedEffectTests(effect, "async");

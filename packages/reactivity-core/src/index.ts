@@ -52,6 +52,7 @@ export {
 export { syncWatch, syncWatchValue, watch, watchValue } from "./watch/watch";
 export { effect } from "./effect/asyncEffect";
 export { syncEffect } from "./effect/syncEffect";
-export { nextTick } from "./effect/dispatch";
+export { dispatchAsyncCallback, nextTick } from "./utils/dispatch";
+export { reportCallbackError } from "./utils/reportCallbackError";
 export * from "./collections";
 export * from "./struct";

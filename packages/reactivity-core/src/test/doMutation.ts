@@ -1,11 +1,11 @@
 import { MockInstance, onTestFinished, vi } from "vitest";
-import { nextTick } from "../effect/dispatch";
-import * as report from "../utils/reportTaskError";
+import { nextTick } from "../utils/dispatch";
+import * as report from "../utils/reportCallbackError";
 
 let ERROR_SPY!: MockInstance | undefined;
 
-export function setupDoMutation() {
-    ERROR_SPY = vi.spyOn(report, "reportTaskError").mockImplementation(() => {});
+export function setupDoMutation(): void {
+    ERROR_SPY = vi.spyOn(report, "reportCallbackError").mockImplementation(() => {});
     onTestFinished(() => {
         ERROR_SPY?.mockRestore();
         ERROR_SPY = undefined;

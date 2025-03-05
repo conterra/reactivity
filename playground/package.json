@@ -8,13 +8,14 @@
     },
     "dependencies": {
         "@conterra/reactivity-core": "workspace:^",
+        "@conterra/reactivity-events": "workspace:^",
         "@mdi/font": "^7.4.47",
         "vue": "^3.5.13",
-        "vuetify": "^3.7.11"
+        "vuetify": "^3.7.14"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.2.1",
         "eslint-plugin-vue": "^9.32.0",
-        "vite": "^6.1.0"
+        "vite": "^6.2.0"
     }
 }

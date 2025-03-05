@@ -80,7 +80,10 @@ export function reactive<T>(
  *
  * @group Primitives
  */
-export function computed<T>(compute: ReactiveGetter<T>, options?: ReactiveOptions<T>): ReadonlyReactive<T> {
+export function computed<T>(
+    compute: ReactiveGetter<T>,
+    options?: ReactiveOptions<T>
+): ReadonlyReactive<T> {
     const impl = new ComputedReactiveImpl(compute, options?.equal);
     return impl as AddBrand<typeof impl>;
 }
@@ -274,7 +277,7 @@ export function untracked<T>(callback: () => T): T {
  *
  * @group Primitives
  */
-export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
+export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T): T {
     if (!isReadonlyReactive(maybeReactive)) {
         return maybeReactive;
     }
@@ -289,7 +292,7 @@ export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
  *
  * @group Primitives
  */
-export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T) {
+export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T): T {
     if (!isReadonlyReactive(maybeReactive)) {
         return maybeReactive;
     }

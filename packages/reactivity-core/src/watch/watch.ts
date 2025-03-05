@@ -1,6 +1,12 @@
 import { effect } from "../effect/asyncEffect";
 import { syncEffect } from "../effect/syncEffect";
-import { CleanupHandle, ReactiveGetter, WatchCallback, WatchImmediateCallback, WatchOptions } from "../types";
+import {
+    CleanupHandle,
+    ReactiveGetter,
+    WatchCallback,
+    WatchImmediateCallback,
+    WatchOptions
+} from "../types";
 import { shallowEqual } from "../utils/equality";
 import { createWatcher } from "./Watcher";
 

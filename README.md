@@ -7,7 +7,10 @@ Framework agnostic library for building reactive applications.
 
 ## Reactivity-API
 
-See the [README of the `@conterra/reactivity-core` package](./packages/reactivity-core/README.md).
+Packages developed in this repository:
+
+- [`@conterra/reactivity-core`](./packages/reactivity-core): Core reactivity library.
+- [`@conterra/reactivity-events`](./packages/reactivity-events): Emitting and subscribing to events.
 
 View API docs:
 
@@ -24,6 +27,12 @@ Install dependencies:
 $ pnpm install
 ```
 
+Build all packages:
+
+```bash
+$ pnpm build
+```
+
 ## Tests
 
 ```bash
@@ -32,14 +41,22 @@ $ pnpm test
 ```
 
 ```bash
-$ cd packages/reactivity-core
-$ pnpm test # watch mode
+# Runs tests for a specific package (or file path)
+$ pnpm test packages/reactivity-core
 ```
 
 Watch TypeScript errors:
 
 ```bash
 $ pnpm watch-types
+```
+
+When developing features across package boundaries, use the `dev` script in your dependencies.
+This way, they will be rebuilt automatically:
+
+```bash
+$ cd packages/reactivity-core
+$ pnpm dev
 ```
 
 ## Playground

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { batch, reactive } from "../signals";
 import { syncWatch, syncWatchValue, watch, watchValue } from "./watch";
 import { doMutation as doMutationImpl, setupDoMutation } from "../test/doMutation";
-import { nextTick } from "../effect/dispatch";
+import { nextTick } from "../utils/dispatch";
 
 describe("sync", () => {
     defineSharedWatchTests(syncWatch, syncWatchValue, "sync");

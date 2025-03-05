@@ -1,13 +1,13 @@
 {
-    "name": "@conterra/reactivity-core",
+    "name": "@conterra/reactivity-events",
     "type": "module",
     "version": "0.4.4",
     "license": "Apache-2.0",
-    "description": "Framework agnostic library for building reactive applications.",
+    "description": "Event support for reactive objects. Based on `@conterra/reactivity-core`.",
     "repository": {
         "type": "git",
         "url": "https://github.com/conterra/reactivity",
-        "directory": "packages/reactivity-core"
+        "directory": "packages/reactivity-events"
     },
     "files": [
         "README.md",
@@ -34,7 +34,7 @@
         "dev:js": "pnpm build:js --watch"
     },
     "dependencies": {
-        "@preact/signals-core": "1.8.0"
+        "@conterra/reactivity-core": "workspace:^"
     },
     "devDependencies": {
         "project-root": "workspace:*"

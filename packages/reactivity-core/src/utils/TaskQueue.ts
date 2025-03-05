@@ -1,5 +1,5 @@
 import { CleanupHandle } from "../types";
-import { reportTaskError } from "./reportTaskError";
+import { reportCallbackError } from "./reportCallbackError";
 
 type TaskFn = () => void;
 
@@ -79,7 +79,7 @@ export class TaskQueue {
             try {
                 task.fn();
             } catch (e) {
-                reportTaskError(e);
+                reportCallbackError(e);
             }
         }
     }
