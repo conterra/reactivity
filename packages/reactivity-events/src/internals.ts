@@ -87,8 +87,13 @@ function dispatch(subscriber: Subscription, args: unknown[]): void {
         // The signal manipulation triggers an effect which then invokes the scheduled callbacks (once the batch is complete).
         // If there is no batch, this will invoke the callback immediately within the assignment below.
         SYNC_QUEUE.push([subscriber, args]);
-        if (SYNC_QUEUE.length === 1) {
-            TRIGGER_DISPATCH.value = !TRIGGER_DISPATCH.peek(); // schedule execution of effect
+        if (!DISPATCH_SCHEDULED) {
+            DISPATCH_SCHEDULED = true;
+
+            // Schedule execution of effect.
+            // Note that this will call the effect immediately (within the assignment)
+            // if we're not in a batch.
+            TRIGGER_DISPATCH.value = !TRIGGER_DISPATCH.peek();
         }
     } else {
         // Execution of async callbacks is always outside of a batch.
@@ -98,31 +103,40 @@ function dispatch(subscriber: Subscription, args: unknown[]): void {
 
 type SyncDispatchItem = [subscription: Subscription, args: unknown[]];
 
+let DISPATCH_SCHEDULED = false;
+let SYNC_QUEUE: SyncDispatchItem[] = [];
 const TRIGGER_DISPATCH = reactive(false);
-const SYNC_QUEUE: SyncDispatchItem[] = [];
 syncEffect(() => {
     void TRIGGER_DISPATCH.value; // Setup dependency
     untracked(() => {
-        for (const [subscriber, args] of SYNC_QUEUE) {
-            invokeCallback(subscriber, args); // does not throw
+        // Note: callbacks invoked here may push further items to the queue
+        while (SYNC_QUEUE.length) {
+            // Swap to avoid concurrent modifications
+            const items = SYNC_QUEUE;
+            SYNC_QUEUE = [];
+
+            for (const [subscription, args] of items) {
+                invokeCallback(subscription, args); // does not throw
+            }
         }
-        SYNC_QUEUE.length = 0;
+
+        DISPATCH_SCHEDULED = false;
     });
 });
 
-function invokeCallback(subscriber: Subscription, args: unknown[]) {
-    if (!subscriber.isActive) {
+function invokeCallback(subscription: Subscription, args: unknown[]) {
+    if (!subscription.isActive) {
         // May have unsubscribed in the meantime, for example if the callback has been delayed (async or batch).
         return;
     }
 
     try {
-        subscriber.callback(...args);
+        subscription.callback(...args);
     } catch (e) {
         reportCallbackError(e, "Error in event callback");
     } finally {
-        if (subscriber.once) {
-            subscriber.remove();
+        if (subscription.once) {
+            subscription.remove();
         }
     }
 }
