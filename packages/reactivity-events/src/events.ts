@@ -61,9 +61,9 @@ export interface EventSource<T> {
  * ```ts
  * import { emitter, on, emit } from "@conterra/reactivity-events";
  *
- * const click = emitter();
- * on(click, () => console.log("Clicked!"));
- * emit(click);
+ * const clicked = emitter();
+ * on(clicked, () => console.log("Clicked!"));
+ * emit(clicked);
  * ```
  *
  * Example with event type:
@@ -76,9 +76,9 @@ export interface EventSource<T> {
  *   y: number;
  * }
  *
- * const click = emitter<ClickEvent>();
- * on(click, (event) => console.log("Clicked at", event.x, event.y));
- * emit(click, { x: 1, y: 2 });
+ * const clicked = emitter<ClickEvent>();
+ * on(clicked, (event) => console.log("Clicked at", event.x, event.y));
+ * emit(clicked, { x: 1, y: 2 });
  * ```
  *
  * @see {@link emit} for emitting events.
@@ -156,7 +156,7 @@ export interface SubscribeOptions {
  * import { on } from "@conterra/reactivity-events";
  *
  * const view = ...;
- * const handle = on(view.click, (event) => {
+ * const handle = on(view.clicked, (event) => {
  *     console.log("Clicked at", event.x, event.y);
  * });
  * // Later, to clean up:
@@ -168,7 +168,7 @@ export interface SubscribeOptions {
  *
  * ```ts
  * // model.getCurrentView() is implemented using signals
- * const handle = on(() => model.getCurrentView().click, (event) => {
+ * const handle = on(() => model.getCurrentView().clicked, (event) => {
  *     console.log("Clicked at", event.x, event.y);
  * });
  * ```
@@ -206,7 +206,7 @@ export function on<T>(
  * import { onSync } from "@conterra/reactivity-events";
  *
  * const view = ...;
- * const handle = onSync(view.click, (event) => {
+ * const handle = onSync(view.clicked, (event) => {
  *     console.log("Clicked at", event.x, event.y);
  * });
  * // Later, to clean up:
@@ -218,7 +218,7 @@ export function on<T>(
  *
  * ```ts
  * // model.getCurrentView() is implemented using signals
- * const handle = onSync(() => model.getCurrentView().click, (event) => {
+ * const handle = onSync(() => model.getCurrentView().clicked, (event) => {
  *     console.log("Clicked at", event.x, event.y);
  * });
  * ```

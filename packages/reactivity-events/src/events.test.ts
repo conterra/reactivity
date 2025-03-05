@@ -8,13 +8,13 @@ afterEach(() => {
 });
 
 it("supports typed events", () => {
-    const click = emitter<ClickEvent>();
+    const clicked = emitter<ClickEvent>();
     const observed: ClickEvent[] = [];
-    onSync(click, (event) => {
+    onSync(clicked, (event) => {
         observed.push(event);
     });
-    emit(click, { x: 1, y: 2 });
-    emit(click, { x: 3, y: 4 });
+    emit(clicked, { x: 1, y: 2 });
+    emit(clicked, { x: 3, y: 4 });
     expect(observed).toEqual([
         { x: 1, y: 2 },
         { x: 3, y: 4 }
@@ -22,24 +22,24 @@ it("supports typed events", () => {
 });
 
 it("supports void events", () => {
-    const click = emitter();
+    const clicked = emitter();
     let observed = 0;
-    onSync(click, () => {
+    onSync(clicked, () => {
         observed++;
     });
-    emit(click);
+    emit(clicked);
     expect(observed).toEqual(1);
 });
 
 it("supports unsubscribing from events", () => {
-    const click = emitter<ClickEvent>();
+    const clicked = emitter<ClickEvent>();
     const observed: ClickEvent[] = [];
-    const handle = onSync(click, (event) => {
+    const handle = onSync(clicked, (event) => {
         observed.push(event);
     });
 
     handle.destroy();
-    emit(click, { x: 1, y: 2 });
+    emit(clicked, { x: 1, y: 2 });
     expect(observed).toEqual([]);
 });
 
@@ -227,19 +227,19 @@ describe("async execution", () => {
 
 it("supports interface/impl separation", () => {
     interface ViewApi {
-        click: EventSource<ClickEvent>;
+        clicked: EventSource<ClickEvent>;
     }
 
     class ViewApiImpl implements ViewApi {
-        click = emitter<ClickEvent>();
+        clicked = emitter<ClickEvent>();
     }
 
     const impl = new ViewApiImpl();
     const api: ViewApi = impl;
 
     const handler = vi.fn();
-    onSync(api.click, handler);
-    emit(impl.click, { x: 1, y: 2 });
+    onSync(api.clicked, handler);
+    emit(impl.clicked, { x: 1, y: 2 });
     expect(handler).toHaveBeenCalledOnce();
 });
 
