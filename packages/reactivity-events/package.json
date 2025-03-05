@@ -3,7 +3,7 @@
     "type": "module",
     "version": "0.4.4",
     "license": "Apache-2.0",
-    "description": "Framework agnostic library for building reactive applications.",
+    "description": "Event support for reactive objects. Based on `@conterra/reactivity-core`.",
     "repository": {
         "type": "git",
         "url": "https://github.com/conterra/reactivity",
