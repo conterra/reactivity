@@ -7,7 +7,7 @@ Click here to visit the [rendered API Documentation](https://conterra.github.io/
 ## Quick Example
 
 ```ts
-import { emit, EVENT_TYPES, on } from "@conterra/reactivity-events";
+import { emit, emitter, on } from "@conterra/reactivity-events";
 
 interface ClickEvent {
     x: number;
@@ -15,48 +15,66 @@ interface ClickEvent {
 }
 
 class View {
-    // Declare event types (only needed for TypeScript support)
-    declare [EVENT_TYPES]: {
-        click: ClickEvent;
-    };
+    readonly clicked = emitter<ClickEvent>();
 }
 
 const view = new View();
 
-// Subscribe to event
-on(view, "click", (event) => {
-    console.log("on click", event.x, event.y);
+// Subscribe to the click event
+on(view.clicked, (event) => {
+    console.log(`Click at ${event.x}, ${event.y}`);
 });
 
-// Emit event
-emit(view, "click", { x: 10, y: 20 });
+// Emit the click event, calling all subscribers
+emit(view.clicked, { x: 10, y: 20 });
 ```
 
 ## Usage
 
-Events can be emitted and subscribed to on any (non-primitive) JavaScript object using the functions `emit` and `on`/`onSync`.
+Use `emitter()` to create an event emitter.
+Event emitters can be used to emit events (using `emit()`) and to subscribe to them (using `on` / `onSync`).
 
-Use `emit(eventSource, eventName, eventObject)` to emit an event.
+Example:
+
+```ts
+import { emitter } from "@conterra/reactivity-events";
+
+// Emits numbers
+const e1 = emitter<number>();
+
+// Emits objects with x and y properties
+const e2 = emitter<{ x: number; y: number }>();
+
+// Emits nothing (void)
+const e3 = emitter();
+```
+
+Use `emit(emitter, event)` to emit an event.
 For example:
 
 ```ts
-import { emit } from "@conterra/reactivity-events";
+import { emit, emitter } from "@conterra/reactivity-events";
 
-// in a class
-emit(this, "click", { x: 10, y: 20 });
+// Emits objects with x and y properties
+const clicked = emitter<{ x: number; y: number }>();
 
-// or on some object
-emit(view, "click", { x: 10, y: 20 });
+// Broadcasts the event to all subscribers of `clicked`
+emit(clicked, { x: 10, y: 20 });
 ```
 
-Use `on(eventSource, eventName, callback)` (or `onSync`) to subscribe to an event:
+Use `on(emitter, callback)` (or `onSync()`) to subscribe to events:
 
 ```ts
-const handle = on(view, "click", (event) => {
-    console.log("on click", event.x, event.y);
+import { emitter, on } from "@conterra/reactivity-events";
+
+const clicked = emitter<{ x: number; y: number }>();
+
+// Callback will be invoked whenever the event is emitted
+const handle = on(clicked, (event) => {
+    console.log("Clicked at", event.x, event.y);
 });
 
-// Later, to unsubscribe:
+// Use the handle to unsubscribe from the event when no longer needed
 handle.destroy();
 ```
 
@@ -64,7 +82,8 @@ handle.destroy();
 
 Similar to `watch` / `watchSync` in `@conterra/reactivity-core`, there are two versions of the `on` function: `on` and `onSync`:
 
-- `on`: Callbacks are called asynchronously (in a future task, similar to `setTimeout(0, cb)`). This is usually what you want.
+- `on`: Callbacks are called asynchronously (in a future task, similar to `setTimeout(0, cb)`).
+  This is usually what you want.
 - `onSync`: Callbacks are called synchronously, immediately after they have been emitted.
   Note that there is a subtle interaction with `batch` (see [Integration with `batch`](#integration-with-batch)).
 
@@ -72,9 +91,9 @@ Similar to `watch` / `watchSync` in `@conterra/reactivity-core`, there are two v
 
 `on` and `onSync` support multiple kinds of event source parameters:
 
-- A plain object (like `view` in the example above).
-- A signal.
-- A function returning an event source, implemented using signals.
+- A plain event source (like `view.clicked` in the example above; not reactive).
+- A signal holding an event source (reactive).
+- A function returning an event source, implemented using signals (reactive).
 
 In the following examples, the signal `currentEventEmitter` points to the active event emitter (either `emitter1` or `emitter2`).
 The subscription configured by `on` automatically switches between the two emitters whenever the signal changes.
@@ -82,90 +101,66 @@ In other words, it always stays subscribed to the current one.
 
 ```ts
 import { nextTick, reactive } from "@conterra/reactivity-core";
-import { emit, EVENT_TYPES, on } from "@conterra/reactivity-events";
+import { emit, emitter, on } from "@conterra/reactivity-events";
 
-class EventEmitter {
-    declare [EVENT_TYPES]: {
-        "message": string;
-    };
+class Logger {
+    onMessage = emitter<string>();
 }
 
-const emitter1 = new EventEmitter();
-const emitter2 = new EventEmitter();
-const currentEventEmitter = reactive(emitter1);
+const logger1 = new Logger();
+const logger2 = new Logger();
+const currentLogger = reactive(logger1);
 
-// Stays subscribed to the current emitter, even if it changes.
+// Stays subscribed to the current logger, even if it changes.
 on(
-    () => currentEventEmitter.value,
-    "message",
+    () => currentLogger.value.onMessage,
     (message) => console.log("on message:", message)
 );
-emit(emitter1, "message", "Message to emitter 1");
+emit(logger1.onMessage, "Message to logger 1");
 
 // Wait for event listener to be called (just for illustration).
 await nextTick();
 
-// Signal changes, `on` automatically unsubscribes from emitter1 and subscribes to emitter2.
-currentEventEmitter.value = emitter2;
-emit(emitter2, "message", "Message to emitter 2");
+// Signal changes, `on` automatically unsubscribes from logger1 and subscribes to logger2.
+currentLogger.value = logger2;
+emit(logger2.onMessage, "Message to logger 2");
 ```
 
 ### One-off event listeners
 
-Configuring `once: true` within a subscription will automatically unsubscribe the listener after the first event has been emitted:
+Configuring `once: true` within a subscription will automatically unsubscribe after the first event has been emitted:
 
 ```ts
-import { emit, EVENT_TYPES, on } from "@conterra/reactivity-events";
+import { emit, emitter, on } from "@conterra/reactivity-events";
 
-class EventEmitter {
-    declare [EVENT_TYPES]: {
-        "click": void;
-    };
-}
+const clicked = emitter();
 
-const emitter = new EventEmitter();
-on(emitter, "click", () => console.log("on click"), { once: true });
-emit(emitter, "click");
-emit(emitter, "click");
-// Outputs: on click (once)
+on(clicked, () => console.log("clicked"), { once: true });
+emit(clicked);
+emit(clicked);
+// Output: clicked (only once)
 ```
 
 Note that is still a good idea to call `destroy` on the handle returned by `on` if you want to unsubscribe manually before the first event has been emitted.
 
-### TypeScript integration
+### TypeScript support
 
-We use the `EVENT_TYPES` symbol to declare the events supported by a class or interface.
-This declaration tells the compiler which events are supported by an object:
+This package provides two important TypeScript types:
 
-```ts
-import { EVENT_TYPES } from "@conterra/reactivity-events";
+- `EventEmitter<T>`.
+  The return type of `emitter<T>`.
+  This type supports both emitting and subscribing to events.
+- `EventSource<T>`.
+  This type allows only subscribing to events.
+  This is useful for public interfaces that where users are not supposed to emit events themselves.
 
-interface ClickEvent {
-    // ...
-}
+Note that the restrictions imposed by `EventSource<T>` are a compile time feature only:
+at runtime, both interfaces are represented by the same object.
 
-interface MoveEvent {
-    // ...
-}
-
-class View {
-    declare [EVENT_TYPES]: {
-        click: ClickEvent; // Declares event name `click` with event object type `ClickEvent`
-        move: MoveEvent;
-        destroyed: void; // Event without payload
-    };
-}
-```
-
-The type map `[EVENT_TYPES]` is used by this package to typecheck event subscriptions and emissions.
-This ensures that you only use events that are actually declared and that the event object type emitted by the event matches the declaration.
-
-The event types will only be interpreted at compile time, so it is fine to never actually initialize them at runtime (effectively the `declare` statement lies to the compiler).
-
-The same approach works for interface declarations as well:
+The following example demonstrates the use of `EventSource` to separate the public interface from the implementation:
 
 ```ts
-import { emit, EVENT_TYPES, on } from "@conterra/reactivity-events";
+import { emit, emitter, on, EventSource } from "@conterra/reactivity-events";
 
 interface ClickEvent {
     x: number;
@@ -174,71 +169,23 @@ interface ClickEvent {
 
 // Public interface
 interface ViewApi {
-    [EVENT_TYPES]?: {
-        click: ClickEvent;
-    };
+    readonly clicked: EventSource<ClickEvent>;
 }
 
-// Private implementation (may provide additional methods or internal events)
+// Private implementation
 class ViewImpl implements ViewApi {
-    // This repetition is (unfortunately) necessary to avoid typescript errors
-    // when using the implementation class instead of the interface.
-    declare [EVENT_TYPES]: ViewApi[typeof EVENT_TYPES];
+    clicked = emitter<ClickEvent>();
 }
 
-const impl = new ViewImpl(); // internal view
-const view: ViewApi = impl; // public view
+const viewImpl = new ViewImpl();
+const viewApi: ViewApi = viewImpl;
+on(viewApi.clicked, (event) => console.log("Clicked at", event.x, event.y));
 
-// Subscribe to event
-on(view, "click", (event) => {
-    console.log("on click", event.x, event.y);
-});
+emit(viewImpl.clicked, { x: 1, y: 2 });
 
-// Emit event
-emit(impl, "click", { x: 10, y: 20 });
+// would be a TypeScript error:
+// emit(viewApi.clicked, { x: 3, y: 4 });
 ```
-
-You can also use the `EventSource` interface:
-
-```ts
-import { EventSource } from "@conterra/reactivity-events";
-
-interface ClickEvent {
-    x: number;
-    y: number;
-}
-
-interface ViewEvents {
-    click: ClickEvent;
-}
-
-interface ViewApi extends EventSource<ClickEvent> {
-    someMethod(): void;
-}
-```
-
-### Private events
-
-Event names can be either strings (the usual case) or symbols.
-Private events can be implemented by using symbols that are not exported from your module:
-
-```ts
-import { emit, EVENT_TYPES, on } from "@conterra/reactivity-events";
-
-const PRIVATE_EVENT = Symbol("private-event");
-
-class EventEmitter {
-    declare [EVENT_TYPES]: {
-        [PRIVATE_EVENT]: string;
-    };
-}
-
-const emitter = new EventEmitter();
-on(emitter, PRIVATE_EVENT, (message) => console.log("on private event:", message));
-emit(emitter, PRIVATE_EVENT, "test");
-```
-
-Because `PRIVATE_EVENT` is not exported, third parties cannot subscribe to this event.
 
 ### Integration with `batch`
 
@@ -247,29 +194,27 @@ Effects or watches are not run executed until the batch completes.
 This prevents intermediate states (which may be inconsistent) from being observed by other parts of the application.
 
 Event handling works the same way: even when `onSync` is used, event handlers are not running _immediately_, but only after the batch completes.
+This prevents event handlers from observing intermediate states as well.
 
 For example:
 
 ```ts
 import { batch, reactive } from "@conterra/reactivity-core";
-import { emit, EVENT_TYPES, onSync } from "@conterra/reactivity-events";
+import { emit, emitter, onSync } from "@conterra/reactivity-events";
 
-class EventEmitter {
-    declare [EVENT_TYPES]: {
-        "changed": void;
-    };
+class Foo {
+    changed = emitter();
 
     a = reactive(0);
     b = reactive(1);
 
-    // TODO: Remove `this` type workaround
-    changeValues(this: EventEmitter) {
+    changeValues() {
         batch(() => {
             console.debug("batch start");
 
             // Values are changed together.
             this.a.value += 1;
-            emit(this, "changed"); // Callbacks are _not_ running here
+            emit(this.changed); // Callbacks are _not_ running here
             this.b.value += 1;
 
             console.debug("batch end");
@@ -277,11 +222,11 @@ class EventEmitter {
     }
 }
 
-const emitter = new EventEmitter();
-onSync(emitter, "changed", () => {
+const foo = new Foo();
+onSync(foo.changed, () => {
     console.log("on change");
 });
-emitter.changeValues();
+foo.changeValues();
 // Output:
 // batch start
 // batch end

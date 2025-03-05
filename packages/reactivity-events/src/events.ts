@@ -193,7 +193,6 @@ export function on<T>(
 
 /**
  * Listens for events on the specified event source and invokes the `callback` for each event.
- *
  * This function is the synchronous variant of {@link on}.
  * Event callbacks will be invoked without delay after events have been emitted.
  *
