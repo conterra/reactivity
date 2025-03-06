@@ -3,39 +3,18 @@ name: Build and release
 on:
   push:
   workflow_dispatch:
-    inputs:
-      release:
-        type: boolean
-        description: "RELEASE: Publish to npmjs.com"
-        required: false
-        default: false
 
 jobs:
-  build:
+  checks:
+    name: Run checks
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-          run_install: false
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: "https://registry.npmjs.org"
-          cache: pnpm
-
-      - name: Install dependencies
-        run: |
-          pnpm install
+      - name: Install
+        uses: ./.github/actions/install
 
       - name: Run tests
         run: |
@@ -44,33 +23,50 @@ jobs:
           pnpm check-types
           pnpm test
 
+  version:
+    name: Update release PR or publish
+    if: github.ref == 'refs/heads/main'
+    concurrency: version-${{ github.ref }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - checks
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install
+        uses: ./.github/actions/install
+
+      - id: changesets
+        name: Create release pull request or publish to npm
+        uses: changesets/action@v1
+        with:
+          version: "pnpm run ci:version"
+          publish: "pnpm run ci:publish"
+          commit: "[RELEASE] Update package versions"
+          title: "[RELEASE] Update package versions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NO_VERIFY: "1" # don't run git hooks on simple version commits
+
+  docs:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install
+        uses: ./.github/actions/install
+
       - name: Build documentation
         run: |
           pnpm build-docs
-
-      - name: Determine release tag
-        if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
-        run: |
-          cd packages/reactivity-core
-
-          VERSION=$(jq ".version" package.json -r)
-          NAME=$(jq ".name" package.json -r)
-          echo RELEASE_TAG=$NAME@$VERSION >> $GITHUB_ENV
-
-      - name: Tag release
-        if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
-        uses: rickstaa/action-create-tag@v1
-        with:
-          tag: "${{ env.RELEASE_TAG }}"
-          force_push_tag: true
-
-      - name: Publish package
-        if: ${{ inputs.release && github.ref == 'refs/heads/main' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          cd packages/reactivity-core
-          pnpm publish
 
       - name: Upload documentation artifact
         uses: actions/upload-artifact@v4
@@ -83,8 +79,11 @@ jobs:
     if: github.ref == 'refs/heads/main'
     concurrency: deploy-${{ github.ref }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: build
+    timeout-minutes: 10
+    needs:
+      - checks
+      - docs
+      - version
     permissions:
       contents: write
     steps:
@@ -102,4 +101,4 @@ jobs:
         with:
           folder: docs
           branch: gh-pages
-          target-folder: ${{ inputs.release && 'latest' || 'dev' }}
+          target-folder: ${{ needs.version.outputs.published == 'true' && 'latest' || 'dev' }}
