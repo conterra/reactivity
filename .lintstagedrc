@@ -1,0 +1,4 @@
+{
+    "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}": ["pnpm run prettier:common --write", "eslint"],
+    "*.{md,json,css,scss,html}": ["pnpm run prettier:common --write"]
+}
