@@ -2,6 +2,7 @@ import {
     CleanupHandle,
     getValue,
     Reactive,
+    ReactiveGetter,
     syncWatchValue,
     untracked
 } from "@conterra/reactivity-core";
@@ -181,7 +182,7 @@ export interface SubscribeOptions {
  * @group Subscribing
  */
 export function on<T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | (() => EventSource<T>),
+    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ): CleanupHandle {
@@ -226,7 +227,7 @@ export function on<T>(
  * @group Subscribing
  */
 export function onSync<T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | (() => EventSource<T>),
+    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ): CleanupHandle {
@@ -237,7 +238,7 @@ export function onSync<T>(
 }
 
 function onImpl<T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | (() => EventSource<T>),
+    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
     callback: EventCallback<T>,
     options: SubscribeOptions & { sync: boolean }
 ): CleanupHandle {
