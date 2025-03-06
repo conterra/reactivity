@@ -49,7 +49,7 @@ The return type of <code>emitter&lt;T&gt;</code>.
 This type supports both emitting and subscribing to events.</li>
 <li><code>EventSource&lt;T&gt;</code>.
 This type allows only subscribing to events.
-This is useful for public interfaces that where users are not supposed to emit events themselves.</li>
+This is useful for public interfaces where users are not supposed to emit events themselves.</li>
 </ul>
 <p>Note that the restrictions imposed by <code>EventSource&lt;T&gt;</code> are a compile time feature only:
 at runtime, both interfaces are represented by the same object.</p>
@@ -58,7 +58,7 @@ at runtime, both interfaces are represented by the same object.</p>
 </code><button type="button">Copy</button></pre>
 
 <a id="integration-with-batch" class="tsd-anchor"></a><h3 class="tsd-anchor-link">Integration with <code>batch</code><a href="#integration-with-batch" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><p>The <code>batch()</code> function from <code>@conterra/reactivity-core</code> can be used to group reactive changes to one or more signals, comparable to a transaction.
-Effects or watches are not run executed until the batch completes.
+Effects or watches are not executed until the batch completes.
 This prevents intermediate states (which may be inconsistent) from being observed by other parts of the application.</p>
 <p>Event handling works the same way: even when <code>onSync</code> is used, event handlers are not running <em>immediately</em>, but only after the batch completes.
 This prevents event handlers from observing intermediate states as well.</p>
