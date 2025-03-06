@@ -152,7 +152,7 @@ This package provides two important TypeScript types:
   This type supports both emitting and subscribing to events.
 - `EventSource<T>`.
   This type allows only subscribing to events.
-  This is useful for public interfaces that where users are not supposed to emit events themselves.
+  This is useful for public interfaces where users are not supposed to emit events themselves.
 
 Note that the restrictions imposed by `EventSource<T>` are a compile time feature only:
 at runtime, both interfaces are represented by the same object.
@@ -190,7 +190,7 @@ emit(viewImpl.clicked, { x: 1, y: 2 });
 ### Integration with `batch`
 
 The `batch()` function from `@conterra/reactivity-core` can be used to group reactive changes to one or more signals, comparable to a transaction.
-Effects or watches are not run executed until the batch completes.
+Effects or watches are not executed until the batch completes.
 This prevents intermediate states (which may be inconsistent) from being observed by other parts of the application.
 
 Event handling works the same way: even when `onSync` is used, event handlers are not running _immediately_, but only after the batch completes.
