@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
 import { computed, reactive } from "vue";
 import { Todo } from "./TodosModel";
 import { useReactiveSnapshot } from "./integration";

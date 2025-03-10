@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
 import { MockInstance, onTestFinished, vi } from "vitest";
 import { nextTick } from "../utils/dispatch";
 import * as report from "../utils/reportCallbackError";

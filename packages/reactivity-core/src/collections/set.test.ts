@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
 import { it, expect, describe, vi } from "vitest";
 import { reactiveSet } from "./set";
 

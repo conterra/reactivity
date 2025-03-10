@@ -1,7 +1,10 @@
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 import pluginVue from "eslint-plugin-vue";
+import headers from "eslint-plugin-headers";
 
 export default tseslint.config(
     eslint.configs.recommended,
@@ -9,6 +12,9 @@ export default tseslint.config(
     ...pluginVue.configs["flat/recommended"],
     eslintConfigPrettier,
     {
+        plugins: {
+            headers
+        },
         rules: {
             "linebreak-style": ["error", "unix"],
             "quotes": [
@@ -34,7 +40,18 @@ export default tseslint.config(
             ],
 
             // Needed for side effects with signals
-            "@typescript-eslint/no-unused-expressions": "off"
+            "@typescript-eslint/no-unused-expressions": "off",
+
+            "headers/header-format": [
+                "error",
+                {
+                    source: "string",
+                    content:
+                        "SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)\n" +
+                        "SPDX-License-Identifier: Apache-2.0",
+                    style: "line"
+                }
+            ]
         }
     },
     {
