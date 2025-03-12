@@ -124,7 +124,7 @@ describe("once", () => {
         expect(events).toBe(1);
     });
 
-    it("should not call a once handler twice, event when emits are nested", () => {
+    it("should not call a once handler twice, even when emits are nested", () => {
         const evt = emitter();
 
         let events = 0;
@@ -141,6 +141,25 @@ describe("once", () => {
             { once: true }
         );
         emit(evt);
+        expect(events).toBe(1);
+    });
+
+    it("should not call a once handler twice, even in batch context", () => {
+        const evt = emitter();
+
+        let events = 0;
+        onSync(
+            evt,
+            () => {
+                events++;
+            },
+            { once: true }
+        );
+
+        batch(() => {
+            emit(evt);
+            emit(evt);
+        });
         expect(events).toBe(1);
     });
 });
