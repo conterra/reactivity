@@ -1,5 +1,24 @@
 # @conterra/reactivity-core
 
+## 0.5.0
+
+### Minor Changes
+
+- 0e9bd35: Use `Object.is` instead of `===` for cleaner comparisons (e.g. around NaN).
+
+    Note that this does not resolve all issues around NaN: a computed signal returning `NaN` will still be considered a change.
+    This is due to the underlying implementation in `@preact/signals-core`, which compares values using `===`.
+
+- 0e9bd35: Remove deprecated `syncEffectOnce` function.
+
+### Patch Changes
+
+- 0e9bd35: Relax type signature of `watch` and `syncWatch`: the array of values is no longer `readonly` (but it still must not be modified at runtime).
+- 0e9bd35: Introduce `ReactiveGetter<T>` type to mark functions used to compute reactive values.
+  This is used in the signatures of `computed` and `*watch*`.
+  `ReactiveGetter<T>` is a simple type alias for `() => T`.
+- 0e9bd35: Export `reportCallbackError` and `dispatchAsyncCallback` from this package.
+
 ## 0.4.4
 
 - Introduce new `ctx` parameter to `watch` and `effect` and variants.
