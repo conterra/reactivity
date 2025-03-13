@@ -95,8 +95,8 @@ Similar to `watch` / `watchSync` in `@conterra/reactivity-core`, there are two v
 - A signal holding an event source (reactive).
 - A function returning an event source, implemented using signals (reactive).
 
-In the following examples, the signal `currentEventEmitter` points to the active event emitter (either `emitter1` or `emitter2`).
-The subscription configured by `on` automatically switches between the two emitters whenever the signal changes.
+In the following examples, the signal `currentLogger` points to the active logger object (either `logger1` or `logger2`).
+The subscription configured by `on` automatically switches between the two loggers whenever the signal changes.
 In other words, it always stays subscribed to the current one.
 
 ```ts
