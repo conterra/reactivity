@@ -20,7 +20,7 @@ For example:</p>
 
 <a id="sync-vs-async-events" class="tsd-anchor"></a><h3 class="tsd-anchor-link">Sync vs async events<a href="#sync-vs-async-events" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><p>Similar to <code>watch</code> / <code>watchSync</code> in <code>@conterra/reactivity-core</code>, there are two versions of the <code>on</code> function: <code>on</code> and <code>onSync</code>:</p>
 <ul>
-<li><code>on</code>: Callbacks are called asynchronously (in a future task, similar to <code>setTimeout(0, cb)</code>).
+<li><code>on</code>: Callbacks are called asynchronously (in a future task, similar to <code>setTimeout(cb, 0)</code>).
 This is usually what you want.</li>
 <li><code>onSync</code>: Callbacks are called synchronously, immediately after they have been emitted.
 Note that there is a subtle interaction with <code>batch</code> (see <a href="#integration-with-batch">Integration with <code>batch</code></a>).</li>
