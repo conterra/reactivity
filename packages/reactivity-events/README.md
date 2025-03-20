@@ -82,7 +82,7 @@ handle.destroy();
 
 Similar to `watch` / `watchSync` in `@conterra/reactivity-core`, there are two versions of the `on` function: `on` and `onSync`:
 
-- `on`: Callbacks are called asynchronously (in a future task, similar to `setTimeout(0, cb)`).
+- `on`: Callbacks are called asynchronously (in a future task, similar to `setTimeout(cb, 0)`).
   This is usually what you want.
 - `onSync`: Callbacks are called synchronously, immediately after they have been emitted.
   Note that there is a subtle interaction with `batch` (see [Integration with `batch`](#integration-with-batch)).
