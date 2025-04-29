@@ -218,8 +218,18 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * @group Primitives
  */
 export function synchronized<T>(getter: () => T, subscribe: SubscribeFunc): ReadonlyReactive<T> {
-    const impl = new SynchronizedReactiveImpl(getter, subscribe);
+    const impl = new SynchronizedReactiveImpl(getter, subscribe); // TODO equals
     return impl as AddBrand<typeof impl>;
+}
+
+/** @experimental */
+export function linked<T, S>(
+    source: () => S,
+    restore: (source: NoInfer<S>, previousValue?: NoInfer<T>) => T,
+    options?: ReactiveOptions<T>
+): Reactive<T> {
+    const impl = new LinkedReactiveImpl(source, restore, options?.equal);
+    return impl as AddWritableBrand<typeof impl>;
 }
 
 /**
@@ -321,15 +331,41 @@ export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is 
     return maybeReactive instanceof WritableReactiveImpl;
 }
 
-const REACTIVE_SIGNAL = Symbol("signal");
-const CUSTOM_EQUALS = Symbol("equals");
-
 abstract class ReactiveImpl<T>
     implements RemoveBrand<ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>>
 {
+    abstract get value(): T;
+    abstract set value(_value: T);
+
+    trigger() {
+        throw new Error("Cannot trigger this reactive object.");
+    }
+
+    peek() {
+        return untracked(() => this.value);
+    }
+
+    toJSON() {
+        return this.value;
+    }
+
+    toString(): string {
+        return `Reactive[value=${getFormattedValue(this.value)}]`;
+    }
+}
+
+const REACTIVE_SIGNAL = Symbol("signal");
+const CUSTOM_EQUALS = Symbol("equals");
+
+/** An object that wraps a raw signal from the underlying signals-core library. */
+class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
     private [REACTIVE_SIGNAL]: RawSignal<T>;
 
+    /**
+     * @param signal The signal that is being _read_ from.
+     */
     constructor(signal: RawSignal<T>) {
+        super();
         this[REACTIVE_SIGNAL] = signal;
     }
 
@@ -340,25 +376,9 @@ abstract class ReactiveImpl<T>
     set value(_value: T) {
         throw new Error("Cannot update a readonly reactive object.");
     }
-
-    trigger() {
-        throw new Error("Cannot trigger this reactive object.");
-    }
-
-    peek() {
-        return this[REACTIVE_SIGNAL].peek();
-    }
-
-    toJSON() {
-        return this.value;
-    }
-
-    toString(): string {
-        return `Reactive[value=${getFormattedValue(this[REACTIVE_SIGNAL].value)}]`;
-    }
 }
 
-class ComputedReactiveImpl<T> extends ReactiveImpl<T> {
+class ComputedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
 
     constructor(compute: () => T, equals: EqualsFunc<T> | undefined) {
@@ -368,7 +388,7 @@ class ComputedReactiveImpl<T> extends ReactiveImpl<T> {
     }
 }
 
-class WritableReactiveImpl<T> extends ReactiveImpl<T> {
+class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [CUSTOM_EQUALS]: EqualsFunc<T>;
 
     constructor(initialValue: T, equals: EqualsFunc<T> | undefined) {
@@ -406,7 +426,7 @@ const HAS_SCHEDULED_INVALIDATE = Symbol("has_scheduled_invalidate");
  *
  * See also https://github.com/tc39/proposal-signals/issues/237
  */
-class SynchronizedReactiveImpl<T> extends ReactiveImpl<T> {
+class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [INVALIDATE_SIGNAL] = rawSignal(false);
     [IS_WATCHED] = false;
     [HAS_SCHEDULED_INVALIDATE] = false;
@@ -436,6 +456,46 @@ class SynchronizedReactiveImpl<T> extends ReactiveImpl<T> {
     #invalidate = () => {
         this[INVALIDATE_SIGNAL].value = !this[INVALIDATE_SIGNAL].peek();
     };
+}
+
+const READ_SIGNAL = Symbol("read_source");
+const WRITE_SIGNAL = Symbol("write_state");
+const PREV_SOURCE = Symbol("prev_source");
+const HAD_SOURCE = Symbol("has_source");
+
+class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
+    [READ_SIGNAL]: ReadonlyReactive<T>;
+    [WRITE_SIGNAL] = reactive<T | undefined>();
+
+    [PREV_SOURCE]: S | undefined; // not reactive
+    [HAD_SOURCE] = false; // false after initial source computation, to discriminate between undefined and initial state
+
+    constructor(
+        source: () => S,
+        restore: (source: S, prev: T | undefined) => T,
+        equals: EqualsFunc<T> | undefined
+    ) {
+        super();
+
+        // TODO: Equals?!
+        this[READ_SIGNAL] = computed(() => {
+            const currentSource = source();
+            if (!this[HAD_SOURCE] || currentSource !== this[PREV_SOURCE]) {
+                this[PREV_SOURCE] = currentSource;
+                this[HAD_SOURCE] = true;
+                this[WRITE_SIGNAL].value = restore(currentSource, this[WRITE_SIGNAL].peek());
+            }
+            return this[WRITE_SIGNAL].value as T;
+        });
+    }
+
+    get value(): T {
+        return this[READ_SIGNAL].value;
+    }
+
+    set value(newValue: T) {
+        this[WRITE_SIGNAL].value = newValue;
+    }
 }
 
 function computeWithEquals<T>(compute: () => T, equals: EqualsFunc<T>) {

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it, vi } from "vitest";
-import { batch, computed, external, reactive, synchronized } from "./signals";
+import { batch, computed, external, linked, reactive, synchronized } from "./signals";
 import { syncEffect } from "./effect/syncEffect";
 import { syncWatchValue } from "./watch/watch";
 
@@ -486,6 +486,70 @@ describe("synchronized", () => {
         watchHandle.destroy();
     });
 });
+
+describe("linked", () => {
+    it("resets to valid value if source changes", () => {
+        const getSource = vi.fn(() => options.value[0]);
+
+        const options = reactive<string[]>(["a", "b", "c"]);
+        const currentOption = simpleLinked(getSource);
+
+        // Initial value from getter
+        expect(getSource).toHaveBeenCalledTimes(0); // lazy
+        expect(currentOption.value).toBe("a");
+        expect(getSource).toHaveBeenCalledTimes(1); // first access
+
+        // Cached, no recomputation
+        expect(currentOption.value).toBe("a");
+        expect(getSource).toHaveBeenCalledTimes(1);
+
+        // Changing the source resets the current option
+        options.value = ["1", "2", "3"];
+        expect(currentOption.value).toBe("1");
+        expect(getSource).toHaveBeenCalledTimes(2); // recomputed
+    });
+
+    it("can change value while source does not change", () => {
+        const options = reactive<string[]>(["a", "b", "c"]);
+        const currentOption = simpleLinked(() => options.value[0]);
+        expect(currentOption.value).toBe("a");
+
+        currentOption.value = "b";
+        expect(currentOption.value).toBe("b");
+
+        currentOption.value = "c";
+        expect(currentOption.value).toBe("c");
+
+        options.value = ["1", "2", "3"];
+        expect(currentOption.value).toBe("1"); // reset to first value
+    });
+
+    it("can preserve the previous value if it's still present in the source", () => {
+        const options = reactive<string[]>(["a", "b", "c"]);
+
+        const restoreSpy = vi.fn((options: string[], prev: string | undefined): string => {
+            if (prev && options.includes(prev)) {
+                return prev;
+            }
+            return options[0]!;
+        });
+        const currentOption = linked(() => options.value, restoreSpy);
+
+        expect(currentOption.value).toBe("a");
+        expect(restoreSpy).toHaveBeenCalledTimes(1);
+
+        currentOption.value = "b";
+        expect(currentOption.value).toBe("b");
+
+        options.value = ["1", "2", "b"];
+        expect(currentOption.value).toBe("b"); // still b
+        expect(restoreSpy).toHaveBeenCalledTimes(2);
+    });
+});
+
+function simpleLinked<T>(expr: () => T) {
+    return linked(expr, (s) => s);
+}
 
 class DataSource {
     #listener: (() => void) | undefined;
