@@ -1,4 +1,4 @@
-# @conterra/reactivity-core ![NPM Version](https://img.shields.io/npm/v/%40conterra%2Freactivity-core)
+# @conterra/reactivity-core [![NPM Version](https://img.shields.io/npm/v/%40conterra%2Freactivity-core)](https://www.npmjs.com/package/@conterra/reactivity-core)
 
 UI framework independent reactivity library with support for all kinds of values.
 
@@ -317,6 +317,22 @@ async function fetchUserDetails(id: string, signal: AbortSignal): Promise<void> 
 }
 ```
 
+### Cleanup
+
+Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
+
+```ts
+const h1 = effect(/* ... */);
+const h2 = watch(/* ... */);
+
+// When you are no longer interested in changes:
+h1.destroy();
+h2.destroy();
+```
+
+When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
+This leads to unintended side effects, unnecessary memory consumption and waste of computational power.
+
 #### Cheat sheet: variants of effect and watch
 
 The following table provides a quick overview of the different variants of `effect` and `watch`:
@@ -337,6 +353,93 @@ The following table provides a quick overview of the different variants of `effe
 Note that `watchValue` and `watch` are almost the same.
 `watch` supports watching multiple values at once directly (but forces you to return an array) while `watchValue` only supports a single value.
 In truth, only their default `equal` functions are different: `watchValue` uses `Object.is` while `watch` uses shallow array equality.
+
+### Linked signals
+
+> **Experimental**: This is an API that makes heavy use of the underlying signals library.
+> While we're confident about the API's stability, the _implementation_ may still contain some undiscovered problems.
+
+Where reactive signals may change arbitrarily, and computed signals are completely derived from other signals, linked signals are a hybrid of both.
+
+A linked signal is a signal whose _source_ value is derived from another signals.
+While _source_ remains unchanged, the linked signal's _value_ may be updated by the user.
+If _source_ changes, the linked signal's value will be reset.
+
+#### Example 1
+
+Consider an application component that allows the user to select a value from a set of options.
+The set of options may change behind the scenes.
+
+```ts
+import { reactive, linked } from "@conterra/reactivity-core";
+
+const options = reactive(["a", "b", "c"]);
+const currentOption = linked(() => options.value[0]); // default to first item
+
+// (1)
+console.log(currentOption.value); // "a"
+
+// (2)
+currentOption.value = "b";
+console.log(currentOption.value); // "b"
+
+// (3)
+options.value = ["x", "y", "z"];
+console.log(currentOption.value); // "x"
+```
+
+- **(1)** `currentOption` is initialized to the the first item of `options`.
+- **(2)** While `options.value` remains unchanged, `currentOption.value` can be changed freely.
+- **(3)** Changing `options.value` has reset `currentOption.value` to the first item of the new options.
+
+#### Example 2
+
+The previous example always resets the user's choice, even if the old choice would still be valid with the new options.
+Linked signals support a `reset` function that can be used to determine the new value after the _source_ has changed.
+
+```ts
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
+import { reactive, linked } from "@conterra/reactivity-core";
+
+const options = reactive(["a", "b", "c"]);
+const currentOption = linked(
+    () => options.value,
+    (options, previousValue?: string) => {
+        if (previousValue != null && options.includes(previousValue)) {
+            // Previous value is still valid
+            return previousValue;
+        }
+        // Reset to first value
+        return options[0];
+    }
+);
+console.log(currentOption.value); // "a"
+
+currentOption.value = "b";
+console.log(currentOption.value); // "b"
+
+options.value = ["x", "y", "b"];
+console.log(currentOption.value); // still "b"
+
+options.value = ["x", "y", "z"];
+console.log(currentOption.value); // "x"
+```
+
+In the previous example, the second argument to the `linked` signal computes the new value based on the new options and the previous value.
+This can preserve the user's selection if it is still valid.
+
+#### Notes
+
+- Like other signals, `linked` supports custom equality functions.
+  Note that this function works on the signal's _value_ and not on the _source_ (if these are different, see Example 2).
+  If you need custom equality for the _source_, wrap that source in a `computed` signal.
+- The function computing _source_ may be called often.
+  If computing _source_ is expensive, consider wrapping the computation in a `computed` signal to benefit from caching.
+
+#### Prior Art
+
+The semantics of linked signals are inspired by [Angular's approach](https://angular.dev/guide/signals/linked-signal).
 
 ### Complex values
 
@@ -478,22 +581,6 @@ function addAuthor(name: string) {
 
 addAuthor("King");
 ```
-
-### Cleanup
-
-Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
-
-```ts
-const h1 = effect(/* ... */);
-const h2 = watch(/* ... */);
-
-// When you are no longer interested in changes:
-h1.destroy();
-h2.destroy();
-```
-
-When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
-This leads to unintended side effects, unnecessary memory consumption and waste of computational power.
 
 ### Reactive collections
 

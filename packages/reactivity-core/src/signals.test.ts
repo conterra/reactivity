@@ -489,67 +489,140 @@ describe("synchronized", () => {
 
 describe("linked", () => {
     it("resets to valid value if source changes", () => {
-        const getSource = vi.fn(() => options.value[0]);
-
         const options = reactive<string[]>(["a", "b", "c"]);
-        const currentOption = simpleLinked(getSource);
+        const source = vi.fn(() => options.value[0]);
+
+        const currentOption = linked(source);
 
         // Initial value from getter
-        expect(getSource).toHaveBeenCalledTimes(0); // lazy
+        expect(source).toHaveBeenCalledTimes(0); // lazy
         expect(currentOption.value).toBe("a");
-        expect(getSource).toHaveBeenCalledTimes(1); // first access
+        expect(source).toHaveBeenCalledTimes(1); // first access
 
         // Cached, no recomputation
         expect(currentOption.value).toBe("a");
-        expect(getSource).toHaveBeenCalledTimes(1);
+        expect(source).toHaveBeenCalledTimes(1);
 
         // Changing the source resets the current option
         options.value = ["1", "2", "3"];
         expect(currentOption.value).toBe("1");
-        expect(getSource).toHaveBeenCalledTimes(2); // recomputed
+        expect(source).toHaveBeenCalledTimes(2); // recomputed
     });
 
     it("can change value while source does not change", () => {
         const options = reactive<string[]>(["a", "b", "c"]);
-        const currentOption = simpleLinked(() => options.value[0]);
+
+        // getSource is called after _every_ (source / value) change with the current implementation.
+        const getSource = vi.fn(() => options.value[0]);
+
+        const currentOption = linked(getSource);
         expect(currentOption.value).toBe("a");
+        expect(getSource).toHaveBeenCalledTimes(1);
 
         currentOption.value = "b";
         expect(currentOption.value).toBe("b");
+        expect(getSource).toHaveBeenCalledTimes(2);
 
         currentOption.value = "c";
         expect(currentOption.value).toBe("c");
+        expect(getSource).toHaveBeenCalledTimes(3);
 
         options.value = ["1", "2", "3"];
         expect(currentOption.value).toBe("1"); // reset to first value
+        expect(getSource).toHaveBeenCalledTimes(4);
     });
 
     it("can preserve the previous value if it's still present in the source", () => {
         const options = reactive<string[]>(["a", "b", "c"]);
 
-        const restoreSpy = vi.fn((options: string[], prev: string | undefined): string => {
+        const reset = vi.fn((options: string[], prev: string | undefined): string => {
             if (prev && options.includes(prev)) {
                 return prev;
             }
             return options[0]!;
         });
-        const currentOption = linked(() => options.value, restoreSpy);
+        const currentOption = linked(() => options.value, reset);
 
         expect(currentOption.value).toBe("a");
-        expect(restoreSpy).toHaveBeenCalledTimes(1);
+        expect(reset).toHaveBeenCalledTimes(1);
 
         currentOption.value = "b";
         expect(currentOption.value).toBe("b");
+        expect(reset).toHaveBeenCalledTimes(1);
 
         options.value = ["1", "2", "b"];
         expect(currentOption.value).toBe("b"); // still b
-        expect(restoreSpy).toHaveBeenCalledTimes(2);
+        expect(reset).toHaveBeenCalledTimes(2);
+
+        options.value = ["1", "2", "3"];
+        expect(currentOption.value).toBe("1"); // back to first item
+        expect(reset).toHaveBeenCalledTimes(3);
+    });
+
+    it("ensures that the latest write wins when the source changed in the meantime", () => {
+        const options = reactive<string[]>(["a", "b", "c"]);
+        const source = vi.fn(() => options.value);
+
+        const reset = vi.fn((options: string[], prev: string | undefined): string => {
+            if (prev && options.includes(prev)) {
+                return prev;
+            }
+            return options[0]!;
+        });
+
+        const currentOption = linked(source, reset);
+        expect(currentOption.value).toBe("a");
+        expect(source).toHaveBeenCalledTimes(1);
+        expect(reset).toHaveBeenCalledTimes(1);
+
+        // Linked signals are lazy, source() was not called yet
+        options.value = ["1", "2", "3"];
+        expect(source).toHaveBeenCalledTimes(1);
+
+        currentOption.value = "X";
+        expect(currentOption.value).toBe("X");
+        expect(source).toHaveBeenCalledTimes(3); // must be >= 2; 3 is implementation weirdness
+        expect(reset).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not update the value if equal", () => {
+        interface User {
+            id: string;
+        }
+
+        const users = reactive<User[]>([{ id: "a" }, { id: "b" }, { id: "c" }]);
+        const currentUser = linked(() => users.value[0], { equal: (a, b) => a?.id === b?.id });
+
+        const firstUser = users.value[0]!;
+        expect(currentUser.value).toBe(firstUser);
+
+        currentUser.value = { id: "a" };
+        expect(currentUser.value).toBe(firstUser); // no change (equal)
+
+        currentUser.value = { id: "b" };
+        expect(currentUser.value.id).toBe("b"); // did change
+
+        currentUser.value = users.value[1];
+        expect(currentUser.value).not.toBe(users.value[1]); // no change (equal)
+    });
+
+    it("emits change events when source or value changes", () => {
+        const events: string[] = [];
+        const options = reactive<string[]>(["a", "b", "c"]);
+        const currentOption = linked(() => options.value[0]);
+
+        syncEffect(() => {
+            events.push(currentOption.value ?? "<undefined>");
+        });
+        expect(events).toEqual(["a"]);
+
+        currentOption.value = "b";
+        expect(events).toEqual(["a", "b"]);
+
+        options.value = ["1", "2", "3"];
+        expect(events).toEqual(["a", "b", "1"]);
     });
 });
-
-function simpleLinked<T>(expr: () => T) {
-    return linked(expr, (s) => s);
-}
 
 class DataSource {
     #listener: (() => void) | undefined;
