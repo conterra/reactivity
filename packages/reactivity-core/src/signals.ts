@@ -218,8 +218,56 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  * @group Primitives
  */
 export function synchronized<T>(getter: () => T, subscribe: SubscribeFunc): ReadonlyReactive<T> {
-    const impl = new SynchronizedReactiveImpl(getter, subscribe);
+    const impl = new SynchronizedReactiveImpl(getter, subscribe); // TODO equals
     return impl as AddBrand<typeof impl>;
+}
+
+/**
+ * Creates a new linked signal derived from the given source.
+ *
+ * The linked signal's value defaults to the source's value.
+ * While the source remains the same, the linked signal can be changed freely.
+ * If the source changes, the linked signal will be reset.
+ *
+ * @experimental
+ * @group Primitives
+ */
+export function linked<T>(source: ReactiveGetter<T>, options?: ReactiveOptions<T>): Reactive<T>;
+
+/**
+ * Creates a new linked signal derived from the given source.
+ *
+ * While the source remains the same, the linked signal can be changed freely.
+ * If the source changes, the linked signal will be reset.
+ *
+ * The `reset` function determines the new value during initialization or after the source has changed.
+ *
+ * @experimental
+ * @group Primitives
+ */
+export function linked<T, S>(
+    source: ReactiveGetter<S>,
+    reset: (source: NoInfer<S>, previousValue?: NoInfer<T>) => T,
+    options?: ReactiveOptions<T>
+): Reactive<T>;
+
+export function linked<T, S = T>(
+    source: ReactiveGetter<S>,
+    resetOrOptions?: ((source: S, previousValue?: T) => T) | ReactiveOptions<T>,
+    optionsArg?: ReactiveOptions<T>
+): Reactive<T> {
+    let reset;
+    let options;
+    if (typeof resetOrOptions === "function") {
+        reset = resetOrOptions;
+        options = optionsArg;
+    } else {
+        reset = (source: S) => source as unknown as T;
+        options = resetOrOptions;
+    }
+
+    const impl = new LinkedReactiveImpl(source, reset, options?.equal);
+    return impl as AddWritableBrand<typeof impl>;
 }
 
 /**
@@ -321,15 +369,41 @@ export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is 
     return maybeReactive instanceof WritableReactiveImpl;
 }
 
-const REACTIVE_SIGNAL = Symbol("signal");
-const CUSTOM_EQUALS = Symbol("equals");
-
 abstract class ReactiveImpl<T>
     implements RemoveBrand<ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>>
 {
+    abstract get value(): T;
+    abstract set value(_value: T);
+
+    trigger() {
+        throw new Error("Cannot trigger this reactive object.");
+    }
+
+    peek() {
+        return untracked(() => this.value);
+    }
+
+    toJSON() {
+        return this.value;
+    }
+
+    toString(): string {
+        return `Reactive[value=${getFormattedValue(this.value)}]`;
+    }
+}
+
+const REACTIVE_SIGNAL = Symbol("signal");
+const CUSTOM_EQUALS = Symbol("equals");
+
+/** An object that wraps a raw signal from the underlying signals-core library. */
+class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
     private [REACTIVE_SIGNAL]: RawSignal<T>;
 
+    /**
+     * @param signal The signal that is being _read_ from.
+     */
     constructor(signal: RawSignal<T>) {
+        super();
         this[REACTIVE_SIGNAL] = signal;
     }
 
@@ -340,25 +414,9 @@ abstract class ReactiveImpl<T>
     set value(_value: T) {
         throw new Error("Cannot update a readonly reactive object.");
     }
-
-    trigger() {
-        throw new Error("Cannot trigger this reactive object.");
-    }
-
-    peek() {
-        return this[REACTIVE_SIGNAL].peek();
-    }
-
-    toJSON() {
-        return this.value;
-    }
-
-    toString(): string {
-        return `Reactive[value=${getFormattedValue(this[REACTIVE_SIGNAL].value)}]`;
-    }
 }
 
-class ComputedReactiveImpl<T> extends ReactiveImpl<T> {
+class ComputedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
 
     constructor(compute: () => T, equals: EqualsFunc<T> | undefined) {
@@ -368,7 +426,7 @@ class ComputedReactiveImpl<T> extends ReactiveImpl<T> {
     }
 }
 
-class WritableReactiveImpl<T> extends ReactiveImpl<T> {
+class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [CUSTOM_EQUALS]: EqualsFunc<T>;
 
     constructor(initialValue: T, equals: EqualsFunc<T> | undefined) {
@@ -406,7 +464,7 @@ const HAS_SCHEDULED_INVALIDATE = Symbol("has_scheduled_invalidate");
  *
  * See also https://github.com/tc39/proposal-signals/issues/237
  */
-class SynchronizedReactiveImpl<T> extends ReactiveImpl<T> {
+class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [INVALIDATE_SIGNAL] = rawSignal(false);
     [IS_WATCHED] = false;
     [HAS_SCHEDULED_INVALIDATE] = false;
@@ -436,6 +494,76 @@ class SynchronizedReactiveImpl<T> extends ReactiveImpl<T> {
     #invalidate = () => {
         this[INVALIDATE_SIGNAL].value = !this[INVALIDATE_SIGNAL].peek();
     };
+}
+
+const READ_SIGNAL = Symbol("read_source");
+const WRITE_SIGNAL = Symbol("write_state");
+const PREV_SOURCE = Symbol("prev_source");
+const IS_INIT = Symbol("has_source");
+
+class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
+    // A writable signal that is used to _write_ the current value.
+    // In addition to being writable as long as the source remains the same,
+    // it is also reset to a new value when the source changes.
+    //
+    // Resetting happens in the computed signal, as a side effect, which is seems to be working fine?
+    [WRITE_SIGNAL]: Reactive<T | undefined>;
+
+    // A computed signal that is used to _read_ the current value.
+    // It automatically resets itself if the source changes.
+    [READ_SIGNAL]: ReadonlyReactive<T>;
+
+    // Old source (if any), not reactive.
+    [PREV_SOURCE]: S | undefined;
+
+    // false after initial source computation, to discriminate between undefined and initial state.
+    [IS_INIT] = true;
+
+    constructor(
+        source: () => S,
+        reset: (source: S, prev: T | undefined) => T,
+        equals: EqualsFunc<T> | undefined
+    ) {
+        super();
+
+        let writeEquals;
+        if (equals) {
+            writeEquals = (a: T | undefined, b: T | undefined) => {
+                if (this[IS_INIT]) {
+                    // The initial value is undefined, which does not match with the equals signature.
+                    return false;
+                }
+                return equals(a as T, b as T);
+            };
+        }
+        this[WRITE_SIGNAL] = reactive(undefined, { equal: writeEquals });
+
+        this[READ_SIGNAL] = computed(() => {
+            const currentSource = source();
+            if (this[IS_INIT] || currentSource !== this[PREV_SOURCE]) {
+                this[PREV_SOURCE] = currentSource;
+                this[WRITE_SIGNAL].value = reset(currentSource, this[WRITE_SIGNAL].peek());
+                this[IS_INIT] = false;
+            }
+            return this[WRITE_SIGNAL].value as T;
+        });
+    }
+
+    get value(): T {
+        return this[READ_SIGNAL].value;
+    }
+
+    set value(newValue: T) {
+        // Ensure source updating happens before, if necessary.
+        // This works around the fact that our reactions to source changes are lazy.
+        // By computing the value before writing it, we ensure that the latest write wins,
+        // since any invalidation happens in peek() and thus before the `.value` assignment.
+        //
+        // As a side effect, this also ensures that the current value is always initialized --
+        // thus equality does not the `| undefined` case.
+        this.peek();
+        this[WRITE_SIGNAL].value = newValue;
+    }
 }
 
 function computeWithEquals<T>(compute: () => T, equals: EqualsFunc<T>) {

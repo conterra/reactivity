@@ -42,6 +42,7 @@ export {
 export {
     reactive,
     computed,
+    linked,
     external,
     synchronized,
     batch,
