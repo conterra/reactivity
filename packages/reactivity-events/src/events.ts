@@ -58,6 +58,8 @@ export interface EventSource<T> {
 
 /**
  * Options for the {@link emitter()} function.
+ *
+ * @group Events
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface EmitterOptions<T> {
