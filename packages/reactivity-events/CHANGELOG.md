@@ -17,7 +17,7 @@
     const mouseMoved = emitter({
         subscribed: () => {
             // Start listening for mouse events
-        }),
+        },
         unsubscribed: () => {
             // Stop listening for mouse events
         },
