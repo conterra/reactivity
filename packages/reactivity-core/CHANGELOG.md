@@ -1,5 +1,34 @@
 # @conterra/reactivity-core
 
+## 0.7.0
+
+### Minor Changes
+
+- 546f3ec: Add two new options to all signal types: `watched` and `unwatched`.
+
+    - `watched()` is called when the _first_ watcher starts watching the signal.
+      This can be used, for example, to setup some background task.
+    - `unwatched()` is called when the _last_ watcher stops watching the signal.
+      This can be used to clean up any resources created in `watched()`.
+
+    Example:
+
+    ```ts
+    const signal = reactive(123, {
+        watched: () => {
+            console.log("Signal is now being watched");
+        },
+        unwatched: () => {
+            console.log("Signal is no longer being watched");
+        }
+    });
+    ```
+
+### Patch Changes
+
+- 546f3ec: Reimplement `synchronized()` based on preact signal's watched/unwatched callbacks instead of patching the signal's internals.
+- e704f30: Bump dependency `@preact/signals-core` to 1.9.0
+
 ## 0.6.0
 
 ### Minor Changes

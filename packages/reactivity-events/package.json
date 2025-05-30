@@ -1,7 +1,7 @@
 {
     "name": "@conterra/reactivity-events",
     "type": "module",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "license": "Apache-2.0",
     "description": "Event support for reactive objects. Based on `@conterra/reactivity-core`.",
     "repository": {
