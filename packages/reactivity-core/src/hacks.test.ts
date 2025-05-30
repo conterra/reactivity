@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it, vi } from "vitest";
 import { batch, reactive, synchronized } from "./signals";
-import { createWatcher, rawComputedWithSubscriptionHook } from "./hacks";
-import { syncWatchValue } from "./watch/watch";
+import { createWatcher } from "./hacks";
 
 describe("Watcher", () => {
     it("does not trigger the notify callback if nothing happens", () => {
@@ -142,36 +141,5 @@ describe("Watcher", () => {
         }
         expect(sub).toBe(1);
         expect(unsub).toBe(1);
-    });
-});
-
-describe("rawComputedWithSubscriptionHook", () => {
-    it("detects the first subscriber", () => {
-        const onUnsubscribe = vi.fn();
-        const onSubscribe = vi.fn().mockReturnValue(onUnsubscribe);
-        const signal = rawComputedWithSubscriptionHook(() => 0, onSubscribe);
-        expect(onSubscribe).toHaveBeenCalledTimes(0);
-        expect(onUnsubscribe).toHaveBeenCalledTimes(0);
-
-        const { destroy: destroy1 } = syncWatchValue(
-            () => signal.value,
-            () => {}
-        );
-        expect(onSubscribe).toHaveBeenCalledTimes(1);
-
-        // no effect since this is the second subscriber
-        const { destroy: destroy2 } = syncWatchValue(
-            () => signal.value,
-            () => {}
-        );
-        expect(onSubscribe).toHaveBeenCalledTimes(1);
-
-        // no effect since the other subscribe is still running
-        destroy1();
-        expect(onUnsubscribe).toHaveBeenCalledTimes(0);
-
-        // now the last subscriber is gone
-        destroy2();
-        expect(onUnsubscribe).toHaveBeenCalledTimes(1);
     });
 });

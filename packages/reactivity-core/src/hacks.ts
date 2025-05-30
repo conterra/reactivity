@@ -1,10 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import {
-    ReadonlySignal as RawReadonlySignal,
-    computed as rawComputed,
-    effect as rawEffect
-} from "@preact/signals-core";
+import { effect as rawEffect } from "@preact/signals-core";
 import { CleanupHandle } from "./types";
 
 /** @internal */
@@ -52,43 +48,4 @@ interface RawEffectInternals {
     // Starts the effect and returns a function to stop it again.
     // Signal accesses are tracked while the effect is running.
     [_START](): () => void;
-}
-
-// Mangled member names. See https://github.com/preactjs/signals/blob/main/mangle.json.
-const _SUBSCRIBE = "S";
-const _UNSUBSCRIBE = "U";
-
-type RawSignalInternals<T> = RawReadonlySignal<T> & {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [_SUBSCRIBE](node: any): void;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [_UNSUBSCRIBE](node: any): void;
-};
-
-// Overrides the subscribe/unsubscribe methods of a signal to allow for custom subscription hooks.
-export function rawComputedWithSubscriptionHook<T>(
-    compute: () => T,
-    subscribe: () => () => void
-): RawReadonlySignal<T> {
-    const signal = rawComputed(compute) as RawSignalInternals<T>;
-    const origSubscribe = signal[_SUBSCRIBE];
-    const origUnsubscribe = signal[_UNSUBSCRIBE];
-
-    let subscriptions = 0;
-    let cleanup: (() => void) | undefined;
-    signal[_SUBSCRIBE] = function patchedSubscribe(node: unknown) {
-        origSubscribe.call(this, node);
-        if (subscriptions++ === 0) {
-            cleanup = subscribe();
-        }
-    };
-    signal[_UNSUBSCRIBE] = function patchedUnsubscribe(node: unknown) {
-        origUnsubscribe.call(this, node);
-        if (--subscriptions === 0) {
-            cleanup?.();
-            cleanup = undefined;
-        }
-    };
-    return signal;
 }

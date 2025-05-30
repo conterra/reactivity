@@ -7,7 +7,6 @@ import {
     signal as rawSignal,
     untracked as rawUntracked
 } from "@preact/signals-core";
-import { rawComputedWithSubscriptionHook } from "./hacks";
 import {
     AddBrand,
     AddWritableBrand,
@@ -55,7 +54,12 @@ export function reactive<T>(
     initialValue?: T,
     options?: ReactiveOptions<T | undefined>
 ): Reactive<T | undefined> {
-    const impl = new WritableReactiveImpl(initialValue, options?.equal);
+    const impl = new WritableReactiveImpl(
+        initialValue,
+        options?.equal,
+        options?.watched,
+        options?.unwatched
+    );
     return impl as AddWritableBrand<typeof impl>;
 }
 
@@ -86,7 +90,12 @@ export function computed<T>(
     compute: ReactiveGetter<T>,
     options?: ReactiveOptions<T>
 ): ReadonlyReactive<T> {
-    const impl = new ComputedReactiveImpl(compute, options?.equal);
+    const impl = new ComputedReactiveImpl(
+        compute,
+        options?.equal,
+        options?.watched,
+        options?.unwatched
+    );
     return impl as AddBrand<typeof impl>;
 }
 
@@ -217,8 +226,18 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
  *
  * @group Primitives
  */
-export function synchronized<T>(getter: () => T, subscribe: SubscribeFunc): ReadonlyReactive<T> {
-    const impl = new SynchronizedReactiveImpl(getter, subscribe); // TODO equals
+export function synchronized<T>(
+    getter: () => T,
+    subscribe: SubscribeFunc,
+    options?: Omit<ReactiveOptions<T>, "equal">
+): ReadonlyReactive<T> {
+    const impl = new SynchronizedReactiveImpl(
+        getter,
+        subscribe,
+        // TODO equals
+        options?.watched,
+        options?.unwatched
+    );
     return impl as AddBrand<typeof impl>;
 }
 
@@ -266,7 +285,13 @@ export function linked<T, S = T>(
         options = resetOrOptions;
     }
 
-    const impl = new LinkedReactiveImpl(source, reset, options?.equal);
+    const impl = new LinkedReactiveImpl(
+        source,
+        reset,
+        options?.equal,
+        options?.watched,
+        options?.unwatched
+    );
     return impl as AddWritableBrand<typeof impl>;
 }
 
@@ -419,8 +444,16 @@ class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
 class ComputedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
 
-    constructor(compute: () => T, equals: EqualsFunc<T> | undefined) {
-        const rawSignal = rawComputed(equals ? computeWithEquals(compute, equals) : compute);
+    constructor(
+        compute: () => T,
+        equals: EqualsFunc<T> | undefined,
+        watched: (() => void) | undefined,
+        unwatched: (() => void) | undefined
+    ) {
+        const rawSignal = rawComputed(equals ? computeWithEquals(compute, equals) : compute, {
+            watched,
+            unwatched
+        });
         super(rawSignal);
         this[CUSTOM_EQUALS] = equals;
     }
@@ -429,8 +462,13 @@ class ComputedReactiveImpl<T> extends WrappingReactiveImpl<T> {
 class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [CUSTOM_EQUALS]: EqualsFunc<T>;
 
-    constructor(initialValue: T, equals: EqualsFunc<T> | undefined) {
-        super(rawSignal(initialValue));
+    constructor(
+        initialValue: T,
+        equals: EqualsFunc<T> | undefined,
+        watched: (() => void) | undefined,
+        unwatched: (() => void) | undefined
+    ) {
+        super(rawSignal(initialValue, { watched, unwatched }));
         this[CUSTOM_EQUALS] = equals ?? defaultEquals;
     }
 
@@ -448,8 +486,7 @@ class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
 }
 
 const INVALIDATE_SIGNAL = Symbol("invalidate_signal");
-const IS_WATCHED = Symbol("is_watched");
-const HAS_SCHEDULED_INVALIDATE = Symbol("has_scheduled_invalidate");
+const SUBSCRIBE_HANDLE = Symbol("subscribe_handle");
 
 /**
  * Custom signal implementation for "synchronized" values, i.e. values from a foreign source.
@@ -466,29 +503,41 @@ const HAS_SCHEDULED_INVALIDATE = Symbol("has_scheduled_invalidate");
  */
 class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     [INVALIDATE_SIGNAL] = rawSignal(false);
-    [IS_WATCHED] = false;
-    [HAS_SCHEDULED_INVALIDATE] = false;
+    [SUBSCRIBE_HANDLE]: (() => void) | undefined;
 
-    constructor(getter: () => T, subscribe: SubscribeFunc) {
-        const rawSignal = rawComputedWithSubscriptionHook(
+    constructor(
+        getter: () => T,
+        subscribe: SubscribeFunc,
+        watched: (() => void) | undefined,
+        unwatched: (() => void) | undefined
+    ) {
+        const raw = rawComputed(
             () => {
                 this[INVALIDATE_SIGNAL].value;
-                if (!this[IS_WATCHED]) {
+                if (!this[SUBSCRIBE_HANDLE]) {
                     this.#invalidate();
                 }
                 return rawUntracked(() => getter());
             },
-            () => {
-                this[IS_WATCHED] = true;
-                const unsubscribe = subscribe(this.#invalidate);
-                return () => {
-                    this[IS_WATCHED] = false;
-                    unsubscribe();
-                    this.#invalidate();
-                };
+            {
+                watched: () => {
+                    this[SUBSCRIBE_HANDLE] = subscribe(this.#invalidate);
+
+                    watched?.();
+                },
+                unwatched: () => {
+                    unwatched?.();
+
+                    const handle = this[SUBSCRIBE_HANDLE];
+                    this[SUBSCRIBE_HANDLE] = undefined;
+                    if (handle) {
+                        handle();
+                        this.#invalidate();
+                    }
+                }
             }
         );
-        super(rawSignal);
+        super(raw);
     }
 
     #invalidate = () => {
@@ -522,7 +571,9 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
     constructor(
         source: () => S,
         reset: (source: S, prev: T | undefined) => T,
-        equals: EqualsFunc<T> | undefined
+        equals: EqualsFunc<T> | undefined,
+        watched: (() => void) | undefined,
+        unwatched: (() => void) | undefined
     ) {
         super();
 
@@ -538,15 +589,18 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
         }
         this[WRITE_SIGNAL] = reactive(undefined, { equal: writeEquals });
 
-        this[READ_SIGNAL] = computed(() => {
-            const currentSource = source();
-            if (this[IS_INIT] || currentSource !== this[PREV_SOURCE]) {
-                this[PREV_SOURCE] = currentSource;
-                this[WRITE_SIGNAL].value = reset(currentSource, this[WRITE_SIGNAL].peek());
-                this[IS_INIT] = false;
-            }
-            return this[WRITE_SIGNAL].value as T;
-        });
+        this[READ_SIGNAL] = computed(
+            () => {
+                const currentSource = source();
+                if (this[IS_INIT] || currentSource !== this[PREV_SOURCE]) {
+                    this[PREV_SOURCE] = currentSource;
+                    this[WRITE_SIGNAL].value = reset(currentSource, this[WRITE_SIGNAL].peek());
+                    this[IS_INIT] = false;
+                }
+                return this[WRITE_SIGNAL].value as T;
+            },
+            { watched, unwatched }
+        );
     }
 
     get value(): T {

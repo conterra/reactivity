@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, Mock, vi } from "vitest";
 import { batch, computed, external, linked, reactive, synchronized } from "./signals";
 import { syncEffect } from "./effect/syncEffect";
 import { syncWatchValue } from "./watch/watch";
+import { ReadonlyReactive } from "./types";
 
 describe("reactive", () => {
     it("supports setting an initial value", () => {
@@ -81,6 +82,16 @@ describe("reactive", () => {
             bar: reactive("2")
         });
         expect(JSON.stringify(r)).toMatchInlineSnapshot(`"{"foo":1,"bar":"2"}"`);
+    });
+
+    it("notifies on watch and unwatch", () => {
+        const watched = vi.fn();
+        const unwatched = vi.fn();
+        const signal = reactive(1, {
+            watched,
+            unwatched
+        });
+        testWatch(signal, watched, unwatched);
     });
 });
 
@@ -225,6 +236,16 @@ describe("computed", () => {
         expect(boom.value).toBe("ok");
         expect(count).toBe(2);
     });
+
+    it("notifies on watch and unwatch", () => {
+        const watched = vi.fn();
+        const unwatched = vi.fn();
+        const signal = computed(() => 1, {
+            watched,
+            unwatched
+        });
+        testWatch(signal, watched, unwatched);
+    });
 });
 
 describe("external", () => {
@@ -320,6 +341,16 @@ describe("external", () => {
         expect(count).toBe(1);
         expect(boom.value).toBe("ok");
         expect(count).toBe(2);
+    });
+
+    it("notifies on watch and unwatch", () => {
+        const watched = vi.fn();
+        const unwatched = vi.fn();
+        const signal = external(() => 1, {
+            watched,
+            unwatched
+        });
+        testWatch(signal, watched, unwatched);
     });
 });
 
@@ -485,6 +516,20 @@ describe("synchronized", () => {
 
         watchHandle.destroy();
     });
+
+    it("notifies on watch and unwatch", () => {
+        const watched = vi.fn();
+        const unwatched = vi.fn();
+        const signal = synchronized(
+            () => 1,
+            () => () => undefined,
+            {
+                watched,
+                unwatched
+            }
+        );
+        testWatch(signal, watched, unwatched);
+    });
 });
 
 describe("linked", () => {
@@ -622,6 +667,16 @@ describe("linked", () => {
         options.value = ["1", "2", "3"];
         expect(events).toEqual(["a", "b", "1"]);
     });
+
+    it("notifies on watch and unwatch", () => {
+        const watched = vi.fn();
+        const unwatched = vi.fn();
+        const signal = linked(() => 1, {
+            watched,
+            unwatched
+        });
+        testWatch(signal, watched, unwatched);
+    });
 });
 
 class DataSource {
@@ -662,4 +717,32 @@ class DataSource {
             this.#listener = undefined;
         };
     }
+}
+
+function testWatch(signal: ReadonlyReactive<unknown>, watched: Mock, unwatched: Mock) {
+    expect(watched).not.toHaveBeenCalled();
+    expect(unwatched).not.toHaveBeenCalled();
+
+    // Signal becomes watched
+    const handle = syncEffect(() => {
+        signal.value;
+    });
+    expect(watched).toHaveBeenCalledTimes(1);
+    expect(unwatched).not.toHaveBeenCalled();
+
+    // Second watcher doesn't do anything
+    const handle2 = syncEffect(() => {
+        signal.value;
+    });
+    expect(watched).toHaveBeenCalledTimes(1);
+    expect(unwatched).not.toHaveBeenCalled();
+
+    handle2.destroy();
+    expect(watched).toHaveBeenCalledTimes(1);
+    expect(unwatched).not.toHaveBeenCalled();
+
+    // Signal is no longer watched
+    handle.destroy();
+    expect(watched).toHaveBeenCalledTimes(1);
+    expect(unwatched).toHaveBeenCalledTimes(1);
 }

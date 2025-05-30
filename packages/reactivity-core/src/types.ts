@@ -133,6 +133,20 @@ export interface ReactiveOptions<T> {
      * By default, `Object.is` is used to compare values.
      */
     equal?: EqualsFunc<T>;
+
+    /**
+     * This function will be invoked when the _first_ watcher starts to watch this signal.
+     *
+     * See also {@link unwatched}.
+     */
+    watched?: () => void;
+
+    /**
+     * This function will be invoked when the _last_ watcher stops watching this signal.
+     *
+     * See also {@link watched}.
+     */
+    unwatched?: () => void;
 }
 
 /**
