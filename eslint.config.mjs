@@ -15,8 +15,8 @@ export default tseslint.config(
         plugins: {
             headers
         },
+
         rules: {
-            "linebreak-style": ["error", "unix"],
             "quotes": [
                 "error",
                 "double",
@@ -75,6 +75,9 @@ export default tseslint.config(
         languageOptions: {
             parserOptions: {
                 parser: "@typescript-eslint/parser"
+            },
+            globals: {
+                "console": "readonly"
             }
         },
         rules: {

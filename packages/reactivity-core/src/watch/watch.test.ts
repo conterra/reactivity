@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { afterEach } from "node:test";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { batch, reactive } from "../signals";
 import { syncWatch, syncWatchValue, watch, watchValue } from "./watch";
 import { doMutation as doMutationImpl, setupDoMutation } from "../test/doMutation";
