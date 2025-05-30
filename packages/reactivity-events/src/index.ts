@@ -5,6 +5,7 @@ export {
     emitter,
     on,
     onSync,
+    type EmitterOptions,
     type EventArgs,
     type EventCallback,
     type EventEmitter,

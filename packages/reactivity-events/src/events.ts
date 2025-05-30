@@ -57,7 +57,7 @@ export interface EventSource<T> {
 }
 
 /**
- * Options for the {@link emitter()} function.
+ * Options for the {@link emitter} function.
  *
  * @group Events
  */
