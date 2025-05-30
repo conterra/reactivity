@@ -143,6 +143,28 @@ emit(clicked);
 
 Note that is still a good idea to call `destroy` on the handle returned by `on` if you want to unsubscribe manually before the first event has been emitted.
 
+### Detecting subscribers
+
+When providing an event, you can use the `subscribed` and `unsubscribed` options to detect when your event is actually being used:
+
+- `subscribed()` will be called when the _first_ subscriber subscribes to the event.
+  This can be used to initialize the event source lazily.
+- `unsubscribed()` will be called when the _last_ subscriber unsubscribes from the event.
+  This can be used to clean up resources initialized in `subscribed()`.
+
+Example:
+
+```ts
+const mouseMoved = emitter({
+    subscribed: () => {
+        // Start listening for mouse events
+    }),
+    unsubscribed: () => {
+        // Stop listening for mouse events
+    },
+});
+```
+
 ### TypeScript support
 
 This package provides two important TypeScript types:

@@ -57,6 +57,22 @@ export interface EventSource<T> {
 }
 
 /**
+ * Options for the {@link emitter()} function.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface EmitterOptions<T> {
+    /**
+     * This function is invoked when the _first_ subscriber subscribes to the emitter.
+     */
+    subscribed?: () => void;
+
+    /**
+     * This function is invoked when the _last_ subscriber unsubscribes from the emitter.
+     */
+    unsubscribed?: () => void;
+}
+
+/**
  * Creates a new event emitter with the specified event type.
  *
  * Example without type (void by default):
@@ -88,8 +104,8 @@ export interface EventSource<T> {
  * @see {@link on} for subscribing to events.
  * @group Events
  */
-export function emitter<T = void>(): EventEmitter<T> {
-    return new EventEmitterImpl() as unknown as EventEmitter<T>;
+export function emitter<T = void>(options?: EmitterOptions<T>): EventEmitter<T> {
+    return new EventEmitterImpl(options) as unknown as EventEmitter<T>;
 }
 
 /**

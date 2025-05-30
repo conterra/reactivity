@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 import {
+    batch,
     CleanupHandle,
     dispatchAsyncCallback,
     reactive,
@@ -8,7 +9,7 @@ import {
     syncEffect,
     untracked
 } from "@conterra/reactivity-core";
-import { SubscribeOptions } from "./events";
+import { EmitterOptions, SubscribeOptions } from "./events";
 
 /**
  * Internal object representing a registered subscription.
@@ -27,13 +28,6 @@ export interface Subscription {
  */
 export type RawCallback = (...args: unknown[]) => void;
 
-export const SUBSCRIPTIONS = Symbol("subscriptions");
-
-export class EventEmitterImpl {
-    // Set<T> maintains insertion order.
-    [SUBSCRIPTIONS]?: Set<Subscription>;
-}
-
 export function assertEmitter(value: unknown): asserts value is EventEmitterImpl {
     if (!(value instanceof EventEmitterImpl)) {
         throw new TypeError("Invalid event source");
@@ -41,13 +35,13 @@ export function assertEmitter(value: unknown): asserts value is EventEmitterImpl
 }
 
 export function emitImpl(emitter: EventEmitterImpl, args: unknown[]): void {
-    const subscriptions = emitter[SUBSCRIPTIONS];
+    const subscriptions = getSubscriptions(emitter);
     if (!subscriptions || !subscriptions.size) {
         return;
     }
 
     // Copy to allow (de-) registration of handlers during emit.
-    // This is convenient for correctness but may been further optimization
+    // This is convenient for correctness but may need further optimization
     // if events are emitted frequently.
     for (const subscription of Array.from(subscriptions)) {
         dispatch(subscription, args);
@@ -55,32 +49,85 @@ export function emitImpl(emitter: EventEmitterImpl, args: unknown[]): void {
 }
 
 export function subscribeImpl(
-    emitter: EventEmitterImpl,
+    emitterArg: EventEmitterImpl,
     callback: RawCallback,
     options: SubscribeOptions & { sync: boolean }
 ): CleanupHandle {
-    let subscriptions = emitter[SUBSCRIPTIONS];
-    if (!subscriptions) {
-        subscriptions = new Set();
-        emitter[SUBSCRIPTIONS] = subscriptions;
-    }
+    return batch(() => {
+        let emitter: EventEmitterImpl | undefined = emitterArg;
+        const subscription: Subscription = {
+            once: options.once ?? false,
+            sync: options.sync,
+            get isActive(): boolean {
+                return (emitter && getSubscriptions(emitter)?.has(subscription)) ?? false;
+            },
+            remove() {
+                batch(() => {
+                    if (!emitter) {
+                        return;
+                    }
 
-    const subscription: Subscription = {
-        once: options.once ?? false,
-        sync: options.sync,
-        get isActive(): boolean {
-            return subscriptions?.has(subscription) ?? false;
-        },
-        remove() {
-            subscriptions?.delete(subscription);
-            subscriptions = undefined;
-        },
-        callback
-    };
-    subscriptions.add(subscription);
-    return {
-        destroy: () => subscription.remove()
-    };
+                    const subscriptions = getSubscriptions(emitter);
+                    if (subscriptions) {
+                        subscriptions.delete(subscription);
+                        if (subscriptions.size == 0) {
+                            emitter[UNSUBSCRIBED]?.();
+                        }
+                    }
+                    emitter = undefined;
+                });
+            },
+            callback
+        };
+
+        const subscriptions = getSubscriptions(emitter, true);
+        subscriptions.add(subscription);
+        try {
+            if (subscriptions.size === 1) {
+                emitter[SUBSCRIBED]?.();
+            }
+        } catch (e) {
+            subscriptions.delete(subscription);
+            throw e;
+        }
+        return {
+            destroy: () => subscription.remove()
+        };
+    });
+}
+
+const SUBSCRIBED = Symbol("subscribed");
+const UNSUBSCRIBED = Symbol("unsubscribed");
+const SUBSCRIPTIONS = Symbol("subscriptions");
+
+export class EventEmitterImpl {
+    [SUBSCRIBED]?: () => void;
+    [UNSUBSCRIBED]?: () => void;
+
+    // Set<T> maintains insertion order.
+    [SUBSCRIPTIONS]?: Set<Subscription>;
+
+    constructor(options: EmitterOptions<void> | undefined) {
+        if (options?.subscribed) {
+            this[SUBSCRIBED] = options.subscribed;
+        }
+        if (options?.unsubscribed) {
+            this[UNSUBSCRIBED] = options.unsubscribed;
+        }
+    }
+}
+
+function getSubscriptions(emitter: EventEmitterImpl, init: true): Set<Subscription>;
+function getSubscriptions(emitter: EventEmitterImpl, init?: boolean): Set<Subscription> | undefined;
+function getSubscriptions(
+    emitter: EventEmitterImpl,
+    init: boolean = false
+): Set<Subscription> | undefined {
+    let subscriptions = emitter[SUBSCRIPTIONS];
+    if (!subscriptions && init) {
+        subscriptions = emitter[SUBSCRIPTIONS] = new Set();
+    }
+    return subscriptions;
 }
 
 function dispatch(subscriber: Subscription, args: unknown[]): void {

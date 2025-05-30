@@ -107,6 +107,48 @@ it("does not throw exceptions from event handlers", () => {
     expect(err).toMatchInlineSnapshot(`[Error: boom!]`);
 });
 
+it("supports subscribed / unsubscribed callbacks", () => {
+    const subscribed = vi.fn();
+    const unsubscribed = vi.fn();
+
+    const evt = emitter({ subscribed, unsubscribed });
+    expect(subscribed).not.toHaveBeenCalled();
+    expect(unsubscribed).not.toHaveBeenCalled();
+
+    const sub1 = on(evt, () => undefined);
+    expect(subscribed).toHaveBeenCalledTimes(1);
+    expect(unsubscribed).not.toHaveBeenCalled();
+
+    const sub2 = on(evt, () => undefined);
+    expect(subscribed).toHaveBeenCalledTimes(1);
+    expect(unsubscribed).not.toHaveBeenCalled();
+
+    sub2.destroy();
+    expect(subscribed).toHaveBeenCalledTimes(1);
+    expect(unsubscribed).not.toHaveBeenCalled();
+
+    sub1.destroy();
+    expect(subscribed).toHaveBeenCalledTimes(1);
+    expect(unsubscribed).toHaveBeenCalledTimes(1);
+});
+
+it("supports emitting events from subscribed callback", () => {
+    const evt = emitter<string>({
+        subscribed: () => {
+            emit(evt, "Hello World!");
+        }
+    });
+    emit(evt, "No listeners ... :(");
+
+    const events: string[] = [];
+    onSync(evt, (message) => {
+        events.push(message);
+    });
+    emit(evt, "After subscribe");
+
+    expect(events).toEqual(["Hello World!", "After subscribe"]);
+});
+
 describe("once", () => {
     it("supports subscribing for a single event", () => {
         const evt = emitter();
