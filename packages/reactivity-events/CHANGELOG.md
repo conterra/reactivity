@@ -1,5 +1,36 @@
 # @conterra/reactivity-events
 
+## 0.7.0
+
+### Minor Changes
+
+- 7b7ed6d: The `emitter()` function now supports two new options: `subscribed` and `unsubscribed`.
+
+    - `subscribed()` will be called when the _first_ subscriber subscribes to the event.
+      This can be used to initialize the event source lazily.
+    - `unsubscribed()` will be called when the _last_ subscriber unsubscribes from the event.
+      This can be used to clean up resources initialized in `subscribed()`.
+
+    Example:
+
+    ```ts
+    const mouseMoved = emitter({
+        subscribed: () => {
+            // Start listening for mouse events
+        }),
+        unsubscribed: () => {
+            // Stop listening for mouse events
+        },
+    });
+    ```
+
+### Patch Changes
+
+- Updated dependencies [546f3ec]
+- Updated dependencies [546f3ec]
+- Updated dependencies [e704f30]
+    - @conterra/reactivity-core@0.7.0
+
 ## 0.6.0
 
 ### Patch Changes
