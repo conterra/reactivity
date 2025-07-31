@@ -1,11 +1,17 @@
 # @conterra/reactivity-core
 
+## 0.7.1
+
+### Patch Changes
+
+- 29fc994: Refactor implementation of syncEffect's context argument using the dispose() feature exposed by recent @preact/signals-core
+- ee22635: Bump dependency @preact-signals/core
+
 ## 0.7.0
 
 ### Minor Changes
 
 - 546f3ec: Add two new options to all signal types: `watched` and `unwatched`.
-
     - `watched()` is called when the _first_ watcher starts watching the signal.
       This can be used, for example, to setup some background task.
     - `unwatched()` is called when the _last_ watcher stops watching the signal.
