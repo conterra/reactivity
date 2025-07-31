@@ -43,25 +43,16 @@ import { effect } from "./asyncEffect";
  * @group Watching
  */
 export function syncEffect(callback: EffectCallback): CleanupHandle {
-    let isDestroyed = false;
-    let destroy: (() => void) | undefined = undefined;
-    const context: EffectContext = {
-        destroy() {
-            if (isDestroyed) {
-                return;
+    let context: EffectContext;
+    const cleanup = rawEffect(function effectBody() {
+        context ??= {
+            destroy: () => {
+                this.dispose();
             }
-
-            isDestroyed = true;
-            destroy?.(); // undefined on effect's first run
-        }
-    };
-    destroy = rawEffect(() => {
+        };
         return callback(context);
     });
-
-    // Handle immediate self-destruction
-    if (isDestroyed) {
-        destroy();
-    }
-    return context;
+    return {
+        destroy: cleanup
+    };
 }
