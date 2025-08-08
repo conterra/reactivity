@@ -1,0 +1,20 @@
+{
+    "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+    "changelog": "@changesets/cli/changelog",
+    "baseBranch": "main",
+    "access": "public",
+    "commit": false,
+    "fixed": [["@conterra/*"]],
+    "linked": [],
+    "ignore": [],
+    "updateInternalDependencies": "patch",
+    "bumpVersionsWithWorkspaceProtocolOnly": true,
+    "privatePackages": {
+        "tag": false,
+        "version": false
+    },
+    "snapshot": {
+        "useCalculatedVersion": true,
+        "prereleaseTemplate": "{tag}.{datetime}"
+    }
+}

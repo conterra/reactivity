@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
 import { effect as reactivityEffect } from "@conterra/reactivity-core";
 import { Ref, ShallowRef, onScopeDispose, shallowRef, watchEffect } from "vue";
 
@@ -19,9 +21,6 @@ export function useReactiveSnapshot<T>(compute: () => T): Readonly<Ref<T>> {
      */
     const snapshot = shallowRef() as ShallowRef<T>;
     const dispose = watchEffect((onCleanup) => {
-        // *slightly* inefficient here to use effect, in case compute's dependencies change very often.
-        // in that case, snapshot.value would be updated more often than needed (need at most ~60 FPS).
-        // However, this is good enough for this example.
         const handle = reactivityEffect(() => {
             const value = compute();
             snapshot.value = value;

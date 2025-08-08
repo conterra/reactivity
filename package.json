@@ -5,36 +5,46 @@
     "type": "module",
     "scripts": {
         "clean": "pnpm -r run --parallel clean",
+        "dev": "pnpm -r run --parallel dev",
         "build": "pnpm -r run --aggregate-output build",
         "build-docs": "typedoc",
-        "test": "pnpm -r run --aggregate-output test run",
+        "test": "pnpm vitest",
         "check-types": "tsc",
         "watch-types": "pnpm check-types -w",
-        "lint": "eslint ./packages ./playground --ext .js,.ts,.jsx,.tsx,.mjs,.mts,.cjs,.cts,.vue",
-        "prettier-check": "pnpm prettier:common -c",
-        "prettier": "pnpm prettier:common -w",
-        "prettier:common": "prettier ./packages ./playground --ignore-path .eslintignore --cache"
+        "lint": "eslint .",
+        "prettier:common": "prettier --ignore-path .gitignore --ignore-path .prettierignore",
+        "prettier": "pnpm run prettier:common --write --cache .",
+        "ci:version": "pnpm changeset version && pnpm install",
+        "ci:publish": "pnpm run clean && pnpm run build && pnpm publish -r --access public && pnpm changeset tag",
+        "prepare": "husky"
     },
     "devDependencies": {
-        "@types/node": "^18.19.33",
-        "@typescript-eslint/eslint-plugin": "^7.9.0",
-        "@typescript-eslint/parser": "^7.9.0",
-        "concurrently": "^8.2.2",
-        "esbuild": "^0.21.3",
-        "eslint": "^8.57.0",
-        "eslint-config-prettier": "^9.1.0",
-        "happy-dom": "^14.11.0",
-        "prettier": "^3.2.5",
-        "rimraf": "^5.0.7",
+        "@changesets/cli": "^2.29.5",
+        "@eslint/js": "^9.32.0",
+        "@types/node": "^20.19.9",
+        "concurrently": "^9.2.0",
+        "esbuild": "^0.25.8",
+        "eslint": "^9.32.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-headers": "1.3.3",
+        "eslint-plugin-vue": "^10.4.0",
+        "happy-dom": "^18.0.1",
+        "husky": "^9.1.7",
+        "lint-staged": "^16.1.4",
+        "prettier": "^3.6.2",
+        "rimraf": "^6.0.1",
         "rollup-plugin-esbuild": "^6.1.1",
-        "tsx": "^4.10.4",
-        "typedoc": "^0.25.13",
-        "typescript": "~5.4.5",
-        "vite": "^5.2.11",
-        "vitest": "^1.6.0"
+        "tsx": "^4.20.3",
+        "typedoc": "^0.28.9",
+        "typescript": "^5.9.2",
+        "typescript-eslint": "^8.39.0",
+        "vite": "^7.1.1",
+        "vitest": "^3.2.4",
+        "vue-eslint-parser": "^10.2.0"
     },
     "engines": {
         "node": ">= 20",
-        "pnpm": "^9"
-    }
+        "pnpm": ">= 10"
+    },
+    "packageManager": "pnpm@10.14.0"
 }

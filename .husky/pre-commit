@@ -1,0 +1,18 @@
+if [ "$NO_VERIFY" ]; then
+    echo 'pre-commit hook skipped' 1>&2
+    exit 0
+fi
+
+# TODO: Ideally only build / check changed packages
+pnpm exec lint-staged
+
+echo '--- build packages ---'
+pnpm build
+
+echo '--- run typescript check ---'
+pnpm check-types
+
+echo '--- run tests ---'
+# CI=1 disallows `.only` in tests
+# --changed only runs the tests affected by changed files
+CI=1 pnpm exec vitest run --changed --passWithNoTests

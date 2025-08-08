@@ -1,19 +1,21 @@
-# @conterra/reactivity-core
+# @conterra/reactivity-core [![NPM Version](https://img.shields.io/npm/v/%40conterra%2Freactivity-core)](https://www.npmjs.com/package/@conterra/reactivity-core)
 
-> UI framework independent reactivity library with support for all kinds of values
+UI framework independent reactivity library with support for all kinds of values.
+
+Click here to visit the [rendered API Documentation](https://conterra.github.io/reactivity/latest/).
 
 ## Quick Example
 
 ```ts
-import { reactive, computed, watch } from "@conterra/reactivity-core";
+import { reactive, computed, watchValue } from "@conterra/reactivity-core";
 
 const firstName = reactive("John");
 const lastName = reactive("Doe");
 const fullName = computed(() => `${firstName.value} ${lastName.value}`);
 
-watch(
-    () => [fullName.value],
-    ([fullName]) => {
+watchValue(
+    () => fullName.value,
+    (fullName) => {
         console.log(fullName);
     },
     {
@@ -71,13 +73,13 @@ r.value = "bar";
 
 `effect(callback)` works like this:
 
--   First, it will execute the given `callback` immediately.
--   During the execution, it tracks all signals whose values were accessed by `callback`.
-    This also works indirectly, for example if you call one or more functions which internally use signals.
--   When _any_ of those signals are updated, the effect will re-execute `callback`.
--   These re-executions will happen indefinitely: either until the signals no longer change or until the effect has been destroyed.
-    Effects can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
--   For an alternative API that doesn't trigger on _every_ change, see [watch()](#effect-vs-watch).
+- First, it will execute the given `callback` immediately.
+- During the execution, it tracks all signals whose values were accessed by `callback`.
+  This also works indirectly, for example if you call one or more functions which internally use signals.
+- When _any_ of those signals are updated, the effect will re-execute `callback`.
+- These re-executions will happen indefinitely: either until the signals no longer change or until the effect has been destroyed.
+  Effects can be destroyed by using the object returned by `effect()` (see [Cleanup](#cleanup)).
+- For an alternative API that doesn't trigger on _every_ change, see [watch()](#effect-vs-watch).
 
 Signals can be composed by deriving values from them via `computed()`.
 `computed()` takes a callback function as its argument.
@@ -148,7 +150,7 @@ Instances of person are now reactive, since their state is actually stored in si
 ```ts
 import { effect } from "@conterra/reactivity-core";
 
-// Person from previous example
+// Person class from previous example
 const p = new Person();
 p.name = "E. Example";
 
@@ -210,23 +212,23 @@ effect(() => {
 If your effect callbacks become more complex, it may be difficult to control which signals are ultimately used.
 This can result in your effect running too often, because you're really only interested in _some_ changes and not all of them.
 
-In that case, you can use `watch()` to have more fine grain control:
+In that case, you can use `watchValue()` (or one of the other `watch` variants) to have more fine grained control:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const r1 = reactive(0);
 const r2 = reactive(1);
 const r3 = reactive(2);
 
-watch(
+watchValue(
     // (1)
     () => {
         const sum = r1.value + r2.value + r3.value;
-        return [sum];
+        return sum;
     },
     // (2)
-    ([sum]) => {
+    (sum) => {
         console.log(sum);
     },
     // (3)
@@ -234,18 +236,39 @@ watch(
 );
 ```
 
-`watch()` takes two functions and one (optional) options object:
+`watchValue()` takes two functions and one (optional) options object:
 
--   **(1)**: The _selector_ function.
-    This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded.
-    The function must return an array of values.
--   **(2)**: The _callback_ function.
-    This function is called whenever the selector function returned different values, and it receives those values as its first argument.
-    The callback itself is _not_ reactive.
--   **(3)**: By default, the callback function will only be invoked after the watched values changed at least once.
-    By specifying `immediate: true`, the callback will also run for the initial values.
+- **(1)**: The _selector_ function.
+  This function's body is tracked (like in `effect()`) and all its reactive dependencies are recorded.
+  The function must return the value you want to watch and it should not have any side effects.
+- **(2)**: The _callback_ function.
+  This function is called whenever the selector function returned a different value, and it receives that value as its first argument.
+  The callback itself is _not_ reactive and it may trigger arbitrary side effects.
+- **(3)**: By default, the callback function will only be invoked after the watched value changed at least once.
+  By specifying `immediate: true`, the callback will also run for the initial value.
 
 In this example, the callback function will only re-run when the computed sum truly changed.
+
+### Accessing previous values
+
+The callback function of `watchValue()` can access the previous value via its second argument:
+
+```ts
+import { reactive, watchValue } from "@conterra/reactivity-core";
+
+const counter = reactive(0);
+watchValue(
+    () => counter.value,
+    (count, oldCount) => {
+        console.log(count, oldCount);
+    }
+);
+
+counter.value += 1;
+// Prints 1 0
+```
+
+Note that the second argument will be undefined for the first execution if `immediate: true` has been set (because there is no previous value).
 
 ### Returning cleanup functions
 
@@ -257,7 +280,7 @@ You can use this function to undo or cancel an action started by your callback.
 The following example fetches the user details for a given user id whenever that id changes:
 
 ```ts
-import { reactive, effect, watch } from "@conterra/reactivity-core";
+import { reactive, effect, watchValue } from "@conterra/reactivity-core";
 
 const userId = reactive("test-1");
 
@@ -272,10 +295,10 @@ effect(() => {
     };
 });
 
-// Same thing, using watch():
-watch(
-    () => [userId.value],
-    ([id]) => {
+// Same thing, using watchValue():
+watchValue(
+    () => userId.value,
+    (id) => {
         const controller = new AbortController();
         fetchUserDetails(id, controller.signal);
         return () => {
@@ -294,21 +317,152 @@ async function fetchUserDetails(id: string, signal: AbortSignal): Promise<void> 
 }
 ```
 
+### Cleanup
+
+Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
+
+```ts
+const h1 = effect(/* ... */);
+const h2 = watch(/* ... */);
+
+// When you are no longer interested in changes:
+h1.destroy();
+h2.destroy();
+```
+
+When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
+This leads to unintended side effects, unnecessary memory consumption and waste of computational power.
+
+### Cheat sheet: variants of effect and watch
+
+The following table provides a quick overview of the different variants of `effect` and `watch`:
+
+| Function       | Kind of values                                     | Callback condition                                |
+| -------------- | -------------------------------------------------- | ------------------------------------------------- |
+| `effect()`     | N/A                                                | After _any_ used signal changes.                  |
+| `watchValue()` | Single value.                                      | After the watched value changed.                  |
+| `watch()`      | Multiple values (via array with shallow equality). | After one ore more of the watched values changed. |
+
+Note that `watchValue()` and `watch()` are almost the same.
+`watch()` supports watching multiple values at once directly (but forces you to return an array) while `watchValue()` only supports a single value.
+In truth, only their default `equal` functions are different: `watchValue()` uses `Object.is()` while `watch()` uses shallow array equality.
+`watch()` also supports specifying the `equal` function manually.
+
+`effect()`, `watch()` and `watchValue()` all support the `dispatch` option.
+The following values can be specified:
+
+- `"async"` (the default):
+  Callbacks are invoked with a slight delay, in a deferred event loop task (similar to `setTimeout(cb, 0)`).
+  This means that synchronous code and handlers for already resolved promises will run _before_ the callback.
+  Because of the slight delay, multiple changes in quick succession may result in only a single callback execution, which will observe the latest value.
+- `"sync"`: Callbacks are invoked synchronously.
+  Callbacks fire either _immediately_ (in the `.value` assignment), or when leaving the `batch()` (see [Batching multiple updates](#batching-multiple-updates)).
+  This dispatch type results in more callback executions, it should only used when the specific timing is needed.
+
+See also [Sync vs async effect / watch](#sync-vs-async-effect--watch)
+
+### Linked signals
+
+> **Experimental**: This is an API that makes heavy use of the underlying signals library.
+> While we're confident about the API's stability, the _implementation_ may still contain some undiscovered problems.
+
+Where reactive signals may change arbitrarily, and computed signals are completely derived from other signals, linked signals are a hybrid of both.
+
+A linked signal is a signal whose _source_ value is derived from another signals.
+While _source_ remains unchanged, the linked signal's _value_ may be updated by the user.
+If _source_ changes, the linked signal's value will be reset.
+
+#### Example 1
+
+Consider an application component that allows the user to select a value from a set of options.
+The set of options may change behind the scenes.
+
+```ts
+import { reactive, linked } from "@conterra/reactivity-core";
+
+const options = reactive(["a", "b", "c"]);
+const currentOption = linked(() => options.value[0]); // default to first item
+
+// (1)
+console.log(currentOption.value); // "a"
+
+// (2)
+currentOption.value = "b";
+console.log(currentOption.value); // "b"
+
+// (3)
+options.value = ["x", "y", "z"];
+console.log(currentOption.value); // "x"
+```
+
+- **(1)** `currentOption` is initialized to the the first item of `options`.
+- **(2)** While `options.value` remains unchanged, `currentOption.value` can be changed freely.
+- **(3)** Changing `options.value` has reset `currentOption.value` to the first item of the new options.
+
+#### Example 2
+
+The previous example always resets the user's choice, even if the old choice would still be valid with the new options.
+Linked signals support a `reset` function that can be used to determine the new value after the _source_ has changed.
+
+```ts
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
+import { reactive, linked } from "@conterra/reactivity-core";
+
+const options = reactive(["a", "b", "c"]);
+const currentOption = linked(
+    () => options.value,
+    (options, previousValue?: string) => {
+        if (previousValue != null && options.includes(previousValue)) {
+            // Previous value is still valid
+            return previousValue;
+        }
+        // Reset to first value
+        return options[0];
+    }
+);
+console.log(currentOption.value); // "a"
+
+currentOption.value = "b";
+console.log(currentOption.value); // "b"
+
+options.value = ["x", "y", "b"];
+console.log(currentOption.value); // still "b"
+
+options.value = ["x", "y", "z"];
+console.log(currentOption.value); // "x"
+```
+
+In the previous example, the second argument to the `linked` signal computes the new value based on the new options and the previous value.
+This can preserve the user's selection if it is still valid.
+
+#### Notes
+
+- Like other signals, `linked` supports custom equality functions.
+  Note that this function works on the signal's _value_ and not on the _source_ (if these are different, see Example 2).
+  If you need custom equality for the _source_, wrap that source in a `computed` signal.
+- The function computing _source_ may be called often.
+  If computing _source_ is expensive, consider wrapping the computation in a `computed` signal to benefit from caching.
+
+#### Prior Art
+
+The semantics of linked signals are inspired by [Angular's approach](https://angular.dev/guide/signals/linked-signal).
+
 ### Complex values
 
 Up to this point, examples have used primitive values such as strings or integers.
 Signals support _any_ kind of `value`, for example:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const currentUser = reactive({
     name: "User 1"
 });
 
-watch(
-    () => [currentUser.value],
-    ([user]) => {
+watchValue(
+    () => currentUser.value,
+    (user) => {
         console.log(user.name);
     },
     { immediate: true }
@@ -318,7 +472,7 @@ watch(
 currentUser.value = { name: "User 2" };
 ```
 
-You should keep in mind that, by default, change detection is based on JavaScript's default comparison (i.e. `===`).
+You should keep in mind that, by default, change detection is based on JavaScript's default comparison (i.e. `Object.is`).
 This means that objects or arrays (or any other reference type) may trigger changes even if their contents are equivalent (equal _content_ but different _identity_).
 For example, the following change would trigger the `watch()` of the previous example, even though the `name` is the same:
 
@@ -331,7 +485,7 @@ For this reason, `reactive` and `computed` allow you to supply a custom equality
 This allows you to ignore certain updates by specifying that a value is _equal_ to another value:
 
 ```ts
-import { reactive, watch } from "@conterra/reactivity-core";
+import { reactive, watchValue } from "@conterra/reactivity-core";
 
 const currentUser = reactive(
     {
@@ -342,12 +496,40 @@ const currentUser = reactive(
     }
 );
 
-watch(
-    () => [currentUser.value],
-    ([user]) => {
+watchValue(
+    () => currentUser.value,
+    (user) => {
         console.log(user.name);
     },
     { immediate: true }
+);
+
+// Assignment is ignored because the name is the same.
+currentUser.value = { name: "User 1" };
+```
+
+When you only need custom equality rules for a single `watch`, you can also use its `equal` option directly:
+
+```ts
+import { reactive, watchValue } from "@conterra/reactivity-core";
+
+// No custom equality here.
+const currentUser = reactive({
+    name: "User 1"
+});
+
+watchValue(
+    () => currentUser.value,
+    (user) => {
+        console.log(user.name);
+    },
+    {
+        immediate: true,
+        // Custom equality directly for the watch callback.
+        equal: (prev, next) => {
+            return prev.name === next.name;
+        }
+    }
 );
 
 // Assignment is ignored because the name is the same.
@@ -406,22 +588,6 @@ function addAuthor(name: string) {
 
 addAuthor("King");
 ```
-
-### Cleanup
-
-Both `effect()` and `watch()` return a `CleanupHandle` to stop watching for changes:
-
-```ts
-const h1 = effect(/* ... */);
-const h2 = watch(/* ... */);
-
-// When you are no longer interested in changes:
-h1.destroy();
-h2.destroy();
-```
-
-When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
-This leads to unintended side effects, unnecessary memory consumption and waste of computational power.
 
 ### Reactive collections
 
@@ -535,10 +701,10 @@ console.log(fullName.value); // Jane Doe
 
 The `define` function can be used to
 
--   make properties read-only
--   declare non-reactive properties
--   create computed properties
--   add methods to the reactive object
+- make properties read-only
+- declare non-reactive properties
+- create computed properties
+- add methods to the reactive object
 
 The following example shows declaring an extended `Person`:
 
@@ -639,7 +805,6 @@ Such an application will have to implement the means to:
 
 1. Fetch the _current_ state and present it to the user.
 2. Subscribe to state changes:
-
     - On change, goto 1.
 
 While step 1 is rather trivial, step 2 turns out to contain lots of complexity in practice, especially if many different sources of state (e.g. objects) are involved.
@@ -647,22 +812,22 @@ While step 1 is rather trivial, step 2 turns out to contain lots of complexity i
 Many frameworks have found different solutions for keeping the UI synchronized with the application's state (e.g. React, Vue, Flux architecture, store libraries such as Zustand/VueX/Pinia, etc.).
 These solutions often come with some trade-offs:
 
--   They are often tied to an UI framework (e.g. React).
--   They may impose unusual programming paradigms (e.g. a centralized store instead of a graph of objects) that may be different to integrate with technologies like TypeScript.
--   They may only support reactivity for _some_ objects.
-    For example, Vue's reactivity system is based on wrapping objects with proxies; this is incompatible with some legitimate objects - a fact that can be both surprising and difficult to debug.
--   They may only support reactivity _locally_.
-    For example, a store library may support reactivity _within_ a single store, but referring to values from multiple stores may be difficult.
+- They are often tied to an UI framework (e.g. React).
+- They may impose unusual programming paradigms (e.g. a centralized store instead of a graph of objects) that may be different to integrate with technologies like TypeScript.
+- They may only support reactivity for _some_ objects.
+  For example, Vue's reactivity system is based on wrapping objects with proxies; this is incompatible with some legitimate objects - a fact that can be both surprising and difficult to debug.
+- They may only support reactivity _locally_.
+  For example, a store library may support reactivity _within_ a single store, but referring to values from multiple stores may be difficult.
 
 This library implements a different set of trade-offs, based on [signals](https://github.com/preactjs/signals):
 
--   The implementation is not tied to any UI technology.
-    It can be used with any UI Framework, or none, or multiple UI Frameworks at the same time.
--   All kinds of values are supported.
-    Updating the current value in a reactive "box" will notify all interested parties (such as effects, watchers or computed objects).
-    However, values that have not been prepared for reactivity will not be deeply reactive: when authoring a class, one has to use the reactive primitives or collections provided by this package.
--   State can be kept in objects and classes (this pairs nicely with TypeScript).
-    The state rendered by the user interface can be gathered from an arbitrary set of objects.
+- The implementation is not tied to any UI technology.
+  It can be used with any UI Framework, or none, or multiple UI Frameworks at the same time.
+- All kinds of values are supported.
+  Updating the current value in a reactive "box" will notify all interested parties (such as effects, watchers or computed objects).
+  However, values that have not been prepared for reactivity will not be deeply reactive: when authoring a class, one has to use the reactive primitives or collections provided by this package.
+- State can be kept in objects and classes (this pairs nicely with TypeScript).
+  The state rendered by the user interface can be gathered from an arbitrary set of objects.
 
 ## API
 
@@ -758,33 +923,42 @@ The example above will not throw an error anymore because the _read_ to `v1` has
 Every update to a signal will usually trigger all watchers.
 This is not really a problem when using the default `watch()` or `effect()`, since multiple changes that follow _immediately_ after each other are grouped into a single notification, with a minimal delay.
 
-However, when using `syncEffect` or `syncWatch`, you will be triggered many times:
+However, when using `dispatch: "sync"`, you may be triggered
+
+- very often or
+- in the middle of a logical operation (inconsistent state)
 
 ```ts
-import { reactive, syncEffect } from "@conterra/reactivity-core";
+import { reactive, effect } from "@conterra/reactivity-core";
 
 const count = reactive(0);
-syncEffect(() => {
-    console.log(count.value);
-});
+effect(
+    () => {
+        console.log(count.value);
+    },
+    { dispatch: "sync" }
+);
 
 count.value += 1;
 count.value += 1;
 count.value += 1;
 count.value += 1;
-// Effect has executed 5 times
+// Effect has executed 5 times, all in-between values were observed.
 ```
 
 You can avoid this by grouping many updates into a single _batch_.
 Effects or watchers will not get notified until the batch is complete:
 
 ```ts
-import { reactive, syncEffect, batch } from "@conterra/reactivity-core";
+import { reactive, effect, batch } from "@conterra/reactivity-core";
 
 const count = reactive(0);
-syncEffect(() => {
-    console.log(count.value);
-});
+effect(
+    () => {
+        console.log(count.value);
+    },
+    { dispatch: "sync" }
+);
 
 batch(() => {
     count.value += 1;
@@ -833,21 +1007,25 @@ effect: 2           # now effect and watch will execute
 watch: 2
 ```
 
-If you need more control over your callbacks, you can use `syncEffect` and `syncWatch` instead:
+If you need more control over your callbacks, you can use `dispatch: "sync"` instead (the default value is `"async"`):
 
 ```ts
-import { syncWatch, syncEffect, reactive } from "@conterra/reactivity-core";
+import { watch, effect, reactive } from "@conterra/reactivity-core";
 
 const s = reactive(1);
-syncEffect(() => {
-    console.log("effect:", s.value);
-});
+effect(
+    () => {
+        console.log("effect:", s.value);
+    },
+    { dispatch: "sync" }
+);
 
-syncWatch(
+watch(
     () => [s.value],
     ([value]) => {
         console.log("watch:", value);
-    }
+    },
+    { dispatch: "sync" }
 );
 
 s.value = 2; // this line also executes the effect and the watch callback!
@@ -886,9 +1064,9 @@ s1.value = 1; // _does_ cause the effect to trigger again
 
 `untracked()` works everywhere dependencies are tracked:
 
--   inside `computed()`
--   in effect callbacks
--   in the `selector` argument of `watch()`
+- inside `computed()`
+- in effect callbacks
+- in the `selector` argument of `watch()`
 
 ### Effects triggering often when working with collections
 
@@ -1043,6 +1221,68 @@ No matter how long it takes, the callback executed by the effect will already ha
 
 If you must use an asynchronous function directly in a reactive context, keep in mind that only the code until the first `await` statement will actually become reactive.
 However, because this is confusing and error prone, it is best to avoid it altogether.
+
+### Self-destructing effects or watches
+
+The different variants of `watch` and `effect` support a `ctx` parameter, which can be used to cancel the object from within its own callback.
+This can be useful to wait for a certain condition, while ensuring that the callback does not trigger again after the condition is met.
+
+For example:
+
+```ts
+import { reactive, ReadonlyReactive, watchValue } from "@conterra/reactivity-core";
+
+// Waits for the signal to be at least 2.
+function waitForTwo(signal: ReadonlyReactive<number>): Promise<void> {
+    return new Promise((resolve) => {
+        const handle = watchValue(
+            () => signal.value,
+            (value, _oldValue, ctx) => {
+                console.log("intermediate value", value);
+
+                // resolve the promise when the condition is met
+                if (value >= 2) {
+                    // may result in error: handle.destroy();
+                    // this always works:
+                    ctx.destroy();
+                    resolve();
+                }
+            },
+            {
+                // run immediately to check the initial value as well
+                immediate: true
+            }
+        );
+    });
+}
+
+const signal = reactive(0);
+waitForTwo(signal).then(() => {
+    console.log("done");
+});
+
+setTimeout(() => {
+    signal.value += 1;
+    setTimeout(() => {
+        signal.value += 1;
+        setTimeout(() => {
+            // 3 is not printed by the watch callback since it has been destroyed
+            signal.value += 1;
+        }, 250);
+    }, 250);
+}, 250);
+
+// Prints:
+// intermediate value 0
+// intermediate value 1
+// intermediate value 2
+// done
+```
+
+In the example above, the watch callback resolves the promise (and destroys itself) when the signal reaches 2.
+The watch callback not only checks _new_ values, but also the initial value due to `immediate: true`.
+A subtle bug could be introduced by calling `handle.destroy()` here, since it is not available during the initial execution of the watch callback (the callback runs _inside_ `watchValue` which has not returned yet).
+`ctx.destroy()` on the other hand can always be used.
 
 ## License
 
