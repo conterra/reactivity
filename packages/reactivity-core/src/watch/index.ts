@@ -212,12 +212,6 @@ export function syncWatch<const Values extends unknown[]>(
  *
  * > NOTE: You must *not* modify the parameters that get passed into `callback`.
  *
- * > NOTE: This function will slightly defer re-executions of the given `callback`.
- * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.
- * > This is done to avoid redundant executions as a result of many fine-grained changes.
- * >
- * > If you need more control, take a look at {@link syncWatchValue}.
- *
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changes.
  * @param options additional options.
@@ -292,12 +286,6 @@ export function watchValue<T>(
  * ```
  *
  * > NOTE: You must *not* modify the parameters that get passed into `callback`.
- *
- * > NOTE: This function will slightly defer re-executions of the given `callback`.
- * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.
- * > This is done to avoid redundant executions as a result of many fine-grained changes.
- * >
- * > If you need more control, take a look at {@link syncWatch}.
  *
  * @param selector a function that returns the values to watch.
  * @param callback a function that will be executed whenever the watched values changed.
