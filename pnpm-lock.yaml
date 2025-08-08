@@ -4,6 +4,90 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@changesets/cli':
+      specifier: ^2.29.5
+      version: 2.29.5
+    '@eslint/js':
+      specifier: ^9.32.0
+      version: 9.32.0
+    '@mdi/font':
+      specifier: ^7.4.47
+      version: 7.4.47
+    '@preact/signals-core':
+      specifier: 1.11.0
+      version: 1.11.0
+    '@types/node':
+      specifier: ^20.19.9
+      version: 20.19.9
+    '@vitejs/plugin-vue':
+      specifier: ^6.0.1
+      version: 6.0.1
+    concurrently:
+      specifier: ^9.2.0
+      version: 9.2.0
+    esbuild:
+      specifier: ^0.25.8
+      version: 0.25.8
+    eslint:
+      specifier: ^9.32.0
+      version: 9.32.0
+    eslint-config-prettier:
+      specifier: ^10.1.8
+      version: 10.1.8
+    eslint-plugin-headers:
+      specifier: 1.3.3
+      version: 1.3.3
+    eslint-plugin-vue:
+      specifier: ^10.4.0
+      version: 10.4.0
+    happy-dom:
+      specifier: ^18.0.1
+      version: 18.0.1
+    husky:
+      specifier: ^9.1.7
+      version: 9.1.7
+    lint-staged:
+      specifier: ^16.1.4
+      version: 16.1.4
+    prettier:
+      specifier: ^3.6.2
+      version: 3.6.2
+    rimraf:
+      specifier: ^6.0.1
+      version: 6.0.1
+    rollup-plugin-esbuild:
+      specifier: ^6.2.1
+      version: 6.2.1
+    tsx:
+      specifier: ^4.20.3
+      version: 4.20.3
+    typedoc:
+      specifier: ^0.28.9
+      version: 0.28.9
+    typescript:
+      specifier: ^5.9.2
+      version: 5.9.2
+    typescript-eslint:
+      specifier: ^8.39.0
+      version: 8.39.0
+    vite:
+      specifier: ^7.1.1
+      version: 7.1.1
+    vitest:
+      specifier: ^3.2.4
+      version: 3.2.4
+    vue:
+      specifier: ^3.5.18
+      version: 3.5.18
+    vue-eslint-parser:
+      specifier: ^10.2.0
+      version: 10.2.0
+    vuetify:
+      specifier: ^3.9.4
+      version: 3.9.4
+
 overrides:
   rollup@>=4.0.0 <4.22.4: '>=4.22.4'
   cross-spawn@<7.0.5: '>=7.0.5'
@@ -20,76 +104,76 @@ importers:
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.29.5
+        specifier: 'catalog:'
         version: 2.29.5
       '@eslint/js':
-        specifier: ^9.32.0
+        specifier: 'catalog:'
         version: 9.32.0
       '@types/node':
-        specifier: ^20.19.9
+        specifier: 'catalog:'
         version: 20.19.9
       concurrently:
-        specifier: ^9.2.0
+        specifier: 'catalog:'
         version: 9.2.0
       esbuild:
-        specifier: ^0.25.8
+        specifier: 'catalog:'
         version: 0.25.8
       eslint:
-        specifier: ^9.32.0
+        specifier: 'catalog:'
         version: 9.32.0
       eslint-config-prettier:
-        specifier: ^10.1.8
+        specifier: 'catalog:'
         version: 10.1.8(eslint@9.32.0)
       eslint-plugin-headers:
-        specifier: 1.3.3
+        specifier: 'catalog:'
         version: 1.3.3(eslint@9.32.0)
       eslint-plugin-vue:
-        specifier: ^10.4.0
+        specifier: 'catalog:'
         version: 10.4.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0)(typescript@5.9.2))(eslint@9.32.0)(vue-eslint-parser@10.2.0(eslint@9.32.0))
       happy-dom:
-        specifier: ^18.0.1
+        specifier: 'catalog:'
         version: 18.0.1
       husky:
-        specifier: ^9.1.7
+        specifier: 'catalog:'
         version: 9.1.7
       lint-staged:
-        specifier: ^16.1.4
+        specifier: 'catalog:'
         version: 16.1.4
       prettier:
-        specifier: ^3.6.2
+        specifier: 'catalog:'
         version: 3.6.2
       rimraf:
-        specifier: ^6.0.1
+        specifier: 'catalog:'
         version: 6.0.1
       rollup-plugin-esbuild:
-        specifier: ^6.1.1
-        version: 6.1.1(esbuild@0.25.8)(rollup@4.45.1)
+        specifier: 'catalog:'
+        version: 6.2.1(esbuild@0.25.8)(rollup@4.45.1)
       tsx:
-        specifier: ^4.20.3
+        specifier: 'catalog:'
         version: 4.20.3
       typedoc:
-        specifier: ^0.28.9
+        specifier: 'catalog:'
         version: 0.28.9(typescript@5.9.2)
       typescript:
-        specifier: ^5.9.2
+        specifier: 'catalog:'
         version: 5.9.2
       typescript-eslint:
-        specifier: ^8.39.0
+        specifier: 'catalog:'
         version: 8.39.0(eslint@9.32.0)(typescript@5.9.2)
       vite:
-        specifier: ^7.1.1
+        specifier: 'catalog:'
         version: 7.1.1(@types/node@20.19.9)(tsx@4.20.3)(yaml@2.8.0)
       vitest:
-        specifier: ^3.2.4
+        specifier: 'catalog:'
         version: 3.2.4(@types/node@20.19.9)(happy-dom@18.0.1)(tsx@4.20.3)(yaml@2.8.0)
       vue-eslint-parser:
-        specifier: ^10.2.0
+        specifier: 'catalog:'
         version: 10.2.0(eslint@9.32.0)
 
   packages/reactivity-core:
     dependencies:
       '@preact/signals-core':
-        specifier: 1.11.0
+        specifier: 'catalog:'
         version: 1.11.0
     devDependencies:
       project-root:
@@ -125,23 +209,23 @@ importers:
         specifier: workspace:^
         version: link:../packages/reactivity-events
       '@mdi/font':
-        specifier: ^7.4.47
+        specifier: 'catalog:'
         version: 7.4.47
       vue:
-        specifier: ^3.5.18
+        specifier: 'catalog:'
         version: 3.5.18(typescript@5.9.2)
       vuetify:
-        specifier: ^3.9.4
+        specifier: 'catalog:'
         version: 3.9.4(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2))
     devDependencies:
       '@vitejs/plugin-vue':
-        specifier: ^6.0.1
+        specifier: 'catalog:'
         version: 6.0.1(vite@7.1.1(@types/node@22.13.9)(tsx@4.20.3)(yaml@2.8.0))(vue@3.5.18(typescript@5.9.2))
       eslint-plugin-vue:
-        specifier: ^10.4.0
+        specifier: 'catalog:'
         version: 10.4.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0)(typescript@5.9.2))(eslint@9.32.0)(vue-eslint-parser@10.2.0(eslint@9.32.0))
       vite:
-        specifier: ^7.1.1
+        specifier: 'catalog:'
         version: 7.1.1(@types/node@22.13.9)(tsx@4.20.3)(yaml@2.8.0)
 
 packages:
@@ -476,15 +560,6 @@ packages:
 
   '@rolldown/pluginutils@1.0.0-beta.29':
     resolution: {integrity: sha512-NIJgOsMjbxAXvoGq/X0gD7VPMQ8j9g0BiDaNjVNVjvl+iKXxL3Jre0v31RmBYeLEmkbj2s02v8vFTbUXi5XS2Q==}
-
-  '@rollup/pluginutils@5.1.0':
-    resolution: {integrity: sha512-XTIWOPPcpvyKI6L1NHo0lFlCyznUEyPmPY1mc3KpPVDYulHSTvyeLNVW00QTLIAFNhR3kYnJTQHeGqU4M3n09g==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      rollup: '>=4.22.4'
-    peerDependenciesMeta:
-      rollup:
-        optional: true
 
   '@rollup/rollup-android-arm-eabi@4.45.1':
     resolution: {integrity: sha512-NEySIFvMY0ZQO+utJkgoMiCAjMrGvnbDLHvcmlA33UXJpYBCvlBEbMMtV837uCkS+plG2umfhn0T5mMAxGrlRA==}
@@ -1129,6 +1204,9 @@ packages:
     resolution: {integrity: sha512-vpeMIQKxczTD/0s2CdEWHcb0eeJe6TFjxb+J5xgX7hScxqrGuyjmv4c1D4A/gelKfyox0gJJwIHF+fLjeaM8kQ==}
     engines: {node: '>=18'}
 
+  get-tsconfig@4.10.1:
+    resolution: {integrity: sha512-auHyJ4AgMz7vgS8Hp3N6HXSmlMdUyhSUrfBF16w153rxtLIEOE+HGqaBppczZvnHLqQJfiHotCYpNhl0lUROFQ==}
+
   get-tsconfig@4.8.1:
     resolution: {integrity: sha512-k9PN+cFBmaLWtVz29SkUoqU5O0slLuHJXt/2P+tMVFT+phsSGXGkp9t3rQIqdz0e+06EHNGs3oM6ZX1s2zHxRg==}
 
@@ -1537,8 +1615,8 @@ packages:
     engines: {node: 20 || >=22}
     hasBin: true
 
-  rollup-plugin-esbuild@6.1.1:
-    resolution: {integrity: sha512-CehMY9FAqJD5OUaE/Mi1r5z0kNeYxItmRO2zG4Qnv2qWKF09J2lTy5GUzjJR354ZPrLkCj4fiBN41lo8PzBUhw==}
+  rollup-plugin-esbuild@6.2.1:
+    resolution: {integrity: sha512-jTNOMGoMRhs0JuueJrJqbW8tOwxumaWYq+V5i+PD+8ecSCVkuX27tGW7BXqDgoULQ55rO7IdNxPcnsWtshz3AA==}
     engines: {node: '>=14.18.0'}
     peerDependencies:
       esbuild: '>=0.25.0'
@@ -1740,6 +1818,10 @@ packages:
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
     engines: {node: '>= 4.0.0'}
+
+  unplugin-utils@0.2.5:
+    resolution: {integrity: sha512-gwXJnPRewT4rT7sBi/IvxKTjsms7jX7QIDLOClApuZwR49SXbrB1z2NLUZ+vDHyqCj/n58OzRRqaW+B8OZi8vg==}
+    engines: {node: '>=18.12.0'}
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -2256,14 +2338,6 @@ snapshots:
   '@preact/signals-core@1.11.0': {}
 
   '@rolldown/pluginutils@1.0.0-beta.29': {}
-
-  '@rollup/pluginutils@5.1.0(rollup@4.45.1)':
-    dependencies:
-      '@types/estree': 1.0.8
-      estree-walker: 2.0.2
-      picomatch: 2.3.1
-    optionalDependencies:
-      rollup: 4.45.1
 
   '@rollup/rollup-android-arm-eabi@4.45.1':
     optional: true
@@ -2946,6 +3020,10 @@ snapshots:
 
   get-east-asian-width@1.3.0: {}
 
+  get-tsconfig@4.10.1:
+    dependencies:
+      resolve-pkg-maps: 1.0.0
+
   get-tsconfig@4.8.1:
     dependencies:
       resolve-pkg-maps: 1.0.0
@@ -3309,14 +3387,14 @@ snapshots:
       glob: 11.0.0
       package-json-from-dist: 1.0.0
 
-  rollup-plugin-esbuild@6.1.1(esbuild@0.25.8)(rollup@4.45.1):
+  rollup-plugin-esbuild@6.2.1(esbuild@0.25.8)(rollup@4.45.1):
     dependencies:
-      '@rollup/pluginutils': 5.1.0(rollup@4.45.1)
       debug: 4.4.1
       es-module-lexer: 1.7.0
       esbuild: 0.25.8
-      get-tsconfig: 4.8.1
+      get-tsconfig: 4.10.1
       rollup: 4.45.1
+      unplugin-utils: 0.2.5
     transitivePeerDependencies:
       - supports-color
 
@@ -3511,6 +3589,11 @@ snapshots:
   undici-types@6.21.0: {}
 
   universalify@0.1.2: {}
+
+  unplugin-utils@0.2.5:
+    dependencies:
+      pathe: 2.0.3
+      picomatch: 4.0.3
 
   uri-js@4.4.1:
     dependencies:
