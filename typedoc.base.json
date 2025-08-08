@@ -2,7 +2,7 @@
     "$schema": "https://typedoc.org/schema.json",
     "includeVersion": true,
     "exclude": ["**/test-data/**", "**.test.*", "**/node_modules/**"],
-    "excludeExternals": true,
+    "excludeExternals": false,
     "excludePrivate": true,
     "excludeInternal": true,
     "skipErrorChecking": true,
