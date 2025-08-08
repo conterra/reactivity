@@ -33,7 +33,6 @@
         "lint-staged": "catalog:",
         "prettier": "catalog:",
         "rimraf": "catalog:",
-        "rollup-plugin-esbuild": "catalog:",
         "tsx": "catalog:",
         "typedoc": "catalog:",
         "typescript": "catalog:",
