@@ -8,17 +8,9 @@ import headers from "eslint-plugin-headers";
 
 export default tseslint.config(
     eslint.configs.recommended,
-    ...tseslint.configs.recommendedTypeChecked,
+    ...tseslint.configs.recommended,
     ...pluginVue.configs["flat/recommended"],
     eslintConfigPrettier,
-    {
-        languageOptions: {
-            parserOptions: {
-                projectService: true,
-                tsconfigRootDir: import.meta.dirname
-            }
-        }
-    },
     {
         plugins: {
             headers
@@ -46,7 +38,6 @@ export default tseslint.config(
                     "ignoreRestSiblings": true
                 }
             ],
-            "@typescript-eslint/no-deprecated": "warn",
 
             // Needed for side effects with signals
             "@typescript-eslint/no-unused-expressions": "off",
@@ -95,9 +86,5 @@ export default tseslint.config(
     },
     {
         ignores: ["**/node_modules", "**/dist"]
-    },
-    {
-        files: ["**/*.{js,cjs,mjs,vue}"],
-        extends: [tseslint.configs.disableTypeChecked]
     }
 );

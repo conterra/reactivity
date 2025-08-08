@@ -76,7 +76,6 @@ export function effect(callback: EffectCallback, options?: EffectOptions): Clean
             };
         }
         default:
-            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             throw new Error(`Unexpected dispatch type: '${dispatch}'`);
     }
 }

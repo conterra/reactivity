@@ -483,11 +483,8 @@ function prepareInstanceProperty(options: PropertyConfig): PropertyDescriptor {
  * of the reactive struct.
  */
 function getPrivateStorage(instance: unknown): PrivateStorage {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (!instance || !(instance as any)[PRIVATE_STORAGE]) {
         throw new Error("internal error: object is not a reactive struct");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return (instance as any)[PRIVATE_STORAGE];
 }

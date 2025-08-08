@@ -264,7 +264,6 @@ describe("external", () => {
         const signal = controller.signal;
 
         const aborted = external(() => signal.aborted);
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         signal.addEventListener("abort", aborted.trigger);
         expect(aborted.value).toBe(false);
 
@@ -281,7 +280,6 @@ describe("external", () => {
         spy.mockReturnValue(2);
 
         // ensure that `trigger` does not require `this`
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const trigger = ext.trigger;
         trigger();
 
@@ -382,14 +380,12 @@ describe("synchronized", () => {
         expect(getter).toHaveBeenCalledTimes(0);
         expect(subscribe).toHaveBeenCalledTimes(0);
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const { destroy } = SYNC_EFFECT(() => {
             sync.value;
         });
         expect(getter).toHaveBeenCalledTimes(1);
         expect(subscribe).toHaveBeenCalledTimes(1);
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const { destroy: destroy2 } = SYNC_EFFECT(() => {
             sync.value;
         });
@@ -455,7 +451,6 @@ describe("synchronized", () => {
         const result = computed(() => `${dep1.value},${dep1.value},${dep2.value},${dep2.value}`);
         expect(result.value).toMatchInlineSnapshot(`"0,2,3,5"`);
 
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const { destroy } = SYNC_EFFECT(() => {
             expect(result.value).toMatchInlineSnapshot(`"6,6,6,6"`);
         });
