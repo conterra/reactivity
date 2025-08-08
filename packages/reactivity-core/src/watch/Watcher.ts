@@ -5,18 +5,16 @@ import { untracked } from "../signals";
 import {
     CleanupFunc,
     CleanupHandle,
-    EffectCallback,
+    DispatchType,
     ReactiveGetter,
     WatchContext,
     WatchImmediateCallback,
     WatchOptions
 } from "../types";
 import { defaultEquals } from "../utils/equality";
-
-export type EffectSignature = (callback: EffectCallback) => CleanupHandle;
+import { effect } from "../effect";
 
 export function createWatcher<T>(
-    effectImpl: EffectSignature,
     selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
@@ -24,7 +22,8 @@ export function createWatcher<T>(
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
     const equal = options?.equal ?? defaultEquals;
-    return new Watcher(effectImpl, callback, computedArgs, equal, immediate);
+    const dispatch = options?.dispatch ?? "async";
+    return new Watcher(callback, computedArgs, equal, immediate, dispatch);
 }
 
 /**
@@ -54,21 +53,27 @@ class Watcher<T> implements WatchContext, CleanupHandle {
     #effectHandle: CleanupHandle | undefined;
 
     constructor(
-        effectImpl: EffectSignature,
         callback: WatchImmediateCallback<T>,
         computedArgs: RawReadonlySignal<T>,
         equal: (a: T, b: T) => boolean,
-        immediate: boolean
+        immediate: boolean,
+        dispatch: DispatchType
     ) {
         this.#callback = callback;
         this.#immediate = immediate;
         this.#equal = equal;
-        this.#effectHandle = effectImpl(() => {
-            const nextValue = computedArgs.value; // Tracked
-            untracked(() => {
-                this.#execute(nextValue);
-            });
-        });
+        this.#effectHandle = effect(
+            () => {
+                const nextValue = computedArgs.value; // Tracked
+                untracked(() => {
+                    this.#execute(nextValue);
+                });
+            },
+            {
+                dispatch
+            }
+        );
+
         if (this.#isDestroyed) {
             // Handle self-destruction in initial execution
             this.#effectHandle.destroy();

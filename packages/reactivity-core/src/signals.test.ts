@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it, Mock, vi } from "vitest";
+import { effect } from "./effect";
 import { batch, computed, external, linked, reactive, synchronized } from "./signals";
-import { syncEffect } from "./effect/syncEffect";
-import { syncWatchValue } from "./watch/watch";
-import { ReadonlyReactive } from "./types";
+import { EffectCallback, ReadonlyReactive } from "./types";
+import { watchValue } from "./watch";
+
+const SYNC_EFFECT = (cb: EffectCallback) => effect(cb, { dispatch: "sync" });
 
 describe("reactive", () => {
     it("supports setting an initial value", () => {
@@ -50,7 +52,7 @@ describe("reactive", () => {
     it("triggers effect on change", () => {
         const r = reactive(0);
         const spy = vi.fn();
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(r.value);
         });
         expect(spy).toBeCalledTimes(1);
@@ -62,7 +64,7 @@ describe("reactive", () => {
     it("does not consider NaNs as different values", () => {
         const r = reactive(NaN);
         const spy = vi.fn();
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(r.value);
         });
         expect(spy).toBeCalledTimes(1);
@@ -100,7 +102,7 @@ describe("batch", () => {
         const spy = vi.fn();
         const r1 = reactive(1);
         const r2 = reactive(2);
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(r1.value, r2.value);
         });
         expect(spy).toBeCalledTimes(1);
@@ -131,7 +133,7 @@ describe("computed", () => {
         const c = computed(() => r1.value + r2.value);
 
         const spy = vi.fn();
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(c.value);
         });
         expect(spy).toBeCalledTimes(1);
@@ -183,7 +185,7 @@ describe("computed", () => {
         });
 
         const spy = vi.fn();
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(c.value);
         });
 
@@ -293,7 +295,7 @@ describe("external", () => {
         const provider = vi.fn().mockReturnValue(1);
         const ext = external(provider);
         const spy = vi.fn();
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(ext.value);
         });
         expect(spy).toHaveBeenCalledTimes(1);
@@ -378,11 +380,11 @@ describe("synchronized", () => {
         expect(getter).toHaveBeenCalledTimes(0);
         expect(subscribe).toHaveBeenCalledTimes(0);
 
-        const { destroy } = syncEffect(() => sync.value);
+        const { destroy } = SYNC_EFFECT(() => sync.value);
         expect(getter).toHaveBeenCalledTimes(1);
         expect(subscribe).toHaveBeenCalledTimes(1);
 
-        const { destroy: destroy2 } = syncEffect(() => sync.value);
+        const { destroy: destroy2 } = SYNC_EFFECT(() => sync.value);
         expect(getter).toHaveBeenCalledTimes(1); // cached
         expect(subscribe).toHaveBeenCalledTimes(1); // not called again for second active effect
 
@@ -406,7 +408,7 @@ describe("synchronized", () => {
 
         // setup effect
         const spy = vi.fn();
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             spy(sync.value);
         });
         expect(spy).toHaveBeenCalledTimes(1);
@@ -445,7 +447,7 @@ describe("synchronized", () => {
         const result = computed(() => `${dep1.value},${dep1.value},${dep2.value},${dep2.value}`);
         expect(result.value).toMatchInlineSnapshot(`"0,2,3,5"`);
 
-        const { destroy } = syncEffect(() => {
+        const { destroy } = SYNC_EFFECT(() => {
             expect(result.value).toMatchInlineSnapshot(`"6,6,6,6"`);
         });
         destroy();
@@ -496,9 +498,12 @@ describe("synchronized", () => {
         const c3 = computed(() => c2.value);
         const c4 = computed(() => c3.value + c2.value);
 
-        const watchHandle = syncWatchValue(
+        const watchHandle = watchValue(
             () => c4.value,
-            () => {}
+            () => {},
+            {
+                dispatch: "sync"
+            }
         );
         expect(c4.value).toBe(2);
         expect(c4.value).toBe(2);
@@ -656,7 +661,7 @@ describe("linked", () => {
         const options = reactive<string[]>(["a", "b", "c"]);
         const currentOption = linked(() => options.value[0]);
 
-        syncEffect(() => {
+        SYNC_EFFECT(() => {
             events.push(currentOption.value ?? "<undefined>");
         });
         expect(events).toEqual(["a"]);
@@ -724,14 +729,14 @@ function testWatch(signal: ReadonlyReactive<unknown>, watched: Mock, unwatched: 
     expect(unwatched).not.toHaveBeenCalled();
 
     // Signal becomes watched
-    const handle = syncEffect(() => {
+    const handle = SYNC_EFFECT(() => {
         signal.value;
     });
     expect(watched).toHaveBeenCalledTimes(1);
     expect(unwatched).not.toHaveBeenCalled();
 
     // Second watcher doesn't do anything
-    const handle2 = syncEffect(() => {
+    const handle2 = SYNC_EFFECT(() => {
         signal.value;
     });
     expect(watched).toHaveBeenCalledTimes(1);

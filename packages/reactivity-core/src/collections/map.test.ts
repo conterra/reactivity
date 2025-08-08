@@ -3,7 +3,7 @@
 import { it, expect, describe, vi } from "vitest";
 import { ReactiveMap, reactiveMap } from "./map";
 import { batch, computed } from "../signals";
-import { syncEffect } from "../effect/syncEffect";
+import { effect } from "../effect";
 
 describe("basic API", () => {
     it("can be constructed with initial data", () => {
@@ -173,9 +173,12 @@ describe("reactivity", () => {
         const map = reactiveMap<string, number>();
 
         const observedValues: (number | undefined)[] = [];
-        syncEffect(() => {
-            observedValues.push(map.get("foo"));
-        });
+        effect(
+            () => {
+                observedValues.push(map.get("foo"));
+            },
+            { dispatch: "sync" }
+        );
 
         // Initial run -> foo not present
         expect(observedValues).toEqual([undefined]);
@@ -198,9 +201,12 @@ describe("reactivity", () => {
         const map = reactiveMap<string, number>();
 
         const observedValues: boolean[] = [];
-        syncEffect(() => {
-            observedValues.push(map.has("foo"));
-        });
+        effect(
+            () => {
+                observedValues.push(map.has("foo"));
+            },
+            { dispatch: "sync" }
+        );
         expect(observedValues).toEqual([false]);
 
         map.set("foo", 123);
@@ -217,9 +223,12 @@ describe("reactivity", () => {
         const map = reactiveMap<string, number>();
 
         const observedValues: string[][] = [];
-        syncEffect(() => {
-            observedValues.push(Array.from(map.keys()));
-        });
+        effect(
+            () => {
+                observedValues.push(Array.from(map.keys()));
+            },
+            { dispatch: "sync" }
+        );
         expect(observedValues).toMatchInlineSnapshot(`
           [
             [],
@@ -259,9 +268,12 @@ describe("reactivity", () => {
         const map = reactiveMap<string, number>();
 
         const observedValues: number[][] = [];
-        syncEffect(() => {
-            observedValues.push(Array.from(map.values()));
-        });
+        effect(
+            () => {
+                observedValues.push(Array.from(map.values()));
+            },
+            { dispatch: "sync" }
+        );
         expect(observedValues).toMatchInlineSnapshot(`
           [
             [],
@@ -301,9 +313,12 @@ describe("reactivity", () => {
         const map = reactiveMap<string, number>();
 
         const observedValues: [string, number][][] = [];
-        syncEffect(() => {
-            observedValues.push(Array.from(map.entries()));
-        });
+        effect(
+            () => {
+                observedValues.push(Array.from(map.entries()));
+            },
+            { dispatch: "sync" }
+        );
         expect(observedValues).toMatchInlineSnapshot(`
           [
             [],
@@ -379,10 +394,13 @@ describe("reactivity", () => {
             );
 
             let triggered = 0;
-            syncEffect(() => {
-                map.size; // currently triggered whenever something triggers a coarse structural change
-                triggered++;
-            });
+            effect(
+                () => {
+                    map.size; // currently triggered whenever something triggers a coarse structural change
+                    triggered++;
+                },
+                { dispatch: "sync" }
+            );
             expect(triggered).toBe(1);
 
             operation(map);

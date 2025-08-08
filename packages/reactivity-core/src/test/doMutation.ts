@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 import { MockInstance, onTestFinished, vi } from "vitest";
+import { DispatchType } from "../types";
 import { nextTick } from "../utils/dispatch";
 import * as report from "../utils/reportCallbackError";
 
@@ -19,7 +20,7 @@ export function setupDoMutation(): void {
  *
  * Throws any error by mocking the shared `reportTasksError` function.
  */
-export async function doMutation(fn: () => void, type: "sync" | "async"): Promise<void> {
+export async function doMutation(fn: () => void, type: DispatchType): Promise<void> {
     if (type === "sync") {
         fn();
     } else if (type === "async") {

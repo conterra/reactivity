@@ -173,6 +173,22 @@ export interface CleanupHandle {
 export type CleanupFunc = () => void;
 
 /**
+ * Options that can be passed to {@link effect}.
+ *
+ * @group Watching
+ */
+export interface EffectOptions {
+    /**
+     * Controls when callbacks are executed.
+     *
+     * The default value is `async`.
+     *
+     * @see {@link DispatchType}
+     */
+    dispatch?: DispatchType;
+}
+
+/**
  * The body of an effect.
  *
  * Instructions in this function are tracked: when any of its reactive
@@ -273,7 +289,57 @@ export interface WatchOptions<T> {
      * By default, an implementation based on object identity is used.
      */
     equal?: EqualsFunc<T>;
+
+    /**
+     * Controls when callbacks are executed.
+     *
+     * The default value is `async`.
+     *
+     * @see {@link DispatchType}
+     */
+    dispatch?: DispatchType;
 }
+
+/**
+ * Controls when callbacks are executed.
+ *
+ * @group Watching
+ **/
+export type DispatchType =
+    /**
+     * Callbacks for watches and effects are invoked in a new task (similar to `setTimeout(cb, 0)`).
+     * This is the default behavior.
+     *
+     * As a consequence, synchronous code and resolved promise executions that immediately
+     * follow the original change (which triggered the callback) will have been executed already
+     * when the callback runs.
+     *
+     * Because the callback execution is slightly delayed, multiple updates may be grouped into a single callback execution;
+     * the callback will only observe the latest value(s).
+     */
+    | "async"
+
+    /**
+     * Callbacks for watches and effects are invoked synchronously, either immediately or after the current `batch()`.
+     *
+     * For example:
+     *
+     * ```ts
+     * mySignal.value = newValue; // Effects / Watches may run here
+     * ```
+     *
+     * or
+     *
+     * ```ts
+     * batch(() => {
+     *   // ...
+     *   mySignal.value = newValue;
+     * }); // Or here, when the outermost batch is complete.
+     * ```
+     *
+     * Only use this dispatch type when it is actually needed: it is less efficient and more error prone.
+     */
+    | "sync";
 
 /**
  * A function that can subscribe to some external data source (e.g. DOM APIs) for updates.

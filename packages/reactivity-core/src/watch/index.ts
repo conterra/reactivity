@@ -1,7 +1,5 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { effect } from "../effect/asyncEffect";
-import { syncEffect } from "../effect/syncEffect";
 import {
     CleanupHandle,
     ReactiveGetter,
@@ -49,32 +47,46 @@ import { createWatcher } from "./Watcher";
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changes.
  * @param options additional options.
+ *
+ * @deprecated Use {@link watchValue} with option `dispatch: "sync"` instead.
+ *
  * @group Watching
  */
 export function syncWatchValue<T>(
     selector: ReactiveGetter<T>,
     callback: WatchCallback<T>,
-    options?: WatchOptions<T> & { immediate?: false }
+    options?: Omit<WatchOptions<T>, "dispatch"> & { immediate?: false }
 ): CleanupHandle;
+
 /**
  * This overload is used when `immediate` is not set to `false`.
  *
  * @param selector a function that returns the value to watch.
  * @param callback a function that will be executed whenever the watched value changes.
  * @param options additional options.
+ *
+ * @deprecated Use {@link watchValue} with option `dispatch: "sync"` instead.
+ *
  * @group Watching
  */
 export function syncWatchValue<T>(
     selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
-    options?: WatchOptions<T>
+    options?: Omit<WatchOptions<T>, "dispatch">
 ): CleanupHandle;
+
+/**
+ * @deprecated Use {@link watchValue} with option `dispatch: "sync"` instead.
+ */
 export function syncWatchValue<T>(
     selector: ReactiveGetter<T>,
     callback: WatchImmediateCallback<T>,
-    options?: WatchOptions<T>
+    options?: Omit<WatchOptions<T>, "dispatch">
 ): CleanupHandle {
-    return createWatcher(syncEffect, selector, callback, options);
+    return watchValue(selector, callback, {
+        ...options,
+        dispatch: "sync"
+    });
 }
 
 /**
@@ -104,7 +116,7 @@ export function syncWatchValue<T>(
  * That handle's `destroy()` function should be called to stop watching when you are no longer interested in updates:
  *
  * ```js
- * const handle = watch(() => [someReactive.value], () => {
+ * const handle = syncWatch(() => [someReactive.value], () => {
  *   // ...
  * });
  * // later:
@@ -116,34 +128,46 @@ export function syncWatchValue<T>(
  * @param selector a function that returns the values to watch.
  * @param callback a function that will be executed whenever the watched values changed.
  * @param options additional options.
+ *
+ * @deprecated Use {@link watch} with option `dispatch: "sync"` instead.
+ *
  * @group Watching
  */
 export function syncWatch<const Values extends unknown[]>(
     selector: ReactiveGetter<Values>,
     callback: WatchCallback<Values>,
-    options?: WatchOptions<Values> & { immediate?: false }
+    options?: Omit<WatchOptions<Values>, "dispatch"> & { immediate?: false }
 ): CleanupHandle;
+
 /**
  * This overload is used when `immediate` is not set to `false`.
  *
  * @param selector a function that returns the values to watch.
  * @param callback a function that will be executed whenever the watched values changed.
  * @param options additional options.
+ *
+ * @deprecated Use {@link watch} with option `dispatch: "sync"` instead.
+ *
  * @group Watching
  */
 export function syncWatch<const Values extends unknown[]>(
     selector: ReactiveGetter<Values>,
     callback: WatchImmediateCallback<Values>,
-    options?: WatchOptions<Values>
+    options?: Omit<WatchOptions<Values>, "dispatch">
 ): CleanupHandle;
+
+/**
+ * @deprecated Use {@link watch} with option `dispatch: "sync"` instead.
+ */
 export function syncWatch<const Values extends unknown[]>(
     selector: ReactiveGetter<Values>,
     callback: WatchImmediateCallback<Values>,
-    options?: WatchOptions<Values>
+    options?: Omit<WatchOptions<Values>, "dispatch">
 ): CleanupHandle {
-    return createWatcher(syncEffect, selector, callback, {
+    return watch(selector, callback, {
         equal: shallowEqual,
-        ...options
+        ...options,
+        dispatch: "sync"
     });
 }
 
@@ -203,6 +227,7 @@ export function watchValue<T>(
     callback: WatchCallback<T>,
     options?: WatchOptions<T> & { immediate?: false }
 ): CleanupHandle;
+
 /**
  * This overload is used when `immediate` is not set to `false`.
  *
@@ -221,7 +246,7 @@ export function watchValue<T>(
     callback: WatchImmediateCallback<T>,
     options?: WatchOptions<T>
 ): CleanupHandle {
-    return createWatcher(effect, selector, callback, options);
+    return createWatcher(selector, callback, options);
 }
 
 /**
@@ -284,6 +309,7 @@ export function watch<const Values extends unknown[]>(
     callback: WatchCallback<Values>,
     options?: WatchOptions<Values> & { immediate?: false }
 ): CleanupHandle;
+
 /**
  * This overload is used when `immediate` is not set to `false`.
  *
@@ -302,7 +328,7 @@ export function watch<const Values extends unknown[]>(
     callback: WatchImmediateCallback<Values>,
     options?: WatchOptions<Values>
 ): CleanupHandle {
-    return createWatcher(effect, selector, callback, {
+    return createWatcher(selector, callback, {
         equal: shallowEqual,
         ...options
     });

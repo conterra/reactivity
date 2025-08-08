@@ -333,26 +333,33 @@ h2.destroy();
 When a watcher is not cleaned up properly, it will continue to execute (possibly forever).
 This leads to unintended side effects, unnecessary memory consumption and waste of computational power.
 
-#### Cheat sheet: variants of effect and watch
+### Cheat sheet: variants of effect and watch
 
 The following table provides a quick overview of the different variants of `effect` and `watch`:
 
-> NOTE: In most circumstances, `watchValue`, `watch` or `effect` are the right choice.
-> The `sync*` variants are useful when you need to run the callback immediately.
-> For more details, see [Sync vs async effect / watch](#sync-vs-async-effect--watch).
+| Function       | Kind of values                                     | Callback condition                                |
+| -------------- | -------------------------------------------------- | ------------------------------------------------- |
+| `effect()`     | N/A                                                | After _any_ used signal changes.                  |
+| `watchValue()` | Single value.                                      | After the watched value changed.                  |
+| `watch()`      | Multiple values (via array with shallow equality). | After one ore more of the watched values changed. |
 
-| Function         | Kind of values                                     | Callback condition                                | Callback delay |
-| ---------------- | -------------------------------------------------- | ------------------------------------------------- | -------------- |
-| `effect`         | N/A                                                | After _any_ used signal changes.                  | Slight delay.  |
-| `watchValue`     | Single value.                                      | After the watched value changed.                  | Slight delay.  |
-| `watch`          | Multiple values (via array with shallow equality). | After one ore more of the watched values changed. | Slight delay.  |
-| `syncEffect`     | N/A                                                | After _any_ used signal changed.                  | No delay.      |
-| `syncWatchValue` | Single value.                                      | After the watched value changed.                  | No delay.      |
-| `syncWatch`      | Multiple values (via array with shallow equality). | After one ore more of the watched values changed. | No delay.      |
+Note that `watchValue()` and `watch()` are almost the same.
+`watch()` supports watching multiple values at once directly (but forces you to return an array) while `watchValue()` only supports a single value.
+In truth, only their default `equal` functions are different: `watchValue()` uses `Object.is()` while `watch()` uses shallow array equality.
+`watch()` also supports specifying the `equal` function manually.
 
-Note that `watchValue` and `watch` are almost the same.
-`watch` supports watching multiple values at once directly (but forces you to return an array) while `watchValue` only supports a single value.
-In truth, only their default `equal` functions are different: `watchValue` uses `Object.is` while `watch` uses shallow array equality.
+`effect()`, `watch()` and `watchValue()` all support the `dispatch` option.
+The following values can be specified:
+
+- `"async"` (the default):
+  Callbacks are invoked with a slight delay, in a deferred event loop task (similar to `setTimeout(cb, 0)`).
+  This means that synchronous code and handlers for already resolved promises will run _before_ the callback.
+  Because of the slight delay, multiple changes in quick succession may result in only a single callback execution, which will observe the latest value.
+- `"sync"`: Callbacks are invoked synchronously.
+  Callbacks fire either _immediately_ (in the `.value` assignment), or when leaving the `batch()` (see [Batching multiple updates](#batching-multiple-updates)).
+  This dispatch type results in more callback executions, it should only used when the specific timing is needed.
+
+See also [Sync vs async effect / watch](#sync-vs-async-effect--watch)
 
 ### Linked signals
 
@@ -798,7 +805,6 @@ Such an application will have to implement the means to:
 
 1. Fetch the _current_ state and present it to the user.
 2. Subscribe to state changes:
-
     - On change, goto 1.
 
 While step 1 is rather trivial, step 2 turns out to contain lots of complexity in practice, especially if many different sources of state (e.g. objects) are involved.
@@ -917,33 +923,42 @@ The example above will not throw an error anymore because the _read_ to `v1` has
 Every update to a signal will usually trigger all watchers.
 This is not really a problem when using the default `watch()` or `effect()`, since multiple changes that follow _immediately_ after each other are grouped into a single notification, with a minimal delay.
 
-However, when using `syncEffect` or `syncWatch`, you will be triggered many times:
+However, when using `dispatch: "sync"`, you may be triggered
+
+- very often or
+- in the middle of a logical operation (inconsistent state)
 
 ```ts
-import { reactive, syncEffect } from "@conterra/reactivity-core";
+import { reactive, effect } from "@conterra/reactivity-core";
 
 const count = reactive(0);
-syncEffect(() => {
-    console.log(count.value);
-});
+effect(
+    () => {
+        console.log(count.value);
+    },
+    { dispatch: "sync" }
+);
 
 count.value += 1;
 count.value += 1;
 count.value += 1;
 count.value += 1;
-// Effect has executed 5 times
+// Effect has executed 5 times, all in-between values were observed.
 ```
 
 You can avoid this by grouping many updates into a single _batch_.
 Effects or watchers will not get notified until the batch is complete:
 
 ```ts
-import { reactive, syncEffect, batch } from "@conterra/reactivity-core";
+import { reactive, effect, batch } from "@conterra/reactivity-core";
 
 const count = reactive(0);
-syncEffect(() => {
-    console.log(count.value);
-});
+effect(
+    () => {
+        console.log(count.value);
+    },
+    { dispatch: "sync" }
+);
 
 batch(() => {
     count.value += 1;
@@ -992,21 +1007,25 @@ effect: 2           # now effect and watch will execute
 watch: 2
 ```
 
-If you need more control over your callbacks, you can use `syncEffect` and `syncWatch` instead:
+If you need more control over your callbacks, you can use `dispatch: "sync"` instead (the default value is `"async"`):
 
 ```ts
-import { syncWatch, syncEffect, reactive } from "@conterra/reactivity-core";
+import { watch, effect, reactive } from "@conterra/reactivity-core";
 
 const s = reactive(1);
-syncEffect(() => {
-    console.log("effect:", s.value);
-});
+effect(
+    () => {
+        console.log("effect:", s.value);
+    },
+    { dispatch: "sync" }
+);
 
-syncWatch(
+watch(
     () => [s.value],
     ([value]) => {
         console.log("watch:", value);
-    }
+    },
+    { dispatch: "sync" }
 );
 
 s.value = 2; // this line also executes the effect and the watch callback!

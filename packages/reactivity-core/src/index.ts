@@ -30,12 +30,14 @@ export {
     type EqualsFunc,
     type ReactiveOptions,
     type CleanupFunc,
+    type EffectOptions,
     type EffectCallback,
     type EffectContext,
     type WatchCallback,
     type WatchImmediateCallback,
     type WatchContext,
     type WatchOptions,
+    type DispatchType,
     type CleanupHandle,
     type SubscribeFunc
 } from "./types";
@@ -52,9 +54,8 @@ export {
     isReadonlyReactive,
     isReactive
 } from "./signals";
-export { syncWatch, syncWatchValue, watch, watchValue } from "./watch/watch";
-export { effect } from "./effect/asyncEffect";
-export { syncEffect } from "./effect/syncEffect";
+export { syncWatch, syncWatchValue, watch, watchValue } from "./watch";
+export { effect, syncEffect } from "./effect";
 export { dispatchAsyncCallback, nextTick } from "./utils/dispatch";
 export { reportCallbackError } from "./utils/reportCallbackError";
 export * from "./collections";

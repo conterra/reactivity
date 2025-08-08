@@ -3,72 +3,13 @@
 import { createWatcher, RawWatcher } from "../hacks";
 import { untracked } from "../signals";
 import { CleanupFunc, CleanupHandle, EffectCallback, EffectContext } from "../types";
-import { reportCallbackError } from "../utils/reportCallbackError";
 import { dispatchAsyncCallback } from "../utils/dispatch";
-
-// Imported for docs
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { syncEffect } from "./syncEffect";
-
-/**
- * Runs the callback function and tracks its reactive dependencies.
- * Whenever one of those dependencies changes, the callback will be executed again.
- *
- * Example:
- *
- * ```js
- * const count = reactive(0);
- * effect(() => {
- *     console.log(count.value);
- * });
- * // Effect runs immediately, prints "0"
- *
- * // Triggers re-execution of the effect (with a minimal delay), prints "1"
- * count.value = 1;
- * ```
- *
- * `effect` returns a handle that allows you to unsubscribe from changes.
- * That handle's `destroy()` function should be called in order to clean up the effect when you no longer need it,
- * otherwise the effect will keep running forever:
- *
- * ```js
- * const handle = effect(() => {
- *     // ...
- * });
- * // later:
- * handle.destroy();
- * ```
- *
- * You can also return a _function_ from your effect callback.
- * It will be called automatically when either the effect will be re-executed or when the effect is being destroyed.
- * This can be very convenient to revert (or clean up) the side effects made by an effect:
- *
- * ```js
- * effect(() => {
- *     const job = startAJob();
- *     return () => job.stop();
- * });
- * ```
- *
- * > NOTE: This function will slightly defer re-executions of the given `callback`.
- * > In other words, the re-execution does not happen _immediately_ after a reactive dependency changed.
- * > This is done to avoid redundant executions as a result of many fine-grained changes.
- * >
- * > If you need more control, take a look at {@link syncEffect}.
- *
- * @group Watching
- */
-export function effect(callback: EffectCallback): CleanupHandle {
-    const effect = new AsyncEffect(callback);
-    return {
-        destroy: effect.destroy.bind(effect)
-    };
-}
+import { reportCallbackError } from "../utils/reportCallbackError";
 
 /**
  * Like the sync effect from @preact/signals-core, but dispatches its callbacks in a new task.
  */
-class AsyncEffect implements EffectContext {
+export class AsyncEffect implements EffectContext {
     /** The user-defined effect body. */
     #callback: EffectCallback;
 
