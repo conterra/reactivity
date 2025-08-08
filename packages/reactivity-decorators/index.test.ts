@@ -1,4 +1,6 @@
-import { reactive, syncEffect } from "@conterra/reactivity-core";
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
+import { reactive, effect } from "@conterra/reactivity-core";
 import { expect, it, vi } from "vitest";
 import { computedProperty, reactiveProperty } from "./index";
 
@@ -10,9 +12,12 @@ it("supports classes with reactive properties", () => {
 
     const obj = new ReactiveClass();
     const spy = vi.fn();
-    syncEffect(() => {
-        spy(obj.value);
-    });
+    effect(
+        () => {
+            spy(obj.value);
+        },
+        { dispatch: "sync" }
+    );
 
     obj.value += 1;
     obj.value = 20;
@@ -67,9 +72,12 @@ it("supports private properties", () => {
 
     const obj = new ReactiveClass();
     const spy = vi.fn();
-    syncEffect(() => {
-        spy(obj.getValue());
-    });
+    effect(
+        () => {
+            spy(obj.getValue());
+        },
+        { dispatch: "sync" }
+    );
 
     obj.updateValue(4);
     expect(spy.mock.calls.map((c) => c[0]!)).toMatchInlineSnapshot(`
@@ -92,9 +100,12 @@ it("supports initialization from constructor", () => {
 
     const obj = new ReactiveClass();
     const spy = vi.fn();
-    syncEffect(() => {
-        spy(obj.value);
-    });
+    effect(
+        () => {
+            spy(obj.value);
+        },
+        { dispatch: "sync" }
+    );
 
     obj.value = 4;
     expect(spy.mock.calls.map((c) => c[0]!)).toMatchInlineSnapshot(`
@@ -141,10 +152,10 @@ it("supports options for reactive properties", () => {
         }
     }
 
-    const p1 = { x: 1, y: 1};
-    const p2 = { x: 1, y: 1};
-    const p3 = { x: 1, y: 2};
-    
+    const p1 = { x: 1, y: 1 };
+    const p2 = { x: 1, y: 1 };
+    const p3 = { x: 1, y: 2 };
+
     const obj = new ReactiveClass(p1);
     expect(obj.point).toBe(p1);
 
@@ -168,7 +179,7 @@ it("supports options for computed properties", () => {
         get objWithName() {
             computedSpy(name.value);
             return { name: name.value.toUpperCase() };
-        } 
+        }
     }
 
     const obj = new ReactiveClass();

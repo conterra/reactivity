@@ -1,4 +1,12 @@
-import { ReactiveOptions, computed, isReactive, isReadonlyReactive, reactive } from "@conterra/reactivity-core";
+// SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
+// SPDX-License-Identifier: Apache-2.0
+import {
+    ReactiveOptions,
+    computed,
+    isReactive,
+    isReadonlyReactive,
+    reactive
+} from "@conterra/reactivity-core";
 
 export interface ReactivePropertyDecoratorApi {
     <This, Prop>(
@@ -39,19 +47,16 @@ export interface ComputedPropertyDecoratorApi {
     ) => () => Prop;
 }
 
-export const computedProperty = Object.assign(
-    defineComputedProperty,
-    {
-        withOptions(options: ReactiveOptions<unknown>) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return (target: any, context: any) => defineComputedProperty(target, context, options);
-        }
+export const computedProperty = Object.assign(defineComputedProperty, {
+    withOptions(options: ReactiveOptions<unknown>) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (target: any, context: any) => defineComputedProperty(target, context, options);
     }
-) as ComputedPropertyDecoratorApi;
+}) as ComputedPropertyDecoratorApi;
 
 function defineReactiveProperty<This, Prop>(
     target: ClassAccessorDecoratorTarget<This, Prop>,
-    context: ClassAccessorDecoratorContext<This, Prop> & {
+    _context: ClassAccessorDecoratorContext<This, Prop> & {
         static: false;
     },
     options?: ReactiveOptions<Prop> | undefined
