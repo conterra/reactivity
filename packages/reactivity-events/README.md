@@ -32,7 +32,7 @@ emit(view.clicked, { x: 10, y: 20 });
 ## Usage
 
 Use `emitter()` to create an event emitter.
-Event emitters can be used to emit events (using `emit()`) and to subscribe to them (using `on` / `onSync`).
+Event emitters can be used to emit events (using `emit()`) and to subscribe to them (using `on()`).
 
 Example:
 
@@ -62,7 +62,7 @@ const clicked = emitter<{ x: number; y: number }>();
 emit(clicked, { x: 10, y: 20 });
 ```
 
-Use `on(emitter, callback)` (or `onSync()`) to subscribe to events:
+Use `on(emitter, callback)` to subscribe to events:
 
 ```ts
 import { emitter, on } from "@conterra/reactivity-events";
@@ -78,18 +78,18 @@ const handle = on(clicked, (event) => {
 handle.destroy();
 ```
 
-### Sync vs async events
+### Sync vs async event callbacks
 
-Similar to `watch` / `watchSync` in `@conterra/reactivity-core`, there are two versions of the `on` function: `on` and `onSync`:
+The events API supports a similar `dispatch` option as `@conterra/reactivity-core` when subscribing via `on()`:
 
-- `on`: Callbacks are called asynchronously (in a future task, similar to `setTimeout(cb, 0)`).
+- `"async"` (the default): Callbacks are called asynchronously (in a future task, similar to `setTimeout(cb, 0)`).
   This is usually what you want.
-- `onSync`: Callbacks are called synchronously, immediately after they have been emitted.
+- `"sync"`: Callbacks are called synchronously, immediately after they have been emitted.
   Note that there is a subtle interaction with `batch` (see [Integration with `batch`](#integration-with-batch)).
 
 ### Reactive event sources
 
-`on` and `onSync` support multiple kinds of event source parameters:
+`on()` support multiple kinds of event source parameters:
 
 - A plain event source (like `view.clicked` in the example above; not reactive).
 - A signal holding an event source (reactive).
@@ -215,14 +215,14 @@ The `batch()` function from `@conterra/reactivity-core` can be used to group rea
 Effects or watches are not executed until the batch completes.
 This prevents intermediate states (which may be inconsistent) from being observed by other parts of the application.
 
-Event handling works the same way: even when `onSync` is used, event handlers are not running _immediately_, but only after the batch completes.
+Event handling works the same way: even when `on()` is used with `dispatch: "sync"`, event handlers are not running _immediately_, but only after the batch completes.
 This prevents event handlers from observing intermediate states as well.
 
 For example:
 
 ```ts
 import { batch, reactive } from "@conterra/reactivity-core";
-import { emit, emitter, onSync } from "@conterra/reactivity-events";
+import { emit, emitter, on } from "@conterra/reactivity-events";
 
 class Foo {
     changed = emitter();
@@ -245,9 +245,13 @@ class Foo {
 }
 
 const foo = new Foo();
-onSync(foo.changed, () => {
-    console.log("on change");
-});
+on(
+    foo.changed,
+    () => {
+        console.log("on change");
+    },
+    { dispatch: "sync" }
+);
 foo.changeValues();
 // Output:
 // batch start

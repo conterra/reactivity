@@ -1,18 +1,28 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 import * as core from "@conterra/reactivity-core";
-import { batch, nextTick, reactive } from "@conterra/reactivity-core";
+import { batch, nextTick, Reactive, reactive, ReactiveGetter } from "@conterra/reactivity-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { emit, emitter, on, onSync, EventSource } from "./events";
+import { emit, emitter, EventCallback, EventSource, on, SubscribeOptions } from "./events";
 
 afterEach(() => {
     vi.restoreAllMocks();
 });
 
+const ON_SYNC = <T>(
+    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
+    callback: EventCallback<T>,
+    options?: SubscribeOptions
+) =>
+    on(source, callback, {
+        ...options,
+        dispatch: "sync"
+    });
+
 it("supports typed events", () => {
     const clicked = emitter<ClickEvent>();
     const observed: ClickEvent[] = [];
-    onSync(clicked, (event) => {
+    ON_SYNC(clicked, (event) => {
         observed.push(event);
     });
     emit(clicked, { x: 1, y: 2 });
@@ -26,7 +36,7 @@ it("supports typed events", () => {
 it("supports void events", () => {
     const clicked = emitter();
     let observed = 0;
-    onSync(clicked, () => {
+    ON_SYNC(clicked, () => {
         observed++;
     });
     emit(clicked);
@@ -36,7 +46,7 @@ it("supports void events", () => {
 it("supports unsubscribing from events", () => {
     const clicked = emitter<ClickEvent>();
     const observed: ClickEvent[] = [];
-    const handle = onSync(clicked, (event) => {
+    const handle = ON_SYNC(clicked, (event) => {
         observed.push(event);
     });
 
@@ -50,12 +60,12 @@ it("supports unsubscribing during emit", () => {
     const observed: string[] = [];
 
     // Relies on internals: insertion order is iteration order during emit
-    onSync(evt, () => {
+    ON_SYNC(evt, () => {
         observed.push("1");
         otherHandle.destroy();
     });
 
-    const otherHandle = onSync(evt, () => {
+    const otherHandle = ON_SYNC(evt, () => {
         observed.push("2");
     });
     emit(evt);
@@ -68,10 +78,10 @@ it("supports subscribing during emit", () => {
     const observed: string[] = [];
 
     let registered = false;
-    onSync(evt, () => {
+    ON_SYNC(evt, () => {
         observed.push("outer");
         if (!registered) {
-            onSync(evt, () => {
+            ON_SYNC(evt, () => {
                 observed.push("inner");
             });
             registered = true;
@@ -98,8 +108,8 @@ it("does not throw exceptions from event handlers", () => {
         throw new Error("boom!");
     });
     const spy2 = vi.fn();
-    onSync(evt, spy1);
-    onSync(evt, spy2);
+    ON_SYNC(evt, spy1);
+    ON_SYNC(evt, spy2);
 
     emit(evt);
     expect(spy1).toHaveBeenCalledOnce();
@@ -141,7 +151,7 @@ it("supports emitting events from subscribed callback", () => {
     emit(evt, "No listeners ... :(");
 
     const events: string[] = [];
-    onSync(evt, (message) => {
+    ON_SYNC(evt, (message) => {
         events.push(message);
     });
     emit(evt, "After subscribe");
@@ -154,7 +164,7 @@ describe("once", () => {
         const evt = emitter();
 
         let events = 0;
-        onSync(
+        ON_SYNC(
             evt,
             () => {
                 events++;
@@ -171,7 +181,7 @@ describe("once", () => {
 
         let events = 0;
         let nestedEmit = false;
-        onSync(
+        ON_SYNC(
             evt,
             () => {
                 if (!nestedEmit) {
@@ -190,7 +200,7 @@ describe("once", () => {
         const evt = emitter();
 
         let events = 0;
-        onSync(
+        ON_SYNC(
             evt,
             () => {
                 events++;
@@ -216,7 +226,7 @@ describe("reactivity", () => {
         const currentSource = reactive(evt1);
 
         const observed: string[] = [];
-        onSync(
+        ON_SYNC(
             () => currentSource.value,
             (event) => {
                 observed.push(event);
@@ -239,7 +249,7 @@ describe("reactivity", () => {
     it("does not emit during an active batch", () => {
         const evt = emitter();
         const spy = vi.fn();
-        onSync(evt, spy);
+        ON_SYNC(evt, spy);
 
         batch(() => {
             emit(evt);
@@ -301,7 +311,7 @@ it("supports interface/impl separation", () => {
     const api: ViewApi = impl;
 
     const handler = vi.fn();
-    onSync(api.clicked, handler);
+    ON_SYNC(api.clicked, handler);
     emit(impl.clicked, { x: 1, y: 2 });
     expect(handler).toHaveBeenCalledOnce();
 });

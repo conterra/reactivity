@@ -4,9 +4,9 @@ import {
     batch,
     CleanupHandle,
     dispatchAsyncCallback,
+    effect,
     reactive,
     reportCallbackError,
-    syncEffect,
     untracked
 } from "@conterra/reactivity-core";
 import { EmitterOptions, SubscribeOptions } from "./events";
@@ -51,13 +51,17 @@ export function emitImpl(emitter: EventEmitterImpl, args: unknown[]): void {
 export function subscribeImpl(
     emitterArg: EventEmitterImpl,
     callback: RawCallback,
-    options: SubscribeOptions & { sync: boolean }
+    options: SubscribeOptions | undefined
 ): CleanupHandle {
+    const dispatch = options?.dispatch ?? "async";
+    const once = options?.once ?? false;
+    const sync = dispatch === "sync";
+
     return batch(() => {
         let emitter: EventEmitterImpl | undefined = emitterArg;
         const subscription: Subscription = {
-            once: options.once ?? false,
-            sync: options.sync,
+            once,
+            sync,
             get isActive(): boolean {
                 return (emitter && getSubscriptions(emitter)?.has(subscription)) ?? false;
             },
@@ -155,23 +159,28 @@ type SyncDispatchItem = [subscription: Subscription, args: unknown[]];
 let DISPATCH_SCHEDULED = false;
 let SYNC_QUEUE: SyncDispatchItem[] = [];
 const TRIGGER_DISPATCH = reactive(false);
-syncEffect(() => {
-    void TRIGGER_DISPATCH.value; // Setup dependency
-    untracked(() => {
-        // Note: callbacks invoked here may push further items to the queue
-        while (SYNC_QUEUE.length) {
-            // Swap to avoid concurrent modifications
-            const items = SYNC_QUEUE;
-            SYNC_QUEUE = [];
+effect(
+    () => {
+        void TRIGGER_DISPATCH.value; // Setup dependency
+        untracked(() => {
+            // Note: callbacks invoked here may push further items to the queue
+            while (SYNC_QUEUE.length) {
+                // Swap to avoid concurrent modifications
+                const items = SYNC_QUEUE;
+                SYNC_QUEUE = [];
 
-            for (const [subscription, args] of items) {
-                invokeCallback(subscription, args); // does not throw
+                for (const [subscription, args] of items) {
+                    invokeCallback(subscription, args); // does not throw
+                }
             }
-        }
 
-        DISPATCH_SCHEDULED = false;
-    });
-});
+            DISPATCH_SCHEDULED = false;
+        });
+    },
+    {
+        dispatch: "sync"
+    }
+);
 
 function invokeCallback(subscription: Subscription, args: unknown[]) {
     if (!subscription.isActive) {

@@ -5,8 +5,9 @@ import {
     getValue,
     Reactive,
     ReactiveGetter,
-    syncWatchValue,
-    untracked
+    untracked,
+    WatchOptions,
+    watchValue
 } from "@conterra/reactivity-core";
 import { assertEmitter, emitImpl, EventEmitterImpl, RawCallback, subscribeImpl } from "./internals";
 
@@ -162,7 +163,57 @@ export interface SubscribeOptions {
      * The subscription can still be removed manually by destroying the handle returned by {@link on}.
      */
     once?: boolean;
+
+    /**
+     * Controls when callbacks are executed.
+     *
+     * The default value is `async`.
+     *
+     * @see {@link DispatchType}
+     */
+    dispatch?: DispatchType;
 }
+
+/**
+ * Controls when callbacks are executed.
+ *
+ * @group Subscribing
+ **/
+export type DispatchType =
+    /**
+     * Callbacks are invoked in a new task (similar to `setTimeout(cb, 0)`).
+     * This is the default behavior.
+     *
+     * As a consequence, synchronous code and resolved promise executions that immediately
+     * follow the original change (which triggered the callback) will have been executed already
+     * when the callback runs.
+     */
+    | "async"
+
+    /**
+     * Callbacks are invoked synchronously, either immediately or after the current `batch()`.
+     *
+     * For example:
+     *
+     * ```ts
+     * emit(myObject.click, { x: 1, y: 2 });; // sync callbacks run here
+     * ```
+     *
+     * or
+     *
+     * ```ts
+     * batch(() => {
+     *   // ...
+     *   mySignal.value = newValue;
+     * }); // Or here, when the outermost batch is complete.
+     * ```
+     */
+    | "sync";
+
+const WATCH_OPTS = {
+    immediate: true,
+    dispatch: "sync"
+} as const satisfies WatchOptions<unknown>;
 
 /**
  * Listens for events on the specified event source and invokes the `callback` for each event.
@@ -206,10 +257,22 @@ export function on<T>(
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ): CleanupHandle {
-    return onImpl(source, callback, {
-        ...options,
-        sync: false
-    });
+    let getter;
+    if (typeof source === "function") {
+        getter = source;
+    } else {
+        getter = () => getValue(source);
+    }
+
+    return watchValue(
+        getter,
+        (source) => {
+            assertEmitter(source);
+            const handle = subscribeImpl(source, callback as RawCallback, options);
+            return () => handle.destroy();
+        },
+        WATCH_OPTS // always sync so we don't miss emitter changes
+    );
 }
 
 /**
@@ -244,6 +307,8 @@ export function on<T>(
  * });
  * ```
  *
+ * @deprecated Use {@link on} with the option `dispatch: "sync"` instead.
+ *
  * @group Subscribing
  */
 export function onSync<T>(
@@ -251,31 +316,8 @@ export function onSync<T>(
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ): CleanupHandle {
-    return onImpl(source, callback, {
+    return on(source, callback, {
         ...options,
-        sync: true
+        dispatch: "sync"
     });
-}
-
-function onImpl<T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
-    callback: EventCallback<T>,
-    options: SubscribeOptions & { sync: boolean }
-): CleanupHandle {
-    let getter;
-    if (typeof source === "function") {
-        getter = source;
-    } else {
-        getter = () => getValue(source);
-    }
-
-    return syncWatchValue(
-        getter,
-        (source) => {
-            assertEmitter(source);
-            const handle = subscribeImpl(source, callback as RawCallback, options);
-            return () => handle.destroy();
-        },
-        { immediate: true }
-    );
 }
