@@ -11,5 +11,10 @@ module.exports = {
         "./packages/reactivity-events",
         "./packages/reactivity-decorators"
     ],
-    skipErrorChecking: true
+    validation: {
+        "invalidLink": true,
+        "notDocumented": true,
+        "notExported": true,
+        "rewrittenLink": true
+    }
 };
