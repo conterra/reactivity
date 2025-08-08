@@ -87,7 +87,7 @@ export type ReadonlyReactiveSet<K> = Omit<ReactiveSet<K>, "add" | "delete" | "cl
  *
  * @group Collections
  */
-export function reactiveSet<V>(initial?: Iterable<V> | undefined): ReactiveSet<V> {
+export function reactiveSet<V>(initial?: Iterable<V>): ReactiveSet<V> {
     return new ReactiveSetImpl<V>(initial);
 }
 

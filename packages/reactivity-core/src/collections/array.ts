@@ -433,28 +433,31 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     slice(...args: any[]): ReactiveArray<T> {
         this.#subscribeToStructureChange();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const items = this.#items.slice(...args).map((cell) => cell.value);
         return reactiveArray(items);
     }
 
     concat(...values: (T | T[] | ReadonlyReactiveArray<T>)[]): ReactiveArray<T> {
         const items = this.getItems().concat(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-argument
             ...values.map((v: any) => {
                 if (v instanceof ReactiveArrayImpl) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return v.getItems();
                 }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return v;
             })
         );
         return reactiveArray(items);
     }
 
-    includes(value: T, fromIndex?: number | undefined): boolean {
+    includes(value: T, fromIndex?: number): boolean {
         return this.#findIndex((v) => v === value, fromIndex) !== -1;
     }
 
-    indexOf(value: T, fromIndex?: number | undefined): number {
+    indexOf(value: T, fromIndex?: number): number {
         return this.#findIndex((v) => v === value, fromIndex);
     }
 
@@ -515,8 +518,10 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
         ...args: any[]
     ): any {
         this.#subscribeToStructureChange();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         return (this.#items.reduce as any)(
             (previousValue: any, cell: Reactive<T>, index: number) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return callback(previousValue, cell.value, index);
             },
             ...args
@@ -530,8 +535,10 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
         ...args: any[]
     ): any {
         this.#subscribeToStructureChange();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         return (this.#items.reduceRight as any)(
             (previousValue: any, cell: Reactive<T>, index: number) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return callback(previousValue, cell.value, index);
             },
             ...args

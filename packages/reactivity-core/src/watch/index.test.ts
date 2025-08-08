@@ -11,7 +11,7 @@ describe("dispatch: sync", () => {
     defineSharedTests("sync");
 
     describe("specifics", () => {
-        it("triggers without a delay", async () => {
+        it("triggers without a delay", () => {
             const spy = vi.fn();
             const r1 = reactive(1);
             watch(
@@ -420,7 +420,7 @@ function defineSharedTests(dispatch: DispatchType) {
         expect(spy).toHaveBeenCalledTimes(2);
     });
 
-    it("calls cleanup function during dispose", async () => {
+    it("calls cleanup function during dispose", () => {
         const spy = vi.fn();
         const cleanup = vi.fn();
         const r = reactive(1);

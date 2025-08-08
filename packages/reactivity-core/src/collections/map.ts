@@ -96,7 +96,7 @@ export type ReadonlyReactiveMap<K, V> = Omit<ReactiveMap<K, V>, "set" | "delete"
  *
  * @group Collections
  */
-export function reactiveMap<K, V>(initial?: Iterable<[K, V]> | undefined): ReactiveMap<K, V> {
+export function reactiveMap<K, V>(initial?: Iterable<[K, V]>): ReactiveMap<K, V> {
     return new ReactiveMapImpl(initial);
 }
 

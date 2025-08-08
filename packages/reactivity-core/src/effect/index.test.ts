@@ -98,7 +98,7 @@ function defineSharedTests(dispatch: DispatchType): void {
     const effectImpl = (cb: EffectCallback) => effect(cb, { dispatch: dispatch });
 
     describe("dependency tracking", () => {
-        it("evaluates an effect at least once", async () => {
+        it("evaluates an effect at least once", () => {
             const r = reactive(1);
             const spy = vi.fn();
             effectImpl(() => {
@@ -190,7 +190,7 @@ function defineSharedTests(dispatch: DispatchType): void {
             expect(spy).toBeCalledTimes(1);
         });
 
-        it("throws on cycle", async () => {
+        it("throws on cycle", () => {
             const r = reactive(1);
             expect(() =>
                 effectImpl(() => {
@@ -261,7 +261,7 @@ function defineSharedTests(dispatch: DispatchType): void {
             `);
         });
 
-        it("calls cleanup function during dispose", async () => {
+        it("calls cleanup function during dispose", () => {
             const spy = vi.fn();
             const cleanup = vi.fn();
             const r = reactive(1);
@@ -402,7 +402,7 @@ function defineSharedTests(dispatch: DispatchType): void {
             expect(spy).toHaveBeenCalledTimes(2);
         });
 
-        it("invokes cleanup function during self-destruction", async () => {
+        it("invokes cleanup function during self-destruction", () => {
             const spy = vi.fn();
             const cleanup = vi.fn();
             const r = reactive(1);

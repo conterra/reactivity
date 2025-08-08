@@ -25,7 +25,9 @@ export async function doMutation(fn: () => void, type: DispatchType): Promise<vo
         fn();
     } else if (type === "async") {
         let err: Error | undefined;
-        ERROR_SPY!.mockImplementationOnce((e) => (err = e));
+        ERROR_SPY!.mockImplementationOnce((e: Error) => {
+            err = e;
+        });
         fn();
         await nextTick();
         if (err) {

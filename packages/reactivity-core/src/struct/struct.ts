@@ -312,14 +312,14 @@ export interface ReactiveStructBuilder<T> {
  */
 export function reactiveStruct<T>(): ReactiveStructBuilder<T> {
     return {
-        define(definition) {
+        define(definition): any {
             class ReactiveStruct {
                 constructor(initialValues?: Partial<T>) {
                     prepareResult.prepareInstance(this, initialValues);
                 }
             }
             const prepareResult = preparePrototype(ReactiveStruct.prototype, definition);
-            return ReactiveStruct as any;
+            return ReactiveStruct;
         }
     };
 }
@@ -386,8 +386,8 @@ function preparePrototype<T>(
             });
 
             initSteps.push((instance, storage) => {
-                storage[propertyKey] = computed(() => {
-                    return (memberDef.compute as any).call(instance);
+                storage[propertyKey] = computed((): any => {
+                    return (memberDef.compute as AnyFunc).call(instance);
                 });
                 Object.defineProperty(instance, propertyKey, desc);
             });
@@ -401,7 +401,7 @@ function preparePrototype<T>(
             });
 
             initSteps.push((instance, storage, initialArgs) => {
-                const initValue = getValue<any>(initialArgs?.[propertyKey]);
+                const initValue = getValue<unknown>(initialArgs?.[propertyKey]);
                 if (!isReactive) {
                     storage[propertyKey] = initValue;
                 } else {
@@ -443,9 +443,9 @@ function prepareInstanceProperty(options: PropertyConfig): PropertyDescriptor {
     const key = options.propertyKey;
     const reactiveProperty = options.reactive;
 
-    const getter = function (this: any) {
+    const getter = function (this: unknown) {
         const storage = getPrivateStorage(this);
-        const data = storage[key];
+        const data: unknown = storage[key];
         if (reactiveProperty) {
             return getValue(data);
         }
@@ -454,10 +454,10 @@ function prepareInstanceProperty(options: PropertyConfig): PropertyDescriptor {
 
     let setter;
     if (options.writable) {
-        setter = function (this: any, value: any) {
+        setter = function (this: unknown, value: unknown) {
             const storage = getPrivateStorage(this);
             if (reactiveProperty) {
-                const signal = storage[key];
+                const signal: unknown = storage[key];
                 if (!isReactive(signal)) {
                     throw new Error("internal error: property must be a writable signal");
                 }
@@ -482,9 +482,12 @@ function prepareInstanceProperty(options: PropertyConfig): PropertyDescriptor {
  * Returns the private storage object that contains the actual property values (or signals)
  * of the reactive struct.
  */
-function getPrivateStorage(instance: any): PrivateStorage {
-    if (!instance || !instance[PRIVATE_STORAGE]) {
+function getPrivateStorage(instance: unknown): PrivateStorage {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (!instance || !(instance as any)[PRIVATE_STORAGE]) {
         throw new Error("internal error: object is not a reactive struct");
     }
-    return instance[PRIVATE_STORAGE];
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    return (instance as any)[PRIVATE_STORAGE];
 }
