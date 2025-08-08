@@ -7,10 +7,5 @@ module.exports = {
     out: "dist/docs",
     entryPointStrategy: "packages",
     entryPoints: ["./packages/reactivity-core", "./packages/reactivity-events"],
-    skipErrorChecking: true,
-    validation: {
-        notExported: false,
-        invalidLink: true,
-        notDocumented: true
-    }
+    skipErrorChecking: true
 };

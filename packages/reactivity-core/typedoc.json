@@ -2,5 +2,11 @@
     // project-root is a dev dependency (link to the project root)
     "extends": ["project-root/typedoc.base.json"],
     "entryPoints": ["./src/index.ts"],
-    "groupOrder": ["Primitives", "Watching", "Collections", "Struct", "Utilities", "*"]
+    "groupOrder": ["Primitives", "Watching", "Collections", "Struct", "Utilities", "*"],
+    "intentionallyNotExported": [
+        "src/struct/struct.ts:GetMemberSchemaForProp",
+        "src/struct/struct.ts:ConstructorArgs",
+        "src/struct/struct.ts:ConstructorProps",
+        "src/struct/struct.ts:PropertyMembers"
+    ]
 }

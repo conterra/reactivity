@@ -6,5 +6,10 @@
     "excludePrivate": true,
     "excludeInternal": true,
     "skipErrorChecking": true,
-    "validation": false
+    "validation": {
+        "invalidLink": true,
+        "notDocumented": true,
+        "notExported": true,
+        "rewrittenLink": true
+    }
 }
