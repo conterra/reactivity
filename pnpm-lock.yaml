@@ -4,6 +4,87 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@changesets/cli':
+      specifier: ^2.29.5
+      version: 2.29.5
+    '@eslint/js':
+      specifier: ^9.32.0
+      version: 9.32.0
+    '@mdi/font':
+      specifier: ^7.4.47
+      version: 7.4.47
+    '@preact/signals-core':
+      specifier: 1.11.0
+      version: 1.11.0
+    '@types/node':
+      specifier: ^20.19.9
+      version: 20.19.9
+    '@vitejs/plugin-vue':
+      specifier: ^6.0.1
+      version: 6.0.1
+    concurrently:
+      specifier: ^9.2.0
+      version: 9.2.0
+    esbuild:
+      specifier: ^0.25.8
+      version: 0.25.8
+    eslint:
+      specifier: ^9.32.0
+      version: 9.32.0
+    eslint-config-prettier:
+      specifier: ^10.1.8
+      version: 10.1.8
+    eslint-plugin-headers:
+      specifier: 1.3.3
+      version: 1.3.3
+    eslint-plugin-vue:
+      specifier: ^10.4.0
+      version: 10.4.0
+    happy-dom:
+      specifier: ^18.0.1
+      version: 18.0.1
+    husky:
+      specifier: ^9.1.7
+      version: 9.1.7
+    lint-staged:
+      specifier: ^16.1.4
+      version: 16.1.4
+    prettier:
+      specifier: ^3.6.2
+      version: 3.6.2
+    rimraf:
+      specifier: ^6.0.1
+      version: 6.0.1
+    tsx:
+      specifier: ^4.20.3
+      version: 4.20.3
+    typedoc:
+      specifier: ^0.28.9
+      version: 0.28.9
+    typescript:
+      specifier: ^5.9.2
+      version: 5.9.2
+    typescript-eslint:
+      specifier: ^8.39.0
+      version: 8.39.0
+    vite:
+      specifier: ^7.1.1
+      version: 7.1.1
+    vitest:
+      specifier: ^3.2.4
+      version: 3.2.4
+    vue:
+      specifier: ^3.5.18
+      version: 3.5.18
+    vue-eslint-parser:
+      specifier: ^10.2.0
+      version: 10.2.0
+    vuetify:
+      specifier: ^3.9.4
+      version: 3.9.4
+
 overrides:
   rollup@>=4.0.0 <4.22.4: '>=4.22.4'
   cross-spawn@<7.0.5: '>=7.0.5'
@@ -20,73 +101,73 @@ importers:
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.29.5
+        specifier: 'catalog:'
         version: 2.29.5
       '@eslint/js':
-        specifier: ^9.32.0
+        specifier: 'catalog:'
         version: 9.32.0
       '@types/node':
-        specifier: ^20.19.9
+        specifier: 'catalog:'
         version: 20.19.9
       concurrently:
-        specifier: ^9.2.0
+        specifier: 'catalog:'
         version: 9.2.0
       esbuild:
-        specifier: ^0.25.8
+        specifier: 'catalog:'
         version: 0.25.8
       eslint:
-        specifier: ^9.32.0
+        specifier: 'catalog:'
         version: 9.32.0
       eslint-config-prettier:
-        specifier: ^10.1.8
+        specifier: 'catalog:'
         version: 10.1.8(eslint@9.32.0)
       eslint-plugin-headers:
-        specifier: 1.3.3
+        specifier: 'catalog:'
         version: 1.3.3(eslint@9.32.0)
       eslint-plugin-vue:
-        specifier: ^10.4.0
+        specifier: 'catalog:'
         version: 10.4.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0)(typescript@5.9.2))(eslint@9.32.0)(vue-eslint-parser@10.2.0(eslint@9.32.0))
       happy-dom:
-        specifier: ^18.0.1
+        specifier: 'catalog:'
         version: 18.0.1
       husky:
-        specifier: ^9.1.7
+        specifier: 'catalog:'
         version: 9.1.7
       lint-staged:
-        specifier: ^16.1.4
+        specifier: 'catalog:'
         version: 16.1.4
       prettier:
-        specifier: ^3.6.2
+        specifier: 'catalog:'
         version: 3.6.2
       rimraf:
-        specifier: ^6.0.1
+        specifier: 'catalog:'
         version: 6.0.1
       tsx:
-        specifier: ^4.20.3
+        specifier: 'catalog:'
         version: 4.20.3
       typedoc:
-        specifier: ^0.28.9
+        specifier: 'catalog:'
         version: 0.28.9(typescript@5.9.2)
       typescript:
-        specifier: ^5.9.2
+        specifier: 'catalog:'
         version: 5.9.2
       typescript-eslint:
-        specifier: ^8.39.0
+        specifier: 'catalog:'
         version: 8.39.0(eslint@9.32.0)(typescript@5.9.2)
       vite:
-        specifier: ^7.1.1
+        specifier: 'catalog:'
         version: 7.1.1(@types/node@20.19.9)(tsx@4.20.3)(yaml@2.8.0)
       vitest:
-        specifier: ^3.2.4
+        specifier: 'catalog:'
         version: 3.2.4(@types/node@20.19.9)(happy-dom@18.0.1)(tsx@4.20.3)(yaml@2.8.0)
       vue-eslint-parser:
-        specifier: ^10.2.0
+        specifier: 'catalog:'
         version: 10.2.0(eslint@9.32.0)
 
   packages/reactivity-core:
     dependencies:
       '@preact/signals-core':
-        specifier: 1.11.0
+        specifier: 'catalog:'
         version: 1.11.0
     devDependencies:
       project-root:
@@ -112,23 +193,23 @@ importers:
         specifier: workspace:^
         version: link:../packages/reactivity-events
       '@mdi/font':
-        specifier: ^7.4.47
+        specifier: 'catalog:'
         version: 7.4.47
       vue:
-        specifier: ^3.5.18
+        specifier: 'catalog:'
         version: 3.5.18(typescript@5.9.2)
       vuetify:
-        specifier: ^3.9.4
+        specifier: 'catalog:'
         version: 3.9.4(typescript@5.9.2)(vue@3.5.18(typescript@5.9.2))
     devDependencies:
       '@vitejs/plugin-vue':
-        specifier: ^6.0.1
+        specifier: 'catalog:'
         version: 6.0.1(vite@7.1.1(@types/node@22.13.9)(tsx@4.20.3)(yaml@2.8.0))(vue@3.5.18(typescript@5.9.2))
       eslint-plugin-vue:
-        specifier: ^10.4.0
+        specifier: 'catalog:'
         version: 10.4.0(@typescript-eslint/parser@8.39.0(eslint@9.32.0)(typescript@5.9.2))(eslint@9.32.0)(vue-eslint-parser@10.2.0(eslint@9.32.0))
       vite:
-        specifier: ^7.1.1
+        specifier: 'catalog:'
         version: 7.1.1(@types/node@22.13.9)(tsx@4.20.3)(yaml@2.8.0)
 
 packages:
