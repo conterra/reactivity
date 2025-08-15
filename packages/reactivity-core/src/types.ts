@@ -267,7 +267,7 @@ export type WatchImmediateCallback<T> = (
 export type WatchContext = EffectContext;
 
 /**
- * Options that can be passed to {@link syncWatch}.
+ * Options that can be passed to {@link watch} and {@link watchValue}.
  *
  * @group Watching
  */

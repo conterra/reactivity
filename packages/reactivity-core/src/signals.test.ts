@@ -248,6 +248,49 @@ describe("computed", () => {
         });
         testWatch(signal, watched, unwatched);
     });
+
+    it("watch notification happens before the value is computed", () => {
+        const events: string[] = [];
+        const signal = computed(
+            () => {
+                events.push("compute");
+            },
+            {
+                watched: () => {
+                    events.push("watched");
+                },
+                unwatched: () => {
+                    events.push("unwatched");
+                }
+            }
+        );
+
+        const handle = effect(() => void signal.value, { dispatch: "sync" });
+        expect(events).toEqual(["watched", "compute"]);
+
+        handle.destroy();
+        expect(events).toEqual(["watched", "compute", "unwatched"]);
+    });
+
+    it("watch notification does not happen outside of effects", () => {
+        const events: string[] = [];
+        const signal = computed(
+            () => {
+                events.push("compute");
+            },
+            {
+                watched: () => {
+                    events.push("watched");
+                },
+                unwatched: () => {
+                    events.push("unwatched");
+                }
+            }
+        );
+        void signal.value;
+
+        expect(events).toEqual(["compute"]);
+    });
 });
 
 describe("external", () => {

@@ -152,7 +152,7 @@ export function emit<T>(emitter: EventEmitter<T>, ...args: EventArgs<T>): void {
 }
 
 /**
- * Options supported by {@link on} and {@link onSync}.
+ * Options supported by {@link on}.
  *
  * @group Subscribing
  */
@@ -244,11 +244,6 @@ const WATCH_OPTS = {
  *     console.log("Clicked at", event.x, event.y);
  * });
  * ```
- *
- * > NOTE: This function will slightly defer executions of the given `callback`.
- * > In other words, the execution of callbacks does not happen _immediately_ after an event was fired.
- * >
- * > If you need more control, take a look at {@link onSync}.
  *
  * @group Subscribing
  */
