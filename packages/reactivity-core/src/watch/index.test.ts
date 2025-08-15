@@ -172,7 +172,7 @@ function defineSharedTests(dispatch: DispatchType) {
 
     it("supports custom equality", async () => {
         const spy = vi.fn();
-        const equalsIgnoreCase = ([a]: [string], [b]: [string]) =>
+        const equalIgnoreCase = ([a]: [string], [b]: [string]) =>
             a.toLowerCase() === b.toLowerCase();
 
         const str = reactive("foo");
@@ -182,7 +182,7 @@ function defineSharedTests(dispatch: DispatchType) {
                 spy(str, oldStr);
             },
             {
-                equal: equalsIgnoreCase,
+                equal: equalIgnoreCase,
                 dispatch
             }
         );

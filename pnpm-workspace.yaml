@@ -5,6 +5,7 @@ packages:
 
 catalog:
   "@preact/signals-core": 1.11.0
+  "fast-equals": "^5.2.2"
 
   # Dev Dependencies
   "@changesets/cli": ^2.29.5

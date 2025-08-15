@@ -7,7 +7,7 @@ import {
     WatchImmediateCallback,
     WatchOptions
 } from "../types";
-import { shallowEqual } from "../utils/equality";
+import { shallowArrayEqual } from "../utils/equality";
 import { createWatcher } from "./Watcher";
 
 /**
@@ -165,7 +165,7 @@ export function syncWatch<const Values extends unknown[]>(
     options?: Omit<WatchOptions<Values>, "dispatch">
 ): CleanupHandle {
     return watch(selector, callback, {
-        equal: shallowEqual,
+        equal: shallowArrayEqual,
         ...options,
         dispatch: "sync"
     });
@@ -317,7 +317,7 @@ export function watch<const Values extends unknown[]>(
     options?: WatchOptions<Values>
 ): CleanupHandle {
     return createWatcher(selector, callback, {
-        equal: shallowEqual,
+        equal: shallowArrayEqual,
         ...options
     });
 }
