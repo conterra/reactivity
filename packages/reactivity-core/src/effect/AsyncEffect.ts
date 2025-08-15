@@ -67,22 +67,16 @@ export class AsyncEffect implements EffectContext {
         this.#isExecuting = true;
         const stop = watcher.start();
         try {
-            // The branch here is for consistent behavior with the raw (sync) effect.
+            this.#triggerCallback();
+        } catch (e) {
             if (this.#initialExecution) {
-                // Invoke right here to transport the (possible) exception to the caller.
-                try {
-                    this.#triggerCallback();
-                } catch (e) {
-                    this.destroy();
-                    throw e;
-                }
+                // The branch here is for consistent behavior with the raw (sync) effect.
+                // Destroy instantly here and transport the exception to the caller.
+                this.destroy();
+                throw e;
             } else {
                 // We're called from a scheduled task, log the error here and continue.
-                try {
-                    this.#triggerCallback();
-                } catch (e) {
-                    reportCallbackError(e);
-                }
+                reportCallbackError(e);
             }
         } finally {
             stop();
