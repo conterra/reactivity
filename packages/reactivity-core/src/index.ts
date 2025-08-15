@@ -20,6 +20,10 @@
  * @groupDescription Struct
  *
  * Utilities to create reactive data structures/objects.
+ *
+ * @groupDescription Equality
+ *
+ * Functions to test for object equality, for example in the `equal` option of `watch()` or `computed()`.
  */
 
 export {
@@ -58,5 +62,6 @@ export { syncWatch, syncWatchValue, watch, watchValue } from "./watch";
 export { effect, syncEffect } from "./effect";
 export { dispatchAsyncCallback, nextTick } from "./utils/dispatch";
 export { reportCallbackError } from "./utils/reportCallbackError";
+export { deepEqual, shallowEqual, defaultEqual, shallowArrayEqual } from "./utils/equality";
 export * from "./collections";
 export * from "./struct";

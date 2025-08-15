@@ -34,7 +34,8 @@
         "dev:js": "pnpm build:js --watch"
     },
     "dependencies": {
-        "@preact/signals-core": "catalog:"
+        "@preact/signals-core": "catalog:",
+        "fast-equals": "catalog:"
     },
     "devDependencies": {
         "project-root": "workspace:*"

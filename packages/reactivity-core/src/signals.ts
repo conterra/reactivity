@@ -19,7 +19,7 @@ import {
     RemoveBrand,
     SubscribeFunc
 } from "./types";
-import { defaultEquals } from "./utils/equality";
+import { defaultEqual } from "./utils/equality";
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.
@@ -418,7 +418,7 @@ abstract class ReactiveImpl<T>
 }
 
 const REACTIVE_SIGNAL = Symbol("signal");
-const CUSTOM_EQUALS = Symbol("equals");
+const CUSTOM_EQUAL = Symbol("equal");
 
 /** An object that wraps a raw signal from the underlying signals-core library. */
 class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
@@ -442,34 +442,34 @@ class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
 }
 
 class ComputedReactiveImpl<T> extends WrappingReactiveImpl<T> {
-    [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
+    [CUSTOM_EQUAL]: EqualsFunc<T> | undefined;
 
     constructor(
         compute: () => T,
-        equals: EqualsFunc<T> | undefined,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
-        const rawSignal = rawComputed(equals ? computeWithEquals(compute, equals) : compute, {
+        const rawSignal = rawComputed(equal ? computeWithEqual(compute, equal) : compute, {
             watched,
             unwatched
         });
         super(rawSignal);
-        this[CUSTOM_EQUALS] = equals;
+        this[CUSTOM_EQUAL] = equal;
     }
 }
 
 class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
-    [CUSTOM_EQUALS]: EqualsFunc<T>;
+    [CUSTOM_EQUAL]: EqualsFunc<T>;
 
     constructor(
         initialValue: T,
-        equals: EqualsFunc<T> | undefined,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
         super(rawSignal(initialValue, { watched, unwatched }));
-        this[CUSTOM_EQUALS] = equals ?? defaultEquals;
+        this[CUSTOM_EQUAL] = equal ?? defaultEqual;
     }
 
     get value() {
@@ -477,7 +477,7 @@ class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
     }
 
     set value(value: T) {
-        const isEqual = rawUntracked(() => this[CUSTOM_EQUALS]?.(this.value, value));
+        const isEqual = rawUntracked(() => this[CUSTOM_EQUAL]?.(this.value, value));
         if (isEqual) {
             return;
         }
@@ -571,23 +571,23 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
     constructor(
         source: () => S,
         reset: (source: S, prev: T | undefined) => T,
-        equals: EqualsFunc<T> | undefined,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
         super();
 
-        let writeEquals;
-        if (equals) {
-            writeEquals = (a: T | undefined, b: T | undefined) => {
+        let writeEqual;
+        if (equal) {
+            writeEqual = (a: T | undefined, b: T | undefined) => {
                 if (this[IS_INIT]) {
                     // The initial value is undefined, which does not match with the equals signature.
                     return false;
                 }
-                return equals(a as T, b as T);
+                return equal(a as T, b as T);
             };
         }
-        this[WRITE_SIGNAL] = reactive(undefined, { equal: writeEquals });
+        this[WRITE_SIGNAL] = reactive(undefined, { equal: writeEqual });
 
         this[READ_SIGNAL] = computed(
             () => {
@@ -620,14 +620,14 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
     }
 }
 
-function computeWithEquals<T>(compute: () => T, equals: EqualsFunc<T>) {
+function computeWithEqual<T>(compute: () => T, equal: EqualsFunc<T>) {
     let firstExecution = true;
     let currentValue: T;
 
     return function computeWithEquals() {
         const newValue = compute();
         return rawUntracked(() => {
-            if (firstExecution || !equals(currentValue, newValue)) {
+            if (firstExecution || !equal(currentValue, newValue)) {
                 currentValue = newValue;
                 firstExecution = false;
             }

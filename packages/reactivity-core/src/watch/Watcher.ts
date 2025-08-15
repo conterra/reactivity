@@ -11,7 +11,7 @@ import {
     WatchImmediateCallback,
     WatchOptions
 } from "../types";
-import { defaultEquals } from "../utils/equality";
+import { defaultEqual } from "../utils/equality";
 import { effect } from "../effect";
 
 export function createWatcher<T>(
@@ -21,7 +21,7 @@ export function createWatcher<T>(
 ): CleanupHandle {
     const computedArgs = rawComputed(selector);
     const immediate = options?.immediate ?? false;
-    const equal = options?.equal ?? defaultEquals;
+    const equal = options?.equal ?? defaultEqual;
     const dispatch = options?.dispatch ?? "async";
     return new Watcher(callback, computedArgs, equal, immediate, dispatch);
 }
