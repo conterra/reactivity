@@ -5,7 +5,6 @@
 ### Minor Changes
 
 - 546f3ec: Add two new options to all signal types: `watched` and `unwatched`.
-
     - `watched()` is called when the _first_ watcher starts watching the signal.
       This can be used, for example, to setup some background task.
     - `unwatched()` is called when the _last_ watcher stops watching the signal.
