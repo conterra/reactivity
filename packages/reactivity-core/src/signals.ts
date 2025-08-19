@@ -391,7 +391,9 @@ export function isReadonlyReactive<T>(
  * @group Primitives
  */
 export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is Reactive<T> {
-    return maybeReactive instanceof WritableReactiveImpl;
+    return (
+        maybeReactive instanceof WritableReactiveImpl || maybeReactive instanceof LinkedReactiveImpl
+    );
 }
 
 abstract class ReactiveImpl<T>
