@@ -10,6 +10,7 @@ import {
 import {
     AddBrand,
     AddWritableBrand,
+    CleanupHandle,
     EqualsFunc,
     ExternalReactive,
     Reactive,
@@ -20,6 +21,7 @@ import {
     SubscribeFunc
 } from "./types";
 import { defaultEquals } from "./utils/equality";
+import { dispatchAsyncCallback } from "./utils/dispatch";
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.
@@ -497,8 +499,11 @@ class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
  * See also https://github.com/tc39/proposal-signals/issues/237
  */
 class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
+    #subscribe: SubscribeFunc;
+
     #invalidateSignal = rawSignal(false);
     #subscription: (() => void) | undefined;
+    #temporarySubscription: CleanupHandle | undefined;
 
     constructor(
         getter: () => T,
@@ -509,35 +514,58 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
         const raw = rawComputed(
             () => {
                 this.#invalidateSignal.value;
-                if (!this.#subscription) {
-                    this.#invalidate();
+
+                // Briefly subscribe to the data source to get updates within this tick.
+                if (!this.#subscription && !this.#temporarySubscription) {
+                    this.#startSubscribe();
+                    this.#temporarySubscription = dispatchAsyncCallback(() => {
+                        this.#temporarySubscription = undefined;
+                        this.#stopSubscribe();
+                    });
                 }
                 return untracked(getter);
             },
             {
                 watched: () => {
-                    this.#subscription = subscribe(this.#invalidate);
-
+                    if (this.#temporarySubscription) {
+                        // Someone started to watch while we're subscribed temporarily.
+                        // We can just inherit the active watch by cancelling the scheduled cleanup action.
+                        this.#temporarySubscription.destroy();
+                        this.#temporarySubscription = undefined;
+                    } else {
+                        this.#startSubscribe();
+                    }
                     watched?.();
                 },
                 unwatched: () => {
                     unwatched?.();
-
-                    const handle = this.#subscription;
-                    this.#subscription = undefined;
-                    if (handle) {
-                        handle();
-                        this.#invalidate();
-                    }
+                    this.#stopSubscribe();
                 }
             }
         );
         super(raw);
+        this.#subscribe = subscribe;
     }
 
     #invalidate = () => {
         this.#invalidateSignal.value = !this.#invalidateSignal.peek();
     };
+
+    #startSubscribe() {
+        if (this.#subscription) {
+            throw new Error("Internal error: already subscribed");
+        }
+        this.#subscription = this.#subscribe(this.#invalidate);
+    }
+
+    #stopSubscribe() {
+        const handle = this.#subscription;
+        this.#subscription = undefined;
+        if (handle) {
+            handle();
+            this.#invalidate();
+        }
+    }
 }
 
 class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
