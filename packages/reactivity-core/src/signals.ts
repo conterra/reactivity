@@ -420,7 +420,6 @@ abstract class ReactiveImpl<T>
 }
 
 const REACTIVE_SIGNAL = Symbol("signal");
-const CUSTOM_EQUALS = Symbol("equals");
 
 /** An object that wraps a raw signal from the underlying signals-core library. */
 class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
@@ -444,34 +443,31 @@ class WrappingReactiveImpl<T> extends ReactiveImpl<T> {
 }
 
 class ComputedReactiveImpl<T> extends WrappingReactiveImpl<T> {
-    [CUSTOM_EQUALS]: EqualsFunc<T> | undefined;
-
     constructor(
         compute: () => T,
-        equals: EqualsFunc<T> | undefined,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
-        const rawSignal = rawComputed(equals ? computeWithEquals(compute, equals) : compute, {
+        const rawSignal = rawComputed(equal ? computeWithEquals(compute, equal) : compute, {
             watched,
             unwatched
         });
         super(rawSignal);
-        this[CUSTOM_EQUALS] = equals;
     }
 }
 
 class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
-    [CUSTOM_EQUALS]: EqualsFunc<T>;
+    #equal: EqualsFunc<T>;
 
     constructor(
         initialValue: T,
-        equals: EqualsFunc<T> | undefined,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
         super(rawSignal(initialValue, { watched, unwatched }));
-        this[CUSTOM_EQUALS] = equals ?? defaultEquals;
+        this.#equal = equal ?? defaultEquals;
     }
 
     get value() {
@@ -479,16 +475,13 @@ class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
     }
 
     set value(value: T) {
-        const isEqual = rawUntracked(() => this[CUSTOM_EQUALS]?.(this.value, value));
+        const isEqual = rawUntracked(() => this.#equal(this.value, value));
         if (isEqual) {
             return;
         }
         this[REACTIVE_SIGNAL].value = value;
     }
 }
-
-const INVALIDATE_SIGNAL = Symbol("invalidate_signal");
-const SUBSCRIBE_HANDLE = Symbol("subscribe_handle");
 
 /**
  * Custom signal implementation for "synchronized" values, i.e. values from a foreign source.
@@ -504,8 +497,8 @@ const SUBSCRIBE_HANDLE = Symbol("subscribe_handle");
  * See also https://github.com/tc39/proposal-signals/issues/237
  */
 class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
-    [INVALIDATE_SIGNAL] = rawSignal(false);
-    [SUBSCRIBE_HANDLE]: (() => void) | undefined;
+    #invalidateSignal = rawSignal(false);
+    #subscription: (() => void) | undefined;
 
     constructor(
         getter: () => T,
@@ -515,23 +508,23 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     ) {
         const raw = rawComputed(
             () => {
-                this[INVALIDATE_SIGNAL].value;
-                if (!this[SUBSCRIBE_HANDLE]) {
+                this.#invalidateSignal.value;
+                if (!this.#subscription) {
                     this.#invalidate();
                 }
-                return rawUntracked(() => getter());
+                return untracked(getter);
             },
             {
                 watched: () => {
-                    this[SUBSCRIBE_HANDLE] = subscribe(this.#invalidate);
+                    this.#subscription = subscribe(this.#invalidate);
 
                     watched?.();
                 },
                 unwatched: () => {
                     unwatched?.();
 
-                    const handle = this[SUBSCRIBE_HANDLE];
-                    this[SUBSCRIBE_HANDLE] = undefined;
+                    const handle = this.#subscription;
+                    this.#subscription = undefined;
                     if (handle) {
                         handle();
                         this.#invalidate();
@@ -543,14 +536,9 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     }
 
     #invalidate = () => {
-        this[INVALIDATE_SIGNAL].value = !this[INVALIDATE_SIGNAL].peek();
+        this.#invalidateSignal.value = !this.#invalidateSignal.peek();
     };
 }
-
-const READ_SIGNAL = Symbol("read_source");
-const WRITE_SIGNAL = Symbol("write_state");
-const PREV_SOURCE = Symbol("prev_source");
-const IS_INIT = Symbol("has_source");
 
 class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
     // A writable signal that is used to _write_ the current value.
@@ -558,17 +546,17 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
     // it is also reset to a new value when the source changes.
     //
     // Resetting happens in the computed signal, as a side effect, which is seems to be working fine?
-    [WRITE_SIGNAL]: Reactive<T | undefined>;
+    #writeSignal: Reactive<T | undefined>;
 
     // A computed signal that is used to _read_ the current value.
     // It automatically resets itself if the source changes.
-    [READ_SIGNAL]: ReadonlyReactive<T>;
+    #readSignal: ReadonlyReactive<T>;
 
     // Old source (if any), not reactive.
-    [PREV_SOURCE]: S | undefined;
+    #prevSource: S | undefined;
 
     // false after initial source computation, to discriminate between undefined and initial state.
-    [IS_INIT] = true;
+    #isInitial = true;
 
     constructor(
         source: () => S,
@@ -582,31 +570,30 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
         let writeEquals;
         if (equals) {
             writeEquals = (a: T | undefined, b: T | undefined) => {
-                if (this[IS_INIT]) {
+                if (this.#isInitial) {
                     // The initial value is undefined, which does not match with the equals signature.
                     return false;
                 }
                 return equals(a as T, b as T);
             };
         }
-        this[WRITE_SIGNAL] = reactive(undefined, { equal: writeEquals });
-
-        this[READ_SIGNAL] = computed(
+        this.#writeSignal = reactive(undefined, { equal: writeEquals });
+        this.#readSignal = computed(
             () => {
                 const currentSource = source();
-                if (this[IS_INIT] || currentSource !== this[PREV_SOURCE]) {
-                    this[PREV_SOURCE] = currentSource;
-                    this[WRITE_SIGNAL].value = reset(currentSource, this[WRITE_SIGNAL].peek());
-                    this[IS_INIT] = false;
+                if (this.#isInitial || currentSource !== this.#prevSource) {
+                    this.#prevSource = currentSource;
+                    this.#writeSignal.value = reset(currentSource, this.#writeSignal.peek());
+                    this.#isInitial = false;
                 }
-                return this[WRITE_SIGNAL].value as T;
+                return this.#writeSignal.value as T;
             },
             { watched, unwatched }
         );
     }
 
     get value(): T {
-        return this[READ_SIGNAL].value;
+        return this.#readSignal.value;
     }
 
     set value(newValue: T) {
@@ -618,7 +605,7 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
         // As a side effect, this also ensures that the current value is always initialized --
         // thus equality does not the `| undefined` case.
         this.peek();
-        this[WRITE_SIGNAL].value = newValue;
+        this.#writeSignal.value = newValue;
     }
 }
 
