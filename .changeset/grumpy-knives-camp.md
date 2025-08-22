@@ -2,4 +2,4 @@
 "@conterra/reactivity-core": patch
 ---
 
-Bump dependency @preact-signals/core
+Update `@preact/signals-core` to 1.12.0
