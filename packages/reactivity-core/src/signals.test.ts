@@ -532,7 +532,7 @@ describe("synchronized", () => {
         expect(getter).toHaveBeenCalledTimes(2);
     });
 
-    it("does not cache computes across many levels", () => {
+    it("caches the computed value", () => {
         const source = new DataSource(1);
         const sync = synchronized(
             () => source.value,
