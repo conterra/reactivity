@@ -1,11 +1,49 @@
 # @conterra/reactivity-events
 
+## 0.8.0
+
+### Minor Changes
+
+- 1e3090b: Deprecate `onSync()`.
+  Use `on()` with the new `dispatch` option instead.
+- 1e3090b: Introduce `dispatch` option to `on()`.
+    - `"async"`: callbacks are executed in the next major task (the default, and the existing behavior)
+    - `"sync"`: callbacks are executed synchronously (like `onSync` etc.)
+
+    Example:
+
+    ```ts
+    import { on } from "@conterra/reactivity-events";
+
+    const eventEmitter = /* ... */;
+
+    on(
+        eventEmitter,
+        (event) => {
+            console.log(`Click at ${event.x}, ${event.y}`);
+        },
+        {
+            dispatch: "sync"
+        }
+    );
+    ```
+
+### Patch Changes
+
+- Updated dependencies [8667eff]
+- Updated dependencies [e7690b7]
+- Updated dependencies [6ee0459]
+- Updated dependencies [7f6e38d]
+- Updated dependencies [8667eff]
+- Updated dependencies [29fc994]
+- Updated dependencies [e7690b7]
+    - @conterra/reactivity-core@0.8.0
+
 ## 0.7.0
 
 ### Minor Changes
 
 - 7b7ed6d: The `emitter()` function now supports two new options: `subscribed` and `unsubscribed`.
-
     - `subscribed()` will be called when the _first_ subscriber subscribes to the event.
       This can be used to initialize the event source lazily.
     - `unsubscribed()` will be called when the _last_ subscriber unsubscribes from the event.
@@ -20,7 +58,7 @@
         },
         unsubscribed: () => {
             // Stop listening for mouse events
-        },
+        }
     });
     ```
 

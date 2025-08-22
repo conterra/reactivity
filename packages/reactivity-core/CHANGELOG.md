@@ -1,11 +1,50 @@
 # @conterra/reactivity-core
 
+## 0.8.0
+
+### Minor Changes
+
+- 8667eff: Deprecate `syncEffect()`, `syncWatch()` and `syncWatchValue()`.
+  Use `effect()`, `watch()` and `watchValue()` with the new `dispatch` option instead.
+- e7690b7: `synchronized`: add support for the `equal` option
+- 8667eff: Introduce `dispatch` option to `effect()`, `watch()` and `watchValue`:
+    - `"async"`: callbacks are executed in the next major task (the default, and the existing behavior)
+    - `"sync"`: callbacks are executed synchronously (like `syncEffect` etc.)
+
+    Example:
+
+    ```ts
+    import { effect, reactive } from "@conterra/reactivity-core";
+
+    const signal = reactive(0);
+
+    effect(
+        () => {
+            console.log(signal.value);
+        },
+        { dispatch: "sync" } // default: "async"
+    );
+
+    signal.value = 1; // effect triggers immediately
+    ```
+
+- e7690b7: Change implementation of `synchronized` signals.
+
+    When a synchronized signal is being accessed without it currently being watched,
+    the package will now briefly subscribe to that signal's source to be notified about changes.
+    The current value is now being cached more aggressively while the underlying data source does _not_ report any changes.
+
+### Patch Changes
+
+- 6ee0459: Update `@preact/signals-core` to 1.12.0
+- 7f6e38d: Ensure `isReactive()` returns true for linked signals.
+- 29fc994: Refactor implementation of syncEffect's context argument using the dispose() feature exposed by recent @preact/signals-core
+
 ## 0.7.0
 
 ### Minor Changes
 
 - 546f3ec: Add two new options to all signal types: `watched` and `unwatched`.
-
     - `watched()` is called when the _first_ watcher starts watching the signal.
       This can be used, for example, to setup some background task.
     - `unwatched()` is called when the _last_ watcher stops watching the signal.
