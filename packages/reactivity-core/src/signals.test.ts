@@ -594,6 +594,24 @@ describe("synchronized", () => {
         watchHandle.destroy();
     });
 
+    it("supports custom equality", () => {
+        const ds = new DataSource(1);
+        const sync = synchronized(
+            () => ds.value,
+            (cb) => ds.subscribe(cb),
+            {
+                equal: (a, b) => Math.abs(a) === Math.abs(b)
+            }
+        );
+
+        expect(sync.value).toBe(1);
+        ds.value = -1;
+        expect(sync.value).toBe(1); // Equal
+
+        ds.value = -2;
+        expect(sync.value).toBe(-2); // Changed
+    });
+
     it("notifies on watch and unwatch", () => {
         const watched = vi.fn();
         const unwatched = vi.fn();

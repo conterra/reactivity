@@ -10,6 +10,7 @@ import {
 import {
     AddBrand,
     AddWritableBrand,
+    CleanupFunc,
     CleanupHandle,
     EqualsFunc,
     ExternalReactive,
@@ -20,8 +21,8 @@ import {
     RemoveBrand,
     SubscribeFunc
 } from "./types";
-import { defaultEquals } from "./utils/equality";
 import { dispatchAsyncCallback } from "./utils/dispatch";
+import { defaultEquals } from "./utils/equality";
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.
@@ -231,12 +232,12 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
 export function synchronized<T>(
     getter: () => T,
     subscribe: SubscribeFunc,
-    options?: Omit<ReactiveOptions<T>, "equal">
+    options?: ReactiveOptions<T>
 ): ReadonlyReactive<T> {
     const impl = new SynchronizedReactiveImpl(
         getter,
         subscribe,
-        // TODO equals
+        options?.equal,
         options?.watched,
         options?.unwatched
     );
@@ -500,17 +501,23 @@ class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
  */
 class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     #subscribe: SubscribeFunc;
-
     #invalidateSignal = rawSignal(false);
-    #subscription: (() => void) | undefined;
+    #subscription: CleanupFunc | undefined;
     #temporarySubscription: CleanupHandle | undefined;
 
     constructor(
         getter: () => T,
         subscribe: SubscribeFunc,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
+        // The getter is always non-reactive
+        let compute = () => untracked(getter);
+        if (equal) {
+            compute = computeWithEquals(compute, equal);
+        }
+
         const raw = rawComputed(
             () => {
                 this.#invalidateSignal.value;
@@ -523,7 +530,7 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
                         this.#stopSubscribe();
                     });
                 }
-                return untracked(getter);
+                return compute();
             },
             {
                 watched: () => {
@@ -548,6 +555,8 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     }
 
     #invalidate = () => {
+        // Flipping the signal invalidates the computed signal.
+        // Everything else in that computed signal is non-reactive.
         this.#invalidateSignal.value = !this.#invalidateSignal.peek();
     };
 
