@@ -450,6 +450,26 @@ describe("synchronized", () => {
         expect(ds.getterCalled).toBe(2);
     });
 
+    it("reacts to changes after temporary subscription has ended", async () => {
+        const ds = new DataSource(1);
+        const sync = synchronized(
+            () => ds.value,
+            (cb) => ds.subscribe(cb)
+        );
+
+        expect(sync.value).toBe(1);
+        expect(ds.listener).toBeDefined();
+
+        await nextTick();
+        expect(ds.listener).toBeUndefined(); // Unsubscribed
+
+        ds.value = 2; // Change while no listener is active
+        expect(sync.value).toBe(2);
+        expect(ds.listener).toBeDefined(); // Re-subscribed
+
+        expect(ds.getterCalled).toBe(2);
+    });
+
     it("reuses the temporary subscription when immediately followed by a watch()", async () => {
         const getter = vi.fn().mockReturnValue(123);
         const unsubscribe = vi.fn();
