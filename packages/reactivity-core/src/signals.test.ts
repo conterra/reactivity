@@ -6,6 +6,7 @@ import { batch, computed, external, linked, reactive, synchronized } from "./sig
 import { EffectCallback, ReadonlyReactive } from "./types";
 import { watchValue } from "./watch";
 import { nextTick } from "./utils/dispatch";
+import { reactiveArray } from "./collections";
 
 const syncEffect = (cb: EffectCallback) => effect(cb, { dispatch: "sync" });
 
@@ -202,6 +203,25 @@ describe("computed", () => {
         const newValue = c.value;
         expect(newValue).toBe(oldValue); // no change
         expect(spy).toHaveBeenCalledOnce(); // no effect triggered
+    });
+
+    it("does not recompute if deep dependencies may have changed (but did in fact not)", () => {
+        const array = reactiveArray([1, 2, 3]);
+
+        const s1 = vi.fn(() => array.get(0)!);
+        const c1 = computed(s1);
+
+        const s2 = vi.fn(() => Math.abs(c1.value));
+        const c2 = computed(s2);
+
+        expect(c2.value).toBe(1);
+        expect(s1).toHaveBeenCalledTimes(1);
+        expect(s2).toHaveBeenCalledTimes(1);
+
+        array.push(4); // Coarse grained change event
+        expect(c2.value).toBe(1); // Unchanged
+        expect(s1).toHaveBeenCalledTimes(2); // Called again, but returned same value
+        expect(s2).toHaveBeenCalledTimes(1); // Getter not called because all dependencies (c1) actually unchanged
     });
 
     it("throws error from compute function", () => {
