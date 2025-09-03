@@ -1089,33 +1089,26 @@ array.push(2);
 The snippet above will print the first array item _twice_, even though that item is never modified.
 The current implementation is a compromise between memory efficiency, code complexity and usability that results in this quirk.
 
-To work around the issue, simply use a `watch()` or wrap the array access into a `computed()` signal.
-Both ways will ensure that the effect or callback is only triggered when the value _actually_ changed:
+To work around the issue, simply use a `watchValue()` expression to get notified when the value _actually_ changes:
 
 ```ts
-import { computed, effect, reactiveArray, watch } from "@conterra/reactivity-core";
+import { reactiveArray, watchValue } from "@conterra/reactivity-core";
 
 const array = reactiveArray([1]);
 
-// This works because computed() caches its value and only propagates change
-// when the value is actually updated.
-// Essentially, the computed's callback will still re-execute but no one else will be notified.
-const firstItem = computed(() => array.get(0));
-effect(() => {
-    console.log("first array item (effect)", firstItem.value);
-});
-
 // This works because the callback is only invoked when the selector returns different values.
 // Essentially, the selector is executed multiple times but watch() will not invoke the callback.
-// (Behind the scenes, watch() is based on `computed` as well).
-watch(
-    () => [array.get(0)],
-    ([item]) => {
-        console.log("first array item (watch)", item);
+watchValue(
+    () => array.get(0),
+    (item) => {
+        console.log("first array item:", item);
+    },
+    {
+        immediate: true
     }
 );
 
-// Triggers neither the effect nor the watch callback.
+// Does not trigger the watch callback because the value stays the same.
 array.push(2);
 ```
 
