@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { Reactive } from "../types";
-import { reactive } from "../signals";
+import { batch } from "../signals";
+import { Trackers } from "./tracking";
 
 /**
  * A reactive map.
@@ -100,45 +100,53 @@ export function reactiveMap<K, V>(initial?: Iterable<[K, V]>): ReactiveMap<K, V>
     return new ReactiveMapImpl(initial);
 }
 
+// This key is triggered whenever _any_ entry is added or removed.
+const ENTRIES_CHANGE = Symbol("length");
+
 class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
-    #map: Map<K, Reactive<V>> = new Map();
-    #structureChanged = reactive(false); // toggled to notify about additions, removals
+    #trackers: Trackers<K | typeof ENTRIES_CHANGE> | undefined;
+    #values: Map<K, V>;
 
     constructor(initial: Iterable<[K, V]> | undefined) {
-        if (initial) {
-            for (const [k, v] of initial) {
-                this.#map.set(k, reactive(v));
+        this.#values = new Map(initial);
+    }
+
+    get size(): number {
+        this.#getTrackers().track(ENTRIES_CHANGE);
+        return this.#values.size;
+    }
+
+    forEach(callback: (value: V, key: K) => void): void {
+        this.#getTrackers().track(ENTRIES_CHANGE);
+        // FIXME: Need to track individual values, too!
+        this.#values.forEach((value, key) => {
+            callback(value, key);
+        });
+    }
+
+    *entries(): IterableIterator<[K, V]> {
+        this.#getTrackers().track(ENTRIES_CHANGE);
+        for (const key of this.#values.keys()) {
+            const value = this.get(key);
+            if (value) {
+                yield [key, value];
             }
         }
     }
 
-    get size(): number {
-        this.#subscribeToStructureChange();
-        return this.#map.size;
-    }
-
-    forEach(callback: (value: V, key: K) => void): void {
-        this.#subscribeToStructureChange();
-        const entries = this.#map.entries();
-        for (const [key, cell] of entries) {
-            callback(cell.value, key);
-        }
-    }
-
-    entries(): IterableIterator<[K, V]> {
-        this.#subscribeToStructureChange();
-        return this.#iterateEntries();
-    }
-
     keys(): IterableIterator<K> {
-        this.#subscribeToStructureChange();
-        const entries = this.#map;
-        return entries.keys();
+        this.#getTrackers().track(ENTRIES_CHANGE);
+        return this.#values.keys();
     }
 
-    values(): IterableIterator<V> {
-        this.#subscribeToStructureChange();
-        return this.#iterateValues();
+    *values(): IterableIterator<V> {
+        this.#getTrackers().track(ENTRIES_CHANGE);
+        for (const key of this.#values.keys()) {
+            const value = this.get(key);
+            if (value) {
+                yield value;
+            }
+        }
     }
 
     [Symbol.iterator](): IterableIterator<[K, V]> {
@@ -146,69 +154,64 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     }
 
     clear(): void {
-        const hadEntries = !!this.#map.size;
-        this.#map.clear();
-        if (hadEntries) {
-            // existing keys were removed - trigger watchers
-            this.#triggerStructuralChange();
+        if (!this.#values.size) {
+            return;
         }
+
+        batch(() => {
+            // Trigger all trackers for all keys that were in the map
+            const trackers = this.#trackers;
+            if (trackers) {
+                for (const key of this.#values.keys()) {
+                    trackers.trigger(key);
+                }
+            }
+
+            this.#values.clear();
+        });
     }
 
     delete(key: K): boolean {
-        const hadKey = this.#map.delete(key);
-        if (hadKey) {
+        const hadKey = this.#values.delete(key);
+        const trackers = this.#trackers;
+        if (hadKey && trackers) {
             // existing key was removed - trigger watchers
-            this.#triggerStructuralChange();
+            batch(() => {
+                trackers.trigger(key);
+                trackers.trigger(ENTRIES_CHANGE);
+            });
         }
         return hadKey;
     }
 
     get(key: K): V | undefined {
-        this.#subscribeToStructureChange();
-        const cell = this.#map.get(key);
-        return cell?.value;
+        this.#getTrackers().track(key);
+        return this.#values.get(key);
     }
 
     has(key: K): boolean {
-        this.#subscribeToStructureChange();
-        return this.#map.has(key);
+        // NOTE: Could be optimized further (only change if entry added / removed, not on individual value changes)
+        this.#getTrackers().track(key);
+        return this.#values.has(key);
     }
 
     set(key: K, value: V): this {
-        const cell = this.#map.get(key);
-        if (cell) {
-            // existing key - no structural change
-            cell.value = value;
-        } else {
-            // new key - trigger watchers
-            this.#map.set(key, reactive(value));
-            this.#triggerStructuralChange();
+        const trackers = this.#trackers;
+        const hadEntry = this.#values.has(key);
+        this.#values.set(key, value);
+        if (trackers) {
+            batch(() => {
+                if (!hadEntry) {
+                    // New entry
+                    trackers.trigger(ENTRIES_CHANGE);
+                }
+                trackers.trigger(key);
+            });
         }
         return this;
     }
 
-    #subscribeToStructureChange() {
-        // Using the value adds a dependency to that value.
-        // When #triggerStructuralChange() is called
-        // values depending on this line will be re-executed.
-        this.#structureChanged.value;
-    }
-
-    #triggerStructuralChange() {
-        this.#structureChanged.value = !this.#structureChanged.peek();
-    }
-
-    *#iterateEntries(): Generator<[K, V]> {
-        const entries = this.#map.entries();
-        for (const [k, cell] of entries) {
-            yield [k, cell.value];
-        }
-    }
-
-    *#iterateValues(): Generator<V> {
-        const values = this.#map.values();
-        for (const cell of values) {
-            yield cell.value;
-        }
+    #getTrackers() {
+        return (this.#trackers ??= new Trackers());
     }
 }
