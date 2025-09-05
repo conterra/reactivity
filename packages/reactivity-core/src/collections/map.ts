@@ -117,9 +117,10 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     }
 
     forEach(callback: (value: V, key: K) => void): void {
-        this.#getTrackers().track(ENTRIES_CHANGE);
-        // FIXME: Need to track individual values, too!
+        const trackers = this.#getTrackers();
+        trackers.track(ENTRIES_CHANGE);
         this.#values.forEach((value, key) => {
+            trackers.track(key);
             callback(value, key);
         });
     }
