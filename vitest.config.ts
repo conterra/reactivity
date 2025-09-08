@@ -4,6 +4,11 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
     test: {
-        projects: ["packages/*"]
+        projects: ["packages/*"],
+        poolOptions: {
+            forks: {
+                execArgv: ["--expose-gc"]
+            }
+        }
     }
 });
