@@ -43,8 +43,8 @@ catalogs:
       specifier: ^10.4.0
       version: 10.4.0
     happy-dom:
-      specifier: ^18.0.1
-      version: 18.0.1
+      specifier: ^20.0.0
+      version: 20.0.0
     husky:
       specifier: ^9.1.7
       version: 9.1.7
@@ -129,7 +129,7 @@ importers:
         version: 10.4.0(@typescript-eslint/parser@8.42.0(eslint@9.35.0)(typescript@5.9.2))(eslint@9.35.0)(vue-eslint-parser@10.2.0(eslint@9.35.0))
       happy-dom:
         specifier: 'catalog:'
-        version: 18.0.1
+        version: 20.0.0
       husky:
         specifier: 'catalog:'
         version: 9.1.7
@@ -159,7 +159,7 @@ importers:
         version: 7.1.5(@types/node@20.19.13)(tsx@4.20.5)(yaml@2.8.1)
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/node@20.19.13)(happy-dom@18.0.1)(tsx@4.20.5)(yaml@2.8.1)
+        version: 3.2.4(@types/node@20.19.13)(happy-dom@20.0.0)(tsx@4.20.5)(yaml@2.8.1)
       vue-eslint-parser:
         specifier: 'catalog:'
         version: 10.2.0(eslint@9.35.0)
@@ -1234,8 +1234,8 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  happy-dom@18.0.1:
-    resolution: {integrity: sha512-qn+rKOW7KWpVTtgIUi6RVmTBZJSe2k0Db0vh1f7CWrWclkkc7/Q+FrOfkZIb2eiErLyqu5AXEzE7XthO9JVxRA==}
+  happy-dom@20.0.0:
+    resolution: {integrity: sha512-GkWnwIFxVGCf2raNrxImLo397RdGhLapj5cT3R2PT7FwL62Ze1DROhzmYW7+J3p9105DYMVenEejEbnq5wA37w==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -3043,7 +3043,7 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  happy-dom@18.0.1:
+  happy-dom@20.0.0:
     dependencies:
       '@types/node': 20.19.13
       '@types/whatwg-mimetype': 3.0.2
@@ -3615,7 +3615,7 @@ snapshots:
       tsx: 4.20.5
       yaml: 2.8.1
 
-  vitest@3.2.4(@types/node@20.19.13)(happy-dom@18.0.1)(tsx@4.20.5)(yaml@2.8.1):
+  vitest@3.2.4(@types/node@20.19.13)(happy-dom@20.0.0)(tsx@4.20.5)(yaml@2.8.1):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
@@ -3642,7 +3642,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 20.19.13
-      happy-dom: 18.0.1
+      happy-dom: 20.0.0
     transitivePeerDependencies:
       - jiti
       - less
