@@ -1,7 +1,7 @@
 {
     "name": "@conterra/reactivity-core",
     "type": "module",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "license": "Apache-2.0",
     "description": "Framework agnostic library for building reactive applications.",
     "repository": {
