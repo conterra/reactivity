@@ -128,10 +128,8 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     *entries(): IterableIterator<[K, V]> {
         this.#getTrackers().track(ENTRIES_CHANGE);
         for (const key of this.#values.keys()) {
-            const value = this.get(key); // tracks
-            if (value) {
-                yield [key, value];
-            }
+            const value = this.get(key)!; // tracks
+            yield [key, value];
         }
     }
 
@@ -143,10 +141,8 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     *values(): IterableIterator<V> {
         this.#getTrackers().track(ENTRIES_CHANGE);
         for (const key of this.#values.keys()) {
-            const value = this.get(key); // tracks
-            if (value) {
-                yield value;
-            }
+            const value = this.get(key)!; // tracks
+            yield value;
         }
     }
 
