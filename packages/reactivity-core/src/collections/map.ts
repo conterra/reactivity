@@ -101,7 +101,7 @@ export function reactiveMap<K, V>(initial?: Iterable<[K, V]>): ReactiveMap<K, V>
 }
 
 // This key is triggered whenever _any_ entry is added or removed.
-const ENTRIES_CHANGE = Symbol("length");
+const ENTRIES_CHANGE = Symbol("ENTRIES_CHANGE");
 
 class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     #trackers: Trackers<K | typeof ENTRIES_CHANGE> | undefined;
@@ -128,7 +128,7 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     *entries(): IterableIterator<[K, V]> {
         this.#getTrackers().track(ENTRIES_CHANGE);
         for (const key of this.#values.keys()) {
-            const value = this.get(key);
+            const value = this.get(key); // tracks
             if (value) {
                 yield [key, value];
             }
@@ -143,7 +143,7 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     *values(): IterableIterator<V> {
         this.#getTrackers().track(ENTRIES_CHANGE);
         for (const key of this.#values.keys()) {
-            const value = this.get(key);
+            const value = this.get(key); // tracks
             if (value) {
                 yield value;
             }
@@ -166,6 +166,7 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
                 for (const key of this.#values.keys()) {
                     trackers.trigger(key);
                 }
+                trackers.trigger(ENTRIES_CHANGE);
             }
 
             this.#values.clear();

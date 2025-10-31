@@ -197,6 +197,24 @@ describe("reactivity", () => {
         expect(observedValues).toEqual([undefined, 3, 4, undefined]);
     });
 
+    it("supports reactive clear", () => {
+        const map = reactiveMap<string, number>([["foo", 1]]);
+        const observedSizes: number[] = [];
+
+        effect(
+            () => {
+                observedSizes.push(map.size);
+            },
+            {
+                dispatch: "sync"
+            }
+        );
+        expect(observedSizes).toEqual([1]);
+
+        map.clear();
+        expect(observedSizes).toEqual([1, 0]);
+    });
+
     it("supports reactive has", () => {
         const map = reactiveMap<string, number>();
 
