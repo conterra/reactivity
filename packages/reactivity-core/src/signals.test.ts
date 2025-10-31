@@ -218,7 +218,7 @@ describe("computed", () => {
         expect(s1).toHaveBeenCalledTimes(1);
         expect(s2).toHaveBeenCalledTimes(1);
 
-        array.push(4); // Coarse grained change event
+        array.set(0, 1);
         expect(c2.value).toBe(1); // Unchanged
         expect(s1).toHaveBeenCalledTimes(2); // Called again, but returned same value
         expect(s2).toHaveBeenCalledTimes(1); // Getter not called because all dependencies (c1) actually unchanged
