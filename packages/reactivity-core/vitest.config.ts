@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
     test: {
-        projects: ["packages/*"]
+        // Needed for testing finalization registry behavior in collections tracking
+        execArgv: ["--expose-gc"]
     }
 });
