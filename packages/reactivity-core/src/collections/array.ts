@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { Reactive } from "../types";
-import { reactive } from "../signals";
+import { batch } from "../signals";
+import { Trackers } from "./tracking";
 
 /**
  * Reactive array interface without modifying methods.
@@ -344,97 +344,162 @@ export function reactiveArray<T>(items?: Iterable<T>): ReactiveArray<T> {
     return new ReactiveArrayImpl(items);
 }
 
+const LENGTH_CHANGED = Symbol("LENGTH_CHANGED");
+
 class ReactiveArrayImpl<T> implements ReactiveArray<T> {
-    #items: Reactive<T>[];
-    #structureChanged = reactive(false);
+    #trackers: Trackers<number | typeof LENGTH_CHANGED> | undefined;
+    #items: T[];
 
     constructor(initial: Iterable<T> | undefined) {
-        this.#items = initial ? Array.from(initial).map((v) => reactive(v)) : [];
+        this.#items = initial ? Array.from(initial) : [];
     }
 
     get length(): number {
-        this.#subscribeToStructureChange();
+        this.#getTrackers().track(LENGTH_CHANGED);
         return this.#items.length;
     }
 
     push(...values: T[]): void {
-        this.#items.push(...values.map((v) => reactive(v)));
-        this.#triggerStructuralChange();
+        const n = values.length;
+        if (n === 0) {
+            return;
+        }
+
+        const oldSize = this.#items.length; // untracked length
+        this.#items.push(...values);
+
+        const trackers = this.#trackers;
+        if (trackers) {
+            batch(() => {
+                for (let i = oldSize, newSize = oldSize + n; i < newSize; ++i) {
+                    trackers.trigger(i);
+                }
+                trackers.trigger(LENGTH_CHANGED);
+            });
+        }
     }
 
     pop(): T | undefined {
-        if (this.#items.length === 0) {
-            return;
+        const len = this.#items.length; // untracked length
+        if (len === 0) {
+            return undefined;
         }
+        const value = this.#items.pop();
 
-        const cell = this.#items.pop();
-        this.#triggerStructuralChange();
-        return cell!.value;
+        const trackers = this.#trackers;
+        if (trackers) {
+            batch(() => {
+                trackers.trigger(len - 1);
+                trackers.trigger(LENGTH_CHANGED);
+            });
+        }
+        return value;
     }
 
     unshift(...values: T[]): void {
-        this.#items.unshift(...values.map((v) => reactive(v)));
-        this.#triggerStructuralChange();
+        this.#items.unshift(...values);
+        this.#triggerEverythingChanged(this.#items.length); // untracked length
     }
 
     shift(): T | undefined {
-        if (this.#items.length === 0) {
-            return;
+        const len = this.#items.length; // untracked length
+        if (len === 0) {
+            return undefined;
         }
 
-        const cell = this.#items.shift();
-        this.#triggerStructuralChange();
-        return cell!.value;
+        const value = this.#items.shift();
+        this.#triggerEverythingChanged(len);
+        return value;
     }
 
     splice(start: number, deleteCount?: number, ...items: T[]): T[] {
-        const removedCells: Reactive<T>[] = this.#items.splice(
-            start,
-            deleteCount ?? this.#items.length,
-            ...items.map((item) => reactive(item))
-        );
-        if ((items != null && items.length !== 0) || removedCells.length !== 0) {
-            this.#triggerStructuralChange();
+        const oldLen = this.#items.length; // untracked length
+
+        if (start < 0) {
+            start = Math.max(start + oldLen, 0);
         }
-        return removedCells.map((cell) => cell.value);
+
+        const result = this.#items.splice(start, deleteCount ?? oldLen, ...items);
+
+        const trackers = this.#trackers;
+        if (trackers) {
+            // NOTE: simply triggers changes on all following items.
+            // We could optimize this for the case where the number of removed items
+            // is the same as the number of inserted items: this situation triggers only a few items.
+            batch(() => {
+                for (let i = start, newLen = this.#items.length; i < newLen; ++i) {
+                    trackers.trigger(i);
+                }
+                trackers.trigger(LENGTH_CHANGED);
+            });
+        }
+
+        return result;
     }
 
     sort(compare: (a: T, b: T) => number): void {
-        this.#items.sort((a, b) => compare(a.value, b.value));
-        this.#triggerStructuralChange();
+        this.#items.sort((a, b) => compare(a, b));
+        this.#triggerEverythingChanged(this.#items.length);
     }
 
     getItems(): T[] {
-        this.#subscribeToStructureChange();
-        return this.#items.map((cell) => cell.value);
+        const result = this.#items.slice();
+        this.#trackAll();
+        return result;
     }
 
     at(index: number): T | undefined {
-        this.#subscribeToStructureChange();
-        const cell = this.#items.at(index);
-        return cell?.value;
+        if (index < 0) {
+            index = this.length + index; // length tracked
+        }
+
+        this.#getTrackers().track(index);
+        return this.#items.at(index);
     }
 
     get(index: number): T | undefined {
-        this.#subscribeToStructureChange();
-        const cell = this.#items[index];
-        return cell?.value;
+        this.#getTrackers().track(index);
+        return this.#items[index];
     }
 
     set(index: number, value: T): void {
+        // TODO: Should be able to support out of bounds writes now
         if (index < 0 || index >= this.#items.length) {
             throw new Error("index out of bounds");
         }
 
-        const cell = this.#items[index];
-        cell!.value = value;
+        this.#items[index] = value;
+
+        const trackers = this.#trackers;
+        if (trackers) {
+            trackers.trigger(index);
+        }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    slice(...args: any[]): ReactiveArray<T> {
-        this.#subscribeToStructureChange();
-        const items = this.#items.slice(...args).map((cell) => cell.value);
-        return reactiveArray(items);
+    slice(start?: number, end?: number): ReactiveArray<T> {
+        const len = this.length; // tracked
+        if (start == null) {
+            start = 0;
+        } else if (start < 0) {
+            start = Math.max(0, start + len);
+        }
+
+        if (end == null) {
+            end = len;
+        } else if (end < 0) {
+            end = Math.max(end + len, 0);
+        }
+
+        if (start >= len || end < start) {
+            return reactiveArray();
+        }
+
+        const result = this.#items.slice(start, end);
+        const trackers = this.#getTrackers();
+        for (let i = start; i < end; ++i) {
+            trackers.track(i);
+        }
+        return reactiveArray(result);
     }
 
     concat(...values: (T | T[] | ReadonlyReactiveArray<T>)[]): ReactiveArray<T> {
@@ -514,10 +579,10 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
         callback: (previousValue: any, currentValue: T, currentIndex: number) => any,
         ...args: any[]
     ): any {
-        this.#subscribeToStructureChange();
+        this.#trackAll();
         return (this.#items.reduce as any)(
-            (previousValue: any, cell: Reactive<T>, index: number) => {
-                return callback(previousValue, cell.value, index);
+            (previousValue: any, value: T, index: number) => {
+                return callback(previousValue, value, index);
             },
             ...args
         );
@@ -529,11 +594,10 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
         callback: (previousValue: any, currentValue: T, currentIndex: number) => any,
         ...args: any[]
     ): any {
-        this.#subscribeToStructureChange();
-
+        this.#trackAll();
         return (this.#items.reduceRight as any)(
-            (previousValue: any, cell: Reactive<T>, index: number) => {
-                return callback(previousValue, cell.value, index);
+            (previousValue: any, value: T, index: number) => {
+                return callback(previousValue, value, index);
             },
             ...args
         );
@@ -541,17 +605,17 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
     keys(): IterableIterator<number> {
-        this.#subscribeToStructureChange();
+        this.#getTrackers().track(LENGTH_CHANGED);
         return this.#items.keys();
     }
 
     values(): IterableIterator<T> {
-        this.#subscribeToStructureChange();
+        this.#getTrackers().track(LENGTH_CHANGED);
         return this.#iterateValues();
     }
 
     entries(): IterableIterator<[index: number, value: T]> {
-        this.#subscribeToStructureChange();
+        this.#getTrackers().track(LENGTH_CHANGED);
         return this.#iterateEntries();
     }
 
@@ -580,25 +644,44 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     }
 
     *#iterateValues(): Generator<T> {
-        for (const cell of this.#items) {
-            yield cell.value;
+        const trackers = this.#getTrackers();
+        for (const [index, value] of this.#items.entries()) {
+            trackers.track(index);
+            yield value;
         }
     }
 
     *#iterateEntries(): Generator<[number, T]> {
-        for (const [index, cell] of this.#items.entries()) {
-            yield [index, cell.value];
+        const trackers = this.#getTrackers();
+        for (const [index, value] of this.#items.entries()) {
+            trackers.track(index);
+            yield [index, value];
         }
     }
 
-    #subscribeToStructureChange() {
-        // Using the value adds a dependency to that value.
-        // When #triggerStructuralChange() is called
-        // values depending on this line will be re-executed.
-        this.#structureChanged.value;
+    #trackAll() {
+        const trackers = this.#getTrackers();
+        for (let i = 0, n = this.#items.length; i < n; ++i) {
+            trackers.track(i);
+        }
+        trackers.track(LENGTH_CHANGED);
     }
 
-    #triggerStructuralChange() {
-        this.#structureChanged.value = !this.#structureChanged.peek();
+    #triggerEverythingChanged(len: number) {
+        const trackers = this.#trackers;
+        if (!trackers) {
+            return;
+        }
+
+        batch(() => {
+            for (let i = 0; i < len; ++i) {
+                trackers.trigger(i);
+            }
+            trackers.trigger(LENGTH_CHANGED);
+        });
+    }
+
+    #getTrackers() {
+        return (this.#trackers ??= new Trackers());
     }
 }

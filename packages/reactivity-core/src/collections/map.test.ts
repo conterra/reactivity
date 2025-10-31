@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { it, expect, describe, vi } from "vitest";
-import { ReactiveMap, reactiveMap } from "./map";
-import { batch, computed } from "../signals";
+import { describe, expect, it, vi } from "vitest";
 import { effect } from "../effect";
+import { batch, computed } from "../signals";
+import { reactiveMap } from "./map";
 
 describe("basic API", () => {
     it("can be constructed with initial data", () => {
@@ -197,6 +197,24 @@ describe("reactivity", () => {
         expect(observedValues).toEqual([undefined, 3, 4, undefined]);
     });
 
+    it("supports reactive clear", () => {
+        const map = reactiveMap<string, number>([["foo", 1]]);
+        const observedSizes: number[] = [];
+
+        effect(
+            () => {
+                observedSizes.push(map.size);
+            },
+            {
+                dispatch: "sync"
+            }
+        );
+        expect(observedSizes).toEqual([1]);
+
+        map.clear();
+        expect(observedSizes).toEqual([1, 0]);
+    });
+
     it("supports reactive has", () => {
         const map = reactiveMap<string, number>();
 
@@ -213,10 +231,10 @@ describe("reactivity", () => {
         expect(observedValues).toEqual([false, true]);
 
         map.set("foo", 124);
-        expect(observedValues).toEqual([false, true]);
+        expect(observedValues).toEqual([false, true, true]); // Currently re-triggers on change
 
         map.delete("foo");
-        expect(observedValues).toEqual([false, true, false]);
+        expect(observedValues).toEqual([false, true, true, false]);
     });
 
     it("supports key iteration", () => {
@@ -369,83 +387,36 @@ describe("reactivity", () => {
         `);
     });
 
-    /**
-     * This test documents the currently intended behavior.
-     * Whenever a new key is added or an existing key is removed ("structural change"),
-     * _all_ watchers on the map will be reevaluated (length, get, has, ...).
-     *
-     * This is not exactly optimal for performance (too many invocations), but its not really wrong either.
-     * The alternative is a much more complicated implementation using fine grained signals even for
-     * keys _not_ in the map (and the resulting memory management / leaks).
-     */
-    it("fires coarse change events for structural changes", () => {
-        const testStructuralChange = (
-            title: string,
-            operation: (map: ReactiveMap<string, number>) => void,
-            options?: {
-                expectChange?: boolean;
-                startEmpty?: boolean;
-            }
-        ) => {
-            const { startEmpty = false, expectChange = true } = options ?? {};
+    it("unrelated key has no effect", () => {
+        const map = reactiveMap<string, number>();
 
-            const map = reactiveMap<string, number>(
-                startEmpty ? undefined : [["existing key", 123]]
-            );
-
-            let triggered = 0;
-            effect(
-                () => {
-                    map.size; // currently triggered whenever something triggers a coarse structural change
-                    triggered++;
-                },
-                { dispatch: "sync" }
-            );
-            expect(triggered).toBe(1);
-
-            operation(map);
-            if (expectChange) {
-                expect(
-                    triggered,
-                    `${title}: operation should trigger a change in the map's structure`
-                ).toBe(2);
-            } else {
-                expect(
-                    triggered,
-                    `${title}: operation should NOT trigger a change in the map's structure`
-                ).toBe(1);
-            }
-        };
-
-        testStructuralChange("adding a new key", (map) => {
-            map.set("new key", 456);
-        });
-        testStructuralChange(
-            "overwriting an existing key",
-            (map) => {
-                map.set("existing key", 456);
+        const events: (number | undefined)[] = [];
+        effect(
+            () => {
+                events.push(map.get("foo"));
             },
-            { expectChange: false }
+            { dispatch: "sync" }
         );
-        testStructuralChange("removing an existing key", (map) => {
-            map.delete("existing key");
-        });
-        testStructuralChange(
-            "removing a non-existing key",
-            (map) => {
-                map.delete("other key");
-            },
-            { expectChange: false }
-        );
-        testStructuralChange("clearing a non-empty map", (map) => {
-            map.clear();
-        });
-        testStructuralChange(
-            "clearing an empty map",
-            (map) => {
-                map.clear();
-            },
-            { expectChange: false, startEmpty: true }
-        );
+        expect(events).toEqual([undefined]);
+
+        // Setting unrelated key
+        map.set("bar", 123);
+        expect(events).toEqual([undefined]);
+
+        // Clearing has no effect
+        map.clear();
+        expect(events).toEqual([undefined]);
+
+        // Again, unrelated
+        map.set("bar", 321);
+        expect(events).toEqual([undefined]);
+
+        // Removing unrelated key has no effect
+        map.delete("bar");
+        expect(events).toEqual([undefined]);
+
+        // Finally, the actual key
+        map.set("foo", 0);
+        expect(events).toEqual([undefined, 0]);
     });
 });
