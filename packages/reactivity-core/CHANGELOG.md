@@ -1,5 +1,16 @@
 # @conterra/reactivity-core
 
+## 0.8.1
+
+### Patch Changes
+
+- 9e04c43: Remove references to `import.meta.env.VITEST` from published code.
+- 28a36f1: Optimize change tracking in reactive collections.
+
+    Maps, sets and arrays now support fine grained changes for keys that are _not_ in the collection.
+    Previously, one would receive a change if _any_ key was added or removed.
+    Now, the collection will only emit changes for the keys that are actually involved.
+
 ## 0.8.0
 
 ### Minor Changes

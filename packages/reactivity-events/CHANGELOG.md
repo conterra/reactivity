@@ -1,5 +1,14 @@
 # @conterra/reactivity-events
 
+## 0.8.1
+
+### Patch Changes
+
+- 9e04c43: Remove references to `import.meta.env.VITEST` from published code.
+- Updated dependencies [9e04c43]
+- Updated dependencies [28a36f1]
+    - @conterra/reactivity-core@0.8.1
+
 ## 0.8.0
 
 ### Minor Changes
