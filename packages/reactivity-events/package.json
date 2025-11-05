@@ -28,7 +28,7 @@
         "clean": "rimraf dist",
         "build": "pnpm run build:types && pnpm run build:js",
         "build:types": "tsc -p tsconfig.prod.json",
-        "build:js": "esbuild ./src/index.ts --bundle --splitting --outdir=dist --format=esm --platform=neutral --packages=external --sourcemap --tsconfig=./tsconfig.prod.json",
+        "build:js": "esbuild ./src/index.ts --bundle --splitting --outdir=dist --format=esm --platform=neutral --packages=external --sourcemap --tsconfig=./tsconfig.prod.json --define:import.meta.env.VITEST=false",
         "dev": "concurrently -c auto 'pnpm:dev:types' 'pnpm:dev:js'",
         "dev:types": "tsc -p tsconfig.prod.json -w --preserveWatchOutput",
         "dev:js": "pnpm build:js --watch"
