@@ -10,7 +10,7 @@ catalog:
   "@changesets/cli": ^2.29.7
   "@eslint/js": ^9.39.1
   "@mdi/font": ^7.4.47
-  "@types/node": ^20.19.24
+  "@types/node": ^20.19.25
   "@vitejs/plugin-vue": ^6.0.1
   concurrently: ^9.2.1
   esbuild: ^0.25.12
@@ -26,12 +26,12 @@ catalog:
   tsx: ^4.20.6
   typedoc: ^0.28.14
   typescript: ^5.9.3
-  typescript-eslint: ^8.46.3
-  vite: ^7.1.12
-  vitest: ^4.0.6
-  vue: ^3.5.22
+  typescript-eslint: ^8.46.4
+  vite: ^7.2.2
+  vitest: ^4.0.10
+  vue: ^3.5.24
   vue-eslint-parser: ^10.2.0
-  vuetify: ^3.10.8
+  vuetify: ^3.10.11
 
 overrides:
   "rollup@>=4.0.0 <4.22.4": ">=4.22.4"
