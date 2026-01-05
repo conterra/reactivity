@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install
         uses: ./.github/actions/install
@@ -35,7 +35,7 @@ jobs:
       published: ${{ steps.changesets.outputs.published }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install
         uses: ./.github/actions/install
@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install
         uses: ./.github/actions/install
@@ -88,7 +88,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Load documentation artifact
         uses: actions/download-artifact@v6
