@@ -1,5 +1,11 @@
 # @conterra/reactivity-core
 
+## 0.8.2
+
+### Patch Changes
+
+- af41b42: Deprecate `external` signals. Use `synchronized` instead.
+
 ## 0.8.1
 
 ### Patch Changes
