@@ -42,7 +42,7 @@
         "vue-eslint-parser": "catalog:"
     },
     "engines": {
-        "node": ">= 20",
+        "node": ">= 22",
         "pnpm": ">= 10"
     },
     "packageManager": "pnpm@10.22.0"

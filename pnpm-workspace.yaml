@@ -10,7 +10,7 @@ catalog:
   "@changesets/cli": ^2.29.7
   "@eslint/js": ^9.39.1
   "@mdi/font": ^7.4.47
-  "@types/node": ^24.10.9
+  "@types/node": ^22.19.7
   "@vitejs/plugin-vue": ^6.0.1
   concurrently: ^9.2.1
   esbuild: ^0.27.0
