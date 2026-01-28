@@ -361,7 +361,7 @@ The following values can be specified:
 
 See also [Sync vs async effect / watch](#sync-vs-async-effect--watch)
 
-### Linked signals
+### Linked signals (EXPERIMENTAL)
 
 > **Experimental**: This is an API that makes heavy use of the underlying signals library.
 > While we're confident about the API's stability, the _implementation_ may still contain some undiscovered problems.
@@ -754,48 +754,62 @@ You can still (if needed) use a reactive struct internally, or you can use manua
 
 #### Integrating external state
 
-This reactivity system does automatically integrate with other ways to manage state (e.g. event based systems, third party reactivity systems).
-However, we do provide facilities to easily integrate "external" state yourself using the `external` signal.
+This reactivity system cannot automatically integrate with other ways to manage state (e.g. event based systems, third party reactivity systems).
+However, we do provide facilities to easily integrate external state yourself using the `synchronized` signal.
 
-To use `external`, you must implement two functionalities:
+To use `synchronized()`, you must implement two functions:
 
-1. A function to _compute_ the _current_ value of the external state.
+1. A function to compute the _current_ value of the external state.
    This is very similar to the way computed signals work, but it is not automatically reactive.
-2. You must subscribe to changes of the external state (through whatever appropriate means) and `.trigger()` the external signal.
-   This tells our reactivity system that the current value is no longer up-to-date.
+2. A function to subscribe to (and unsubscribe from) the external data source.
 
-Example:
+The general structure is as follows:
 
 ```ts
-import { effect, external } from "@conterra/reactivity-core";
+import { synchronized } from "@conterra/reactivity-core";
 
-// An abort signal is a value that may be `aborted` through its controller.
-// It provides both the `aborted` property (the current state) and a simple event that fires when that state changes.
-// We use these facilities to provide a reactive boolean that accurately reflects the current state.
-const controller = new AbortController();
-const signal = controller.signal;
+const signal = synchronized(
+    () => /* get value from external (non-reactive) source */,
+    (onChange) => {
+        /* register onChange somewhere: to be called when the non reactive value changes */
+        return () => {
+            /* unregister onChange again: don't leak event listeners */
+        }
+    }
+);
+signal.value;
+```
 
-// boolean signal that tracks the aborted state.
-// calls 'trigger()` on the signal when the signal is aborted.
-const isAborted = external(() => signal.aborted);
-signal.addEventListener("abort", isAborted.trigger);
-// later, don't forget to unregister the event handler:
-// signal.removeEventListener("abort", isAborted.trigger);
+The following example binds the `aborted` state of the `AbortSignal` and makes it available for reactive computations.
+Users of the `aborted` signal can use it like they would use any other `computed` signal:
+
+```ts
+import { effect, synchronized } from "@conterra/reactivity-core";
+
+const abortController = new AbortController();
+const abortSignal = abortController.signal;
+
+// Reactive binding for abortSignal.aborted
+const aborted = synchronized(
+    () => abortSignal.aborted,
+    (onChange) => {
+        abortSignal.addEventListener("abort", onChange);
+        return () => abortSignal.removeEventListener("abort", onChange);
+    }
+);
 
 effect(() => {
-    console.log("is aborted:", isAborted.value);
+    console.log(`Aborted: ${aborted.value}`);
 });
 
-setTimeout(() => {
-    controller.abort();
-}, 1000);
+abortController.abort();
 ```
 
 Output:
 
 ```text
-is aborted: false
-is aborted: true
+Aborted: false
+Aborted: true
 ```
 
 ## Why?

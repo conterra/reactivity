@@ -131,7 +131,7 @@ export function computed<T>(
  *
  * // later: unsubscribe from signal
  * ```
- *
+ * @deprecated Use {@link synchronized} instead.
  * @group Primitives
  */
 export function external<T>(compute: () => T, options?: ReactiveOptions<T>): ExternalReactive<T> {
