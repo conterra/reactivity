@@ -4,7 +4,7 @@ packages:
   - "!**/test/**"
 
 catalog:
-  "@preact/signals-core": 1.13.0
+  "@preact/signals-core": 1.14.0
 
   # Dev Dependencies
   "@changesets/cli": ^2.30.0

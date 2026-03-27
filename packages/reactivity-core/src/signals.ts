@@ -23,6 +23,7 @@ import {
 } from "./types";
 import { dispatchAsyncCallback } from "./utils/dispatch";
 import { defaultEquals } from "./utils/equality";
+import { createTracker, trackChanges, triggerChange } from "./utils/ChangeTracker";
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.
@@ -150,12 +151,12 @@ export function external<T>(compute: () => T, options?: ReactiveOptions<T>): Ext
         It does pretty much the same thing for computed signals and would mean that we could get rid of the `trigger` signal.
         But that function is a) internal and b) mangled (to `N` at the time of this writing) -- this is too risky.
      */
-    const invalidateSignal = rawSignal(false);
+    const tracker = createTracker();
     const invalidate = () => {
-        invalidateSignal.value = !invalidateSignal.peek();
+        triggerChange(tracker);
     };
     const externalReactive = computed(() => {
-        invalidateSignal.value;
+        trackChanges(tracker);
         return rawUntracked(() => compute());
     }, options);
     (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger =
@@ -399,9 +400,9 @@ export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is 
     );
 }
 
-abstract class ReactiveImpl<T>
-    implements RemoveBrand<ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>>
-{
+abstract class ReactiveImpl<T> implements RemoveBrand<
+    ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>
+> {
     abstract get value(): T;
     abstract set value(_value: T);
 
@@ -501,7 +502,7 @@ class WritableReactiveImpl<T> extends WrappingReactiveImpl<T> {
  */
 class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     #subscribe: SubscribeFunc;
-    #invalidateSignal = rawSignal(false);
+    #tracker = createTracker();
     #subscription: CleanupFunc | undefined;
     #temporarySubscription: CleanupHandle | undefined;
 
@@ -520,7 +521,7 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
 
         const raw = rawComputed(
             () => {
-                this.#invalidateSignal.value;
+                trackChanges(this.#tracker);
 
                 // Briefly subscribe to the data source to get updates within this tick.
                 if (!this.#subscription && !this.#temporarySubscription) {
@@ -555,9 +556,8 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
     }
 
     #invalidate = () => {
-        // Flipping the signal invalidates the computed signal.
-        // Everything else in that computed signal is non-reactive.
-        this.#invalidateSignal.value = !this.#invalidateSignal.peek();
+        // Triggers computations of the value (trackChanges above).
+        triggerChange(this.#tracker);
     };
 
     #startSubscribe() {

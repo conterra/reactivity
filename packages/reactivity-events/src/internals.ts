@@ -5,7 +5,9 @@ import {
     CleanupHandle,
     dispatchAsyncCallback,
     effect,
-    reactive,
+    internal_createTracker,
+    internal_trackChanges,
+    internal_triggerChange,
     reportCallbackError,
     untracked
 } from "@conterra/reactivity-core";
@@ -146,7 +148,7 @@ function dispatch(subscriber: Subscription, args: unknown[]): void {
             // Schedule execution of effect.
             // Note that this will call the effect immediately (within the assignment)
             // if we're not in a batch.
-            TRIGGER_DISPATCH.value = !TRIGGER_DISPATCH.peek();
+            internal_triggerChange(TRIGGER_DISPATCH);
         }
     } else {
         // Execution of async callbacks is always outside of a batch.
@@ -158,10 +160,11 @@ type SyncDispatchItem = [subscription: Subscription, args: unknown[]];
 
 let DISPATCH_SCHEDULED = false;
 let SYNC_QUEUE: SyncDispatchItem[] = [];
-const TRIGGER_DISPATCH = reactive(false);
+const TRIGGER_DISPATCH = internal_createTracker();
 effect(
     () => {
-        void TRIGGER_DISPATCH.value; // Setup dependency
+        internal_trackChanges(TRIGGER_DISPATCH);
+
         untracked(() => {
             // Note: callbacks invoked here may push further items to the queue
             while (SYNC_QUEUE.length) {

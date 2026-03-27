@@ -1,9 +1,7 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { Signal as RawSignal, signal as rawSignal } from "@preact/signals-core";
 import { batch } from "../signals";
-
-type ReactiveTracker = RawSignal<boolean>;
+import { ChangeTracker, createTracker, trackChanges, triggerChange } from "../utils/ChangeTracker";
 
 /**
  * Supports notifications of arbitrary key changes based on signals.
@@ -24,7 +22,7 @@ type ReactiveTracker = RawSignal<boolean>;
  * > Watchers hold a reference to that object, our wrapper object would become garbage almost immediately.
  */
 export class Trackers<Key> {
-    #trackers: Map<Key, WeakRef<ReactiveTracker>> | undefined;
+    #trackers: Map<Key, WeakRef<ChangeTracker>> | undefined;
     #finalizers: FinalizationRegistry<Key> | undefined;
 
     constructor() {
@@ -41,7 +39,7 @@ export class Trackers<Key> {
         const trackers = this.#getTrackers();
         const finalizers = this.#getFinalizers();
 
-        let trackerRef: WeakRef<ReactiveTracker> | undefined = trackers.get(key);
+        let trackerRef: WeakRef<ChangeTracker> | undefined = trackers.get(key);
         let tracker = trackerRef?.deref();
         if (!tracker) {
             tracker = createTracker();
@@ -59,7 +57,7 @@ export class Trackers<Key> {
     trigger(key: Key) {
         const tracker = this.#trackers?.get(key)?.deref();
         if (tracker) {
-            triggerChanges(tracker);
+            triggerChange(tracker);
         }
     }
 
@@ -71,7 +69,7 @@ export class Trackers<Key> {
             this.#trackers?.forEach((trackerRef) => {
                 const tracker = trackerRef.deref();
                 if (tracker) {
-                    triggerChanges(tracker);
+                    triggerChange(tracker);
                 }
             });
         });
@@ -93,18 +91,4 @@ export class Trackers<Key> {
             }
         }));
     }
-}
-
-function createTracker(): ReactiveTracker {
-    return rawSignal(false);
-}
-
-function trackChanges(tracker: ReactiveTracker) {
-    // Subscribes to future notifications, see trigger function
-    tracker.value;
-}
-
-function triggerChanges(tracker: ReactiveTracker) {
-    // Communicates a change to anyone who depends on this signal.
-    tracker.value = !tracker.peek();
 }

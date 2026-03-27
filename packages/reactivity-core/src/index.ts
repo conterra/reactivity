@@ -60,3 +60,11 @@ export { dispatchAsyncCallback, nextTick } from "./utils/dispatch";
 export { reportCallbackError } from "./utils/reportCallbackError";
 export * from "./collections";
 export * from "./struct";
+
+// Internal API
+export {
+    type ChangeTracker as internal_ChangeTracker,
+    createTracker as internal_createTracker,
+    trackChanges as internal_trackChanges,
+    triggerChange as internal_triggerChange
+} from "./utils/ChangeTracker";

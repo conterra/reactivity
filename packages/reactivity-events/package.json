@@ -34,7 +34,7 @@
         "dev:js": "pnpm build:js --watch"
     },
     "dependencies": {
-        "@conterra/reactivity-core": "workspace:^"
+        "@conterra/reactivity-core": "workspace:*"
     },
     "devDependencies": {
         "project-root": "workspace:*"
