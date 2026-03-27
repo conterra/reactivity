@@ -16,8 +16,8 @@ catalogs:
       specifier: ^7.4.47
       version: 7.4.47
     '@preact/signals-core':
-      specifier: 1.14.0
-      version: 1.14.0
+      specifier: 1.13.0
+      version: 1.13.0
     '@types/node':
       specifier: ^22.19.15
       version: 22.19.15
@@ -172,7 +172,7 @@ importers:
     dependencies:
       '@preact/signals-core':
         specifier: 'catalog:'
-        version: 1.14.0
+        version: 1.13.0
     devDependencies:
       project-root:
         specifier: workspace:*
@@ -540,8 +540,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@preact/signals-core@1.14.0':
-    resolution: {integrity: sha512-AowtCcCU/33lFlh1zRFf/u+12rfrhtNakj7UpaGEsmMwUKpKWMVvcktOGcwBBNiB4lWrZWc01LhiyyzVklJyaQ==}
+  '@preact/signals-core@1.13.0':
+    resolution: {integrity: sha512-slT6XeTCAbdql61GVLlGU4x7XHI7kCZV5Um5uhE4zLX4ApgiiXc0UYFvVOKq06xcovzp7p+61l68oPi563ARKg==}
 
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
@@ -2279,7 +2279,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@preact/signals-core@1.14.0': {}
+  '@preact/signals-core@1.13.0': {}
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
