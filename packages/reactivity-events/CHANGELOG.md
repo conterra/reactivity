@@ -1,5 +1,14 @@
 # @conterra/reactivity-events
 
+## 0.8.2
+
+### Patch Changes
+
+- c914e51: Update to @preact/signals-core v1.14.0
+- Updated dependencies [c914e51]
+- Updated dependencies [af41b42]
+    - @conterra/reactivity-core@0.8.2
+
 ## 0.8.1
 
 ### Patch Changes

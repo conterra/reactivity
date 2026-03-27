@@ -1,5 +1,12 @@
 # @conterra/reactivity-core
 
+## 0.8.2
+
+### Patch Changes
+
+- c914e51: Update to @preact/signals-core v1.14.0
+- af41b42: Deprecate `external` signals. Use `synchronized` instead.
+
 ## 0.8.1
 
 ### Patch Changes
