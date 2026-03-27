@@ -7,6 +7,7 @@ import * as components from "vuetify/components";
 import * as directives from "vuetify/directives";
 import Playground from "./Playground.vue";
 
+// @ts-expect-error Missing type for import
 import "vuetify/styles";
 import "@mdi/font/css/materialdesignicons.css";
 
