@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "declaration": true,
+        "declarationMap": true,
 
         "target": "ES2022",
         "lib": ["DOM", "DOM.Iterable", "ES2022"],
