@@ -18,7 +18,7 @@ catalog:
   eslint-config-prettier: ^10.1.8
   eslint-plugin-headers: 1.3.4
   eslint-plugin-vue: ^10.8.0
-  happy-dom: ^20.8.7
+  happy-dom: ^20.8.8
   husky: ^9.1.7
   lint-staged: ^16.4.0
   prettier: ^3.8.1
@@ -58,6 +58,12 @@ auditConfig:
 
 onlyBuiltDependencies:
   - esbuild
+
+minimumReleaseAge: 4320 # 3 days in minutes
+minimumReleaseAgeExclude:
+  - "@open-pioneer/*"
+  - "@conterra/*"
+  - happy-dom@20.8.8
 
 # Don't automatically link to workspace packages.
 # One must use the explicit `workspace:...` protocol instead.

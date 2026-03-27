@@ -43,7 +43,7 @@ catalogs:
       specifier: ^10.8.0
       version: 10.8.0
     happy-dom:
-      specifier: ^20.8.7
+      specifier: ^20.8.8
       version: 20.8.8
     husky:
       specifier: ^9.1.7
