@@ -68,6 +68,8 @@ minimumReleaseAgeExclude:
   - "@open-pioneer/*"
   - "@conterra/*"
   - happy-dom@20.8.8
+  # Renovate security update: vite@7.3.2
+  - vite@7.3.2
 
 # Don't automatically link to workspace packages.
 # One must use the explicit `workspace:...` protocol instead.
