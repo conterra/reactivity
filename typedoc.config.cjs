@@ -6,6 +6,15 @@ module.exports = {
     readme: "none",
     out: "dist/docs",
     entryPointStrategy: "packages",
-    entryPoints: ["./packages/reactivity-core", "./packages/reactivity-events"],
-    skipErrorChecking: true
+    entryPoints: [
+        "./packages/reactivity-core",
+        "./packages/reactivity-events",
+        "./packages/reactivity-decorators"
+    ],
+    validation: {
+        "invalidLink": true,
+        "notDocumented": true,
+        "notExported": true,
+        "rewrittenLink": true
+    }
 };
