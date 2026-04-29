@@ -82,8 +82,8 @@ catalogs:
       specifier: ^10.4.0
       version: 10.4.0
     vuetify:
-      specifier: ^3.12.5
-      version: 3.12.5
+      specifier: ^4.0.6
+      version: 4.0.6
 
 overrides:
   rollup@>=4.0.0 <4.59.4: '>=4.59.0'
@@ -208,7 +208,7 @@ importers:
         version: 3.5.33(typescript@6.0.3)
       vuetify:
         specifier: 'catalog:'
-        version: 3.12.5(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3))
+        version: 4.0.6(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3))
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: 'catalog:'
@@ -2092,8 +2092,8 @@ packages:
       typescript:
         optional: true
 
-  vuetify@3.12.5:
-    resolution: {integrity: sha512-Gk3eDIiBXpv+QjMTYmXXk/uvpqaSNAgprcV/Og0btBUx4saLN7AUmqUi34hRmBqu2tpype2GVvg2yxJUqP2mdg==}
+  vuetify@4.0.6:
+    resolution: {integrity: sha512-a4kasYa3SuFI5IOG/0Fx04M4TWeef5mCdTTKFlaxt86oz16RMQ/DJ3BynlOnIdUODt7NxYIkdLYud070/vVEUQ==}
     peerDependencies:
       typescript: '>=4.7'
       vite-plugin-vuetify: '>=2.1.0'
@@ -3940,7 +3940,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  vuetify@3.12.5(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3)):
+  vuetify@4.0.6(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3)):
     dependencies:
       vue: 3.5.33(typescript@6.0.3)
     optionalDependencies:
