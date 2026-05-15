@@ -5,6 +5,7 @@ import { effect } from "./effect";
 import {
     batch,
     computed,
+    constant,
     external,
     getValue,
     isReactive,
@@ -977,6 +978,28 @@ describe("linked", () => {
             unwatched
         });
         testWatch(signal, watched, unwatched);
+    });
+});
+
+describe("constant", () => {
+    it("holds the initial value", () => {
+        const c = constant(123);
+        expect(c.value).toBe(123);
+    });
+
+    it("is a readonly signal", () => {
+        expect(isReadonlyReactive(constant(123))).toBe(true);
+    });
+
+    it("is not a writable signal", () => {
+        expect(isReactive(constant(123) as any)).toBe(false);
+    });
+
+    it("throws when attempting to change the value", () => {
+        const c = constant(123);
+        expect(() => ((c as any).value = 0)).toThrowErrorMatchingInlineSnapshot(
+            `[Error: Cannot update a readonly reactive object.]`
+        );
     });
 });
 
