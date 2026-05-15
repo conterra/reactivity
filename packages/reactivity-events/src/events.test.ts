@@ -320,3 +320,42 @@ interface ClickEvent {
     x: number;
     y: number;
 }
+
+describe("error handling", () => {
+    it("throws when emitting on a non-emitter object", () => {
+        const notAnEmitter = {} as any;
+        expect(() => emit(notAnEmitter, 1)).toThrow("Invalid event source");
+    });
+
+    it("throws when subscribing to a non-emitter object", () => {
+        const notAnEmitter = {} as any;
+        expect(() => ON_SYNC(notAnEmitter, () => {})).toThrow("Invalid event source");
+    });
+});
+
+describe("double destroy", () => {
+    it("is idempotent for on() handles", () => {
+        const evt = emitter();
+        const spy = vi.fn();
+        const handle = ON_SYNC(evt, spy);
+
+        handle.destroy();
+        handle.destroy(); // second call should not throw
+
+        emit(evt);
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it("is idempotent for async on() handles", async () => {
+        const evt = emitter();
+        const spy = vi.fn();
+        const handle = on(evt, spy);
+
+        handle.destroy();
+        handle.destroy(); // second call should not throw
+
+        emit(evt);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(spy).not.toHaveBeenCalled();
+    });
+});

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { it, expect, describe, vi } from "vitest";
 import { reactiveSet } from "./set";
+import { effect } from "../effect";
+import { EffectCallback } from "../types";
 
 describe("basic API", () => {
     it("can be constructed with initial data", () => {
@@ -102,4 +104,103 @@ describe("basic API", () => {
     });
 });
 
-// no reactivity tests because the implementation is based on ReactiveMap
+const syncEffect = (cb: EffectCallback) => effect(cb, { dispatch: "sync" });
+
+describe("reactivity", () => {
+    it("triggers effect when size changes via add", () => {
+        const set = reactiveSet<string>();
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(set.size);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(0);
+
+        set.add("foo");
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(1);
+    });
+
+    it("does not trigger effect when adding a duplicate value", () => {
+        const set = reactiveSet<string>(["foo"]);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(set.size);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        set.add("foo");
+        expect(spy).toHaveBeenCalledTimes(1); // no change
+    });
+
+    it("triggers effect when size changes via delete", () => {
+        const set = reactiveSet<string>(["foo", "bar"]);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(set.size);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(2);
+
+        set.delete("foo");
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(1);
+    });
+
+    it("does not trigger effect when deleting a non-existing value", () => {
+        const set = reactiveSet<string>(["foo"]);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(set.size);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        set.delete("bar");
+        expect(spy).toHaveBeenCalledTimes(1); // no change
+    });
+
+    it("triggers effect when clearing", () => {
+        const set = reactiveSet<string>(["foo", "bar"]);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(set.size);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        set.clear();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(0);
+    });
+
+    it("tracks has() reactively", () => {
+        const set = reactiveSet<string>();
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(set.has("foo"));
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(false);
+
+        set.add("foo");
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(true);
+
+        set.delete("foo");
+        expect(spy).toHaveBeenCalledTimes(3);
+        expect(spy).toHaveBeenCalledWith(false);
+    });
+
+    it("tracks iteration reactively", () => {
+        const set = reactiveSet<string>(["a"]);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(Array.from(set));
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(["a"]);
+
+        set.add("b");
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(["a", "b"]);
+    });
+});

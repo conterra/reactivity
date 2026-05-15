@@ -2,7 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it, Mock, vi } from "vitest";
 import { effect } from "./effect";
-import { batch, computed, external, linked, reactive, synchronized } from "./signals";
+import {
+    batch,
+    computed,
+    external,
+    getValue,
+    isReactive,
+    isReadonlyReactive,
+    linked,
+    peekValue,
+    reactive,
+    synchronized,
+    untracked
+} from "./signals";
 import { EffectCallback, ReadonlyReactive } from "./types";
 import { watchValue } from "./watch";
 import { nextTick } from "./utils/dispatch";
@@ -99,6 +111,144 @@ describe("reactive", () => {
     });
 });
 
+describe("getValue", () => {
+    it("returns the value of a reactive signal", () => {
+        const r = reactive(42);
+        expect(getValue(r)).toBe(42);
+    });
+
+    it("returns the value of a computed signal", () => {
+        const r = reactive(5);
+        const c = computed(() => r.value * 2);
+        expect(getValue(c)).toBe(10);
+    });
+
+    it("returns a non-reactive value as-is", () => {
+        expect(getValue(42)).toBe(42);
+        expect(getValue("hello")).toBe("hello");
+        expect(getValue(null)).toBe(null);
+        expect(getValue(undefined)).toBe(undefined);
+    });
+
+    it("tracks the access reactively", () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(getValue(r));
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(1);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(2);
+    });
+});
+
+describe("peekValue", () => {
+    it("returns the value of a reactive signal", () => {
+        const r = reactive(42);
+        expect(peekValue(r)).toBe(42);
+    });
+
+    it("returns a non-reactive value as-is", () => {
+        expect(peekValue(42)).toBe(42);
+        expect(peekValue("hello")).toBe("hello");
+        expect(peekValue(null)).toBe(null);
+    });
+
+    it("does not track the access reactively", () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(peekValue(r));
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(1);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(1); // not called again
+    });
+});
+
+describe("isReadonlyReactive", () => {
+    it("returns true for a reactive signal", () => {
+        const r = reactive(1);
+        expect(isReadonlyReactive(r)).toBe(true);
+    });
+
+    it("returns true for a computed signal", () => {
+        const c = computed(() => 1);
+        expect(isReadonlyReactive(c)).toBe(true);
+    });
+
+    it("returns true for a linked signal", () => {
+        const l = linked(() => 1);
+        expect(isReadonlyReactive(l)).toBe(true);
+    });
+
+    it("returns true for an external signal", () => {
+        const e = external(() => 1);
+        expect(isReadonlyReactive(e)).toBe(true);
+    });
+
+    it("returns false for plain values", () => {
+        expect(isReadonlyReactive(1)).toBe(false);
+        expect(isReadonlyReactive("string")).toBe(false);
+        expect(isReadonlyReactive(null)).toBe(false);
+        expect(isReadonlyReactive(undefined)).toBe(false);
+        expect(isReadonlyReactive({ value: 1 } as any)).toBe(false);
+    });
+});
+
+describe("isReactive", () => {
+    it("returns true for a writable reactive signal", () => {
+        const r = reactive(1);
+        expect(isReactive(r)).toBe(true);
+    });
+
+    it("returns true for a linked signal", () => {
+        const l = linked(() => 1);
+        expect(isReactive(l)).toBe(true);
+    });
+
+    it("returns false for a computed signal", () => {
+        const c = computed(() => 1);
+        expect(isReactive(c as any)).toBe(false);
+    });
+
+    it("returns false for an external signal", () => {
+        const e = external(() => 1);
+        expect(isReactive(e)).toBe(false);
+    });
+
+    it("returns false for plain values", () => {
+        expect(isReactive(1)).toBe(false);
+        expect(isReactive("string")).toBe(false);
+        expect(isReactive(null)).toBe(false);
+        expect(isReactive(undefined)).toBe(false);
+    });
+});
+
+describe("untracked", () => {
+    it("returns the value of the callback", () => {
+        expect(untracked(() => 42)).toBe(42);
+    });
+
+    it("prevents reactive tracking inside the callback", () => {
+        const r = reactive(1);
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(untracked(() => r.value));
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(1);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(1); // not called again
+    });
+});
+
 describe("batch", () => {
     it("batches multiple reactive updates into a single effect", () => {
         const spy = vi.fn();
@@ -115,6 +265,24 @@ describe("batch", () => {
             expect(spy).toBeCalledTimes(1);
         });
         expect(spy).toBeCalledTimes(2);
+    });
+
+    it("returns the value of the callback", () => {
+        const result = batch(() => 42);
+        expect(result).toBe(42);
+    });
+});
+
+describe("toString / toJSON", () => {
+    it("formats reactive string value with quotes", () => {
+        const r = reactive("hello");
+        expect(r.toString()).toMatchInlineSnapshot(`"Reactive[value="hello"]"`);
+    });
+
+    it("formats computed value", () => {
+        const r = reactive(5);
+        const c = computed(() => r.value * 2);
+        expect(c.toString()).toMatchInlineSnapshot(`"Reactive[value=10]"`);
     });
 });
 
