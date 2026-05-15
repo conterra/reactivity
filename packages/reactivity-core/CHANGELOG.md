@@ -1,5 +1,22 @@
 # @conterra/reactivity-core
 
+## 0.8.4
+
+### Patch Changes
+
+- 46311de: Implement new `constant` signal.
+
+    Constant signals are created with a fixed value that never changes.
+    In addition, they implement the `ReadonlyReactive` interface.
+
+    ```ts
+    const foo = constant(3);
+    console.log(foo.value); // 3
+    foo.value = 4; // TypeScript error and runtime error
+    ```
+
+- 9ea2403: Improve the implementation of `linked` signals. They are no longer marked as experimental.
+
 ## 0.8.3
 
 ### Patch Changes
