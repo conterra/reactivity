@@ -13,7 +13,6 @@ import {
     CleanupFunc,
     CleanupHandle,
     EqualsFunc,
-    ExternalReactive,
     Reactive,
     ReactiveGetter,
     ReactiveOptions,
@@ -101,67 +100,6 @@ export function computed<T>(
         options?.unwatched
     );
     return impl as AddBrand<typeof impl>;
-}
-
-/**
- * Creates a signal that integrates state from 'foreign' objects (e.g. different state management solutions)
- * into the reactivity system.
- *
- * The `compute` function should return the current value from the foreign object.
- * Just like with computed objects, the return value of `compute` will be cached.
- * Unlike computed objects, the `compute` function will _not_ be triggered automatically: you must subscribe
- * to changes on the foreign object (with whatever API is appropriate) and call the returned `ExternalReactive`'s
- * `trigger()` method.
- *
- * Once `.trigger()` has been called, accessing the reactive object's value will re-execute the `compute` method
- * and return the latest value.
- *
- * Example:
- *
- * ```js
- * // This example makes the state of an AbortSignal accessible as an reactive object.
- * const controller = new AbortController();
- * const signal = controller.signal;
- *
- * const aborted = external(() => signal.aborted);
- * signal.addEventListener("abort", aborted.trigger);
- * console.log(aborted.value); // false
- *
- * controller.abort(); // triggers the event handler registered above
- * console.log(aborted.value); // true
- *
- * // later: unsubscribe from signal
- * ```
- * @deprecated Use {@link synchronized} instead.
- * @group Primitives
- */
-export function external<T>(compute: () => T, options?: ReactiveOptions<T>): ExternalReactive<T> {
-    /*
-        Implementation note:
-        
-        The external value is accessed by wrapping it inside a `computed()`.
-        However, that computed block is untracked and therefore nonreactive.
-        A simple 'version' signal is the only real reactive dependency.
-        That signal is supposed to switch to a new value to trigger recomputation of the external value;
-        that trigger can be called from the outside.
-
-        Therefore, calling trigger() on the reactive object will recompute the external value.
-
-        Alternative implementation: use the _notify() function from signals-core directly.
-        It does pretty much the same thing for computed signals and would mean that we could get rid of the `trigger` signal.
-        But that function is a) internal and b) mangled (to `N` at the time of this writing) -- this is too risky.
-     */
-    const tracker = createTracker();
-    const invalidate = () => {
-        triggerChange(tracker);
-    };
-    const externalReactive = computed(() => {
-        trackChanges(tracker);
-        return rawUntracked(() => compute());
-    }, options);
-    (externalReactive as RemoveBrand<typeof externalReactive> as ReactiveImpl<T>).trigger =
-        invalidate;
-    return externalReactive as ExternalReactive<T>;
 }
 
 /**
@@ -400,9 +338,7 @@ export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is 
     );
 }
 
-abstract class ReactiveImpl<T> implements RemoveBrand<
-    ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>
-> {
+abstract class ReactiveImpl<T> implements RemoveBrand<ReadonlyReactive<T> & Reactive<T>> {
     abstract get value(): T;
     abstract set value(_value: T);
 

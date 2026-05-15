@@ -25,7 +25,6 @@
 export {
     type ReadonlyReactive,
     type Reactive,
-    type ExternalReactive,
     type ReactiveGetter,
     type EqualsFunc,
     type ReactiveOptions,
@@ -45,7 +44,6 @@ export {
     reactive,
     computed,
     linked,
-    external,
     synchronized,
     batch,
     untracked,
@@ -54,8 +52,8 @@ export {
     isReadonlyReactive,
     isReactive
 } from "./signals";
-export { syncWatch, syncWatchValue, watch, watchValue } from "./watch";
-export { effect, syncEffect } from "./effect";
+export { watch, watchValue } from "./watch";
+export { effect } from "./effect";
 export { dispatchAsyncCallback, nextTick } from "./utils/dispatch";
 export { reportCallbackError } from "./utils/reportCallbackError";
 export * from "./collections";
