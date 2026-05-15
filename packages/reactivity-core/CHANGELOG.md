@@ -1,5 +1,11 @@
 # @conterra/reactivity-core
 
+## 0.8.5
+
+### Patch Changes
+
+- 8273e55: Wrap the `equals` call of linked signal in `untracked`.
+
 ## 0.8.4
 
 ### Patch Changes
