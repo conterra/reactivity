@@ -415,4 +415,22 @@ function defineSharedTests(dispatch: DispatchType): void {
             expect(cleanup).toHaveBeenCalledTimes(1);
         });
     });
+
+    it("double destroy", async () => {
+        const r = reactive(0);
+        const spy = vi.fn();
+        const handle = effect(
+            () => {
+                spy(r.value);
+            },
+            { dispatch }
+        );
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        handle.destroy();
+        handle.destroy(); // second call should not throw
+
+        await doMutation(() => (r.value = 1));
+        expect(spy).toHaveBeenCalledTimes(1); // still not called again
+    });
 }

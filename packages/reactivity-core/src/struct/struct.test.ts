@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
-import { it, expect, describe } from "vitest";
+import { it, expect, describe, vi } from "vitest";
 import { reactiveStruct } from "./struct";
 import { computed } from "../signals";
+import { effect } from "../effect";
+import { EffectCallback } from "../types";
 
 type HasMessage = {
     msg: string;
@@ -497,5 +499,75 @@ describe("reactiveStruct", () => {
             boolA: true
         });
         expect(myInstance.boolB).toBe(true);
+    });
+
+    it("does not allow writing to computed properties", () => {
+        type WithComputed = {
+            base: number;
+            doubled: number;
+        };
+        const MyClass = reactiveStruct<WithComputed>().define({
+            base: {},
+            doubled: {
+                compute() {
+                    return this.base * 2;
+                }
+            }
+        });
+        const instance = new MyClass({ base: 5 });
+        expect(instance.doubled).toBe(10);
+        expect(() => (instance.doubled = 100)).toThrowErrorMatchingInlineSnapshot(
+            `[TypeError: Cannot set property doubled of #<ReactiveStruct> which has only a getter]`
+        );
+    });
+
+    it("supports mixing property, computed, and method members", () => {
+        type Mixed = {
+            x: number;
+            y: number;
+            sum: number;
+            describe: () => string;
+        };
+        const MixedClass = reactiveStruct<Mixed>().define({
+            x: {},
+            y: {},
+            sum: {
+                compute() {
+                    return this.x + this.y;
+                }
+            },
+            describe: {
+                method() {
+                    return `(${this.x}, ${this.y}) => ${this.sum}`;
+                }
+            }
+        });
+        const m = new MixedClass({ x: 3, y: 4 });
+        expect(m.sum).toBe(7);
+        expect(m.describe()).toBe("(3, 4) => 7");
+
+        m.x = 10;
+        expect(m.sum).toBe(14);
+        expect(m.describe()).toBe("(10, 4) => 14");
+    });
+
+    it("triggers effects when struct properties change", () => {
+        const syncEffect = (cb: EffectCallback) => effect(cb, { dispatch: "sync" });
+        const PersonClass = reactiveStruct<PersonType>().define({
+            firstName: {},
+            lastName: {}
+        });
+        const person = new PersonClass({ firstName: "John", lastName: "Doe" });
+
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(person.firstName);
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith("John");
+
+        person.firstName = "Jane";
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith("Jane");
     });
 });

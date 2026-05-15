@@ -5,7 +5,7 @@ import { batch, reactive } from "../signals";
 import { doMutation as doMutationImpl, setupDoMutation } from "../test/doMutation";
 import { DispatchType } from "../types";
 import { nextTick } from "../utils/dispatch";
-import { watch, watchValue } from "./index";
+import { syncWatch, syncWatchValue, watch, watchValue } from "./index";
 
 describe("dispatch: sync", () => {
     defineSharedTests("sync");
@@ -554,3 +554,77 @@ function defineSharedTests(dispatch: DispatchType) {
         });
     });
 }
+
+describe("syncWatch wrapper", () => {
+    it("is a shorthand for watch with dispatch: sync", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        syncWatch(
+            () => [r.value] as const,
+            ([v]) => {
+                spy(v);
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(2);
+    });
+});
+
+describe("syncWatchValue wrapper", () => {
+    it("is a shorthand for watchValue with dispatch: sync", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        syncWatchValue(
+            () => r.value,
+            (v) => {
+                spy(v);
+            }
+        );
+        expect(spy).toHaveBeenCalledTimes(0);
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(2);
+    });
+});
+
+describe("double destroy", () => {
+    it("is idempotent for watch handles", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        const handle = watch(
+            () => [r.value],
+            ([v]) => {
+                spy(v);
+            },
+            { dispatch: "sync" }
+        );
+
+        handle.destroy();
+        handle.destroy(); // should not throw
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(0);
+    });
+
+    it("is idempotent for watchValue handles", () => {
+        const spy = vi.fn();
+        const r = reactive(1);
+        const handle = watchValue(
+            () => r.value,
+            (v) => {
+                spy(v);
+            },
+            { dispatch: "sync" }
+        );
+
+        handle.destroy();
+        handle.destroy(); // should not throw
+
+        r.value = 2;
+        expect(spy).toHaveBeenCalledTimes(0);
+    });
+});
