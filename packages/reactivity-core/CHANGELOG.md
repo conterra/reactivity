@@ -1,5 +1,11 @@
 # @conterra/reactivity-core
 
+## 0.8.3
+
+### Patch Changes
+
+- 8e4fedd: Update to `@preact/signals-core` 1.14.2
+
 ## 0.8.2
 
 ### Patch Changes
