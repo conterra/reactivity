@@ -361,10 +361,7 @@ The following values can be specified:
 
 See also [Sync vs async effect / watch](#sync-vs-async-effect--watch)
 
-### Linked signals (EXPERIMENTAL)
-
-> **Experimental**: This is an API that makes heavy use of the underlying signals library.
-> While we're confident about the API's stability, the _implementation_ may still contain some undiscovered problems.
+### Linked signals
 
 Where reactive signals may change arbitrarily, and computed signals are completely derived from other signals, linked signals are a hybrid of both.
 
@@ -441,12 +438,11 @@ This can preserve the user's selection if it is still valid.
 - Like other signals, `linked` supports custom equality functions.
   Note that this function works on the signal's _value_ and not on the _source_ (if these are different, see Example 2).
   If you need custom equality for the _source_, wrap that source in a `computed` signal.
-- The function computing _source_ may be called often.
-  If computing _source_ is expensive, consider wrapping the computation in a `computed` signal to benefit from caching.
 
 #### Prior Art
 
 The semantics of linked signals are inspired by [Angular's approach](https://angular.dev/guide/signals/linked-signal).
+The implementation is based on a technique shown by [Ryan Carniato](https://dev.to/ryansolid).
 
 ### Complex values
 

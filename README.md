@@ -35,6 +35,8 @@ $ pnpm build
 
 ## Tests
 
+> NOTE: Packages reference each other locally; they must be built at least once for tests in dependent packages to succeed.
+
 ```bash
 # Runs all tests
 $ pnpm test

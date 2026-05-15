@@ -859,8 +859,6 @@ describe("linked", () => {
 
     it("can change value while source does not change", () => {
         const options = reactive<string[]>(["a", "b", "c"]);
-
-        // getSource is called after _every_ (source / value) change with the current implementation.
         const getSource = vi.fn(() => options.value[0]);
 
         const currentOption = linked(getSource);
@@ -869,15 +867,15 @@ describe("linked", () => {
 
         currentOption.value = "b";
         expect(currentOption.value).toBe("b");
-        expect(getSource).toHaveBeenCalledTimes(2);
+        expect(getSource).toHaveBeenCalledTimes(1);
 
         currentOption.value = "c";
         expect(currentOption.value).toBe("c");
-        expect(getSource).toHaveBeenCalledTimes(3);
+        expect(getSource).toHaveBeenCalledTimes(1);
 
         options.value = ["1", "2", "3"];
         expect(currentOption.value).toBe("1"); // reset to first value
-        expect(getSource).toHaveBeenCalledTimes(4);
+        expect(getSource).toHaveBeenCalledTimes(2);
     });
 
     it("can preserve the previous value if it's still present in the source", () => {
@@ -929,7 +927,7 @@ describe("linked", () => {
 
         currentOption.value = "X";
         expect(currentOption.value).toBe("X");
-        expect(source).toHaveBeenCalledTimes(3); // must be >= 2; 3 is implementation weirdness
+        expect(source).toHaveBeenCalledTimes(2);
         expect(reset).toHaveBeenCalledTimes(2);
     });
 
