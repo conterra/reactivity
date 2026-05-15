@@ -81,26 +81,6 @@ export interface Reactive<T> extends ReadonlyReactive<T> {
 }
 
 /**
- * A signal that holds a value from an external source.
- *
- * Instances of this type are used to integrate "foreign" state into the reactivity system.
- *
- * @group Primitives
- */
-export interface ExternalReactive<T> extends ReadonlyReactive<T> {
-    /**
-     * Notifies the reactivity system that the external value has changed.
-     *
-     * The users of this value will be notified automatically; if there are any users
-     * then the value will be re-computed from its external source using the original callback.
-     *
-     * > NOTE: This function is bound to its instance. You can use it directly as an event handler callback
-     * > without safeguarding `this`.
-     */
-    trigger(): void;
-}
-
-/**
  * A function that returns a value that may change over time.
  *
  * The function should be implemented in terms of signals (directly or indirectly).

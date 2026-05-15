@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it, Mock, vi } from "vitest";
 import { effect } from "./effect";
-import { batch, computed, external, linked, reactive, synchronized } from "./signals";
+import { batch, computed, linked, reactive, synchronized } from "./signals";
 import { EffectCallback, ReadonlyReactive } from "./types";
 import { watchValue } from "./watch";
 import { nextTick } from "./utils/dispatch";
@@ -311,112 +311,6 @@ describe("computed", () => {
         void signal.value;
 
         expect(events).toEqual(["compute"]);
-    });
-});
-
-describe("external", () => {
-    it("accesses the external value", () => {
-        const spy = vi.fn().mockReturnValue(1);
-        const ext = external(spy);
-        expect(ext.value).toBe(1);
-        expect(ext.value).toBe(1); // second access -> value is cached
-        expect(spy).toHaveBeenCalledOnce();
-    });
-
-    it("can integrate 'foreign' state", () => {
-        const controller = new AbortController();
-        const signal = controller.signal;
-
-        const aborted = external(() => signal.aborted);
-        signal.addEventListener("abort", aborted.trigger);
-        expect(aborted.value).toBe(false);
-
-        controller.abort();
-        expect(aborted.value).toBe(true);
-    });
-
-    it("can trigger recomputation", () => {
-        const spy = vi.fn().mockReturnValue(1);
-        const ext = external(spy);
-        expect(ext.value).toBe(1);
-
-        spy.mockClear();
-        spy.mockReturnValue(2);
-
-        // ensure that `trigger` does not require `this`
-        const trigger = ext.trigger;
-        trigger();
-
-        // invalidate implementation based on boolean toggle (reverts to original but is still "dirty").
-        trigger();
-
-        expect(spy).toHaveBeenCalledTimes(0); // lazy
-        expect(ext.value).toBe(2);
-        expect(spy).toHaveBeenCalledTimes(1);
-    });
-
-    it("triggers effects on change", () => {
-        const provider = vi.fn().mockReturnValue(1);
-        const ext = external(provider);
-        const spy = vi.fn();
-        syncEffect(() => {
-            spy(ext.value);
-        });
-        expect(spy).toHaveBeenCalledTimes(1);
-
-        ext.trigger();
-        expect(spy).toHaveBeenCalledTimes(1); // no actual change
-
-        provider.mockReturnValue(2);
-        ext.trigger();
-        expect(spy).toHaveBeenCalledTimes(2); // called after change
-    });
-
-    it("throws error from compute function", () => {
-        let count = 0;
-        const boom = external(() => {
-            count++;
-            throw new Error("boom");
-        });
-
-        expect(() => boom.value).toThrowError("boom");
-        expect(count).toBe(1);
-
-        expect(() => boom.value).toThrowError("boom");
-        expect(count).toBe(1); // error is cached
-    });
-
-    it("remains usable after compute has thrown", () => {
-        let doThrow = true;
-        let count = 0;
-        const boom = external(() => {
-            count++;
-            if (doThrow) {
-                throw new Error("boom");
-            }
-            return "ok";
-        });
-
-        // Throws initially
-        expect(() => boom.value).toThrowError("boom");
-        expect(count).toBe(1);
-
-        // Recovers and no longer throws
-        doThrow = false;
-        boom.trigger();
-        expect(count).toBe(1);
-        expect(boom.value).toBe("ok");
-        expect(count).toBe(2);
-    });
-
-    it("notifies on watch and unwatch", () => {
-        const watched = vi.fn();
-        const unwatched = vi.fn();
-        const signal = external(() => 1, {
-            watched,
-            unwatched
-        });
-        testWatch(signal, watched, unwatched);
     });
 });
 
