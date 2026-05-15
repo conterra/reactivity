@@ -252,7 +252,6 @@ export function synchronized<T>(
  * While the source remains the same, the linked signal can be changed freely.
  * If the source changes, the linked signal will be reset.
  *
- * @experimental
  * @group Primitives
  */
 export function linked<T>(source: ReactiveGetter<T>, options?: ReactiveOptions<T>): Reactive<T>;
@@ -265,7 +264,6 @@ export function linked<T>(source: ReactiveGetter<T>, options?: ReactiveOptions<T
  *
  * The `reset` function determines the new value during initialization or after the source has changed.
  *
- * @experimental
  * @group Primitives
  */
 export function linked<T, S>(
@@ -578,71 +576,64 @@ class SynchronizedReactiveImpl<T> extends WrappingReactiveImpl<T> {
 }
 
 class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
-    // A writable signal that is used to _write_ the current value.
-    // In addition to being writable as long as the source remains the same,
-    // it is also reset to a new value when the source changes.
-    //
-    // Resetting happens in the computed signal, as a side effect, which is seems to be working fine?
-    #writeSignal: Reactive<T | undefined>;
-
-    // A computed signal that is used to _read_ the current value.
-    // It automatically resets itself if the source changes.
-    #readSignal: ReadonlyReactive<T>;
+    // A signal (writable) within a signal (read-only, computed).
+    // The outer computed changes whenever the _source_ changes; this causes the state to be reset to the _initial_ value.
+    // When changing the linked value manually, only the _inner_ signals is modified.
+    // With this approach, manual changes persist for as long as the source remains the same.
+    #signal: ReadonlyReactive<Reactive<T>>;
 
     // Old source (if any), not reactive.
     #prevSource: S | undefined;
 
-    // false after initial source computation, to discriminate between undefined and initial state.
-    #isInitial = true;
+    // Signal returned from the last iteration of this.#signal.
+    #prevSignal: Reactive<T> | undefined;
 
     constructor(
         source: () => S,
         reset: (source: S, prev: T | undefined) => T,
-        equals: EqualsFunc<T> | undefined,
+        equal: EqualsFunc<T> | undefined,
         watched: (() => void) | undefined,
         unwatched: (() => void) | undefined
     ) {
         super();
-
-        let writeEquals;
-        if (equals) {
-            writeEquals = (a: T | undefined, b: T | undefined) => {
-                if (this.#isInitial) {
-                    // The initial value is undefined, which does not match with the equals signature.
-                    return false;
-                }
-                return equals(a as T, b as T);
-            };
-        }
-        this.#writeSignal = reactive(undefined, { equal: writeEquals });
-        this.#readSignal = computed(
-            () => {
+        this.#signal = computed(
+            (): Reactive<T> => {
                 const currentSource = source();
-                if (this.#isInitial || currentSource !== this.#prevSource) {
-                    this.#prevSource = currentSource;
-                    this.#writeSignal.value = reset(currentSource, this.#writeSignal.peek());
-                    this.#isInitial = false;
+                const prevSignal = this.#prevSignal;
+                if (currentSource === this.#prevSource && prevSignal) {
+                    // Source stays the same -> no change.
+                    return prevSignal;
                 }
-                return this.#writeSignal.value as T;
+
+                this.#prevSource = currentSource;
+
+                // Get snapshot of current value (no reactive dependency).
+                let prev: T | undefined;
+                let hasPrev;
+                if (prevSignal) {
+                    prev = prevSignal.peek();
+                    hasPrev = true;
+                }
+
+                // Compute new initial value; return old signal unchanged if its still the same.
+                const value = untracked(() => reset(currentSource, prev));
+                if (hasPrev && equal?.(prev!, value)) {
+                    return prevSignal!; // non-null due to hasPrev = true
+                }
+
+                // Initialize a new signal for independent temporary state.
+                return (this.#prevSignal = reactive(value, { equal }));
             },
             { watched, unwatched }
         );
     }
 
     get value(): T {
-        return this.#readSignal.value;
+        return this.#signal.value.value;
     }
 
     set value(newValue: T) {
-        // Ensure source updating happens before, if necessary.
-        // This works around the fact that our reactions to source changes are lazy.
-        // By computing the value before writing it, we ensure that the latest write wins,
-        // since any invalidation happens in peek() and thus before the `.value` assignment.
-        //
-        // As a side effect, this also ensures that the current value is always initialized --
-        // thus equality does not the `| undefined` case.
-        this.peek();
-        this.#writeSignal.value = newValue;
+        this.#signal.value.value = newValue;
     }
 }
 
