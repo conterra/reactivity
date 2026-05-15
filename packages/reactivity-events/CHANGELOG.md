@@ -1,5 +1,12 @@
 # @conterra/reactivity-events
 
+## 0.8.5
+
+### Patch Changes
+
+- Updated dependencies [8273e55]
+    - @conterra/reactivity-core@0.8.5
+
 ## 0.8.4
 
 ### Patch Changes
