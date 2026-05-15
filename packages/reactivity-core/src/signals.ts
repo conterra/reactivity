@@ -654,7 +654,7 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
 
                 // Compute new initial value; return old signal unchanged if its still the same.
                 const value = untracked(() => reset(currentSource, prev));
-                if (hasPrev && equal?.(prev!, value)) {
+                if (hasPrev && untracked(() => equal?.(prev!, value))) {
                     return prevSignal!; // non-null due to hasPrev = true
                 }
 
