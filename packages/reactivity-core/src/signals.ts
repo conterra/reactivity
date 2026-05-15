@@ -298,6 +298,26 @@ export function linked<T, S = T>(
 }
 
 /**
+ * Creates a new, immutable signal with a constant value.
+ *
+ * The returned signal otherwise implements the same API as other readable signals,
+ * making it compatible with APIs that expect a `ReadonlyReactive<T>`.
+ *
+ * Example:
+ *
+ * ```ts
+ * const foo = constant(3);
+ * console.log(foo.value); // 3
+ * ```
+ *
+ * @group Primitives
+ */
+export function constant<T>(value: T): ReadonlyReactive<T> {
+    const impl = new ConstantReactive(value);
+    return impl as AddBrand<typeof impl>;
+}
+
+/**
  * Executes a set of reactive updates implemented in `callback`.
  * Effects are delayed until the batch has completed.
  *
@@ -418,6 +438,23 @@ abstract class ReactiveImpl<T> implements RemoveBrand<
 
     toString(): string {
         return `Reactive[value=${getFormattedValue(this.value)}]`;
+    }
+}
+
+class ConstantReactive<T> extends ReactiveImpl<T> {
+    #value: T;
+
+    constructor(value: T) {
+        super();
+        this.#value = value;
+    }
+
+    get value() {
+        return this.#value;
+    }
+
+    set value(_value: T) {
+        throw new Error("Cannot update a readonly reactive object.");
     }
 }
 

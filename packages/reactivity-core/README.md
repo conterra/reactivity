@@ -361,6 +361,19 @@ The following values can be specified:
 
 See also [Sync vs async effect / watch](#sync-vs-async-effect--watch)
 
+### Constant signals
+
+Constant signals are signals that do not support changes of their value.
+They can be helpful for APIs that expect a `ReadonlyReactive<T>`:
+
+```ts
+import { constant } from "@conterra/reactivity-core";
+
+const foo = constant(3);
+console.log(foo.value); // 3
+foo.value = 4; // TypeScript error and runtime error
+```
+
 ### Linked signals
 
 Where reactive signals may change arbitrarily, and computed signals are completely derived from other signals, linked signals are a hybrid of both.
