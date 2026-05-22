@@ -118,6 +118,9 @@ Computed signals only re-compute their value (by invoking the callback function)
 For as long as nothing has changed, the current value will be cached.
 This can make even complex computed signals very efficient.
 
+> NOTE: Not every _derived_ value needs to be a `computed`. Sometimes, a _getter_ can be sufficient.
+> See also [MaybeReactive](#maybereactive).
+
 Note that the callback function for a computed signal should be stateless:
 it is supposed to compute a value (possibly very often), and it should not change the state of the application while doing so.
 
@@ -993,6 +996,59 @@ batch(() => {
 ```
 
 It is usually a good idea to surround a complex update operation with `batch()`.
+
+### MaybeReactive
+
+The helper type `MaybeReactive<T>` and the associated function `getReactive()` help minimize the difference between _getters_ and computed signals.
+This is very helpful for reusable APIs that take arbitrary reactive values as inputs:
+
+```ts
+import { MaybeReactive, getReactive, reactive, computed, effect } from "@conterra/reactivity-core";
+
+// Example function: watch a reactive number and print its values.
+function trackNumberChanges(currentNumber: MaybeReactive<number>) {
+    effect(() => {
+        const value = getReactive(currentNumber);
+        console.log(value);
+    });
+}
+
+// Not reactive, but works
+trackNumberChanges(1);
+
+// Actually reactive: would print new values if `reactiveNumber` changes.
+const reactiveNumber = reactive(1);
+trackNumberChanges(reactiveNumber);
+
+// Two arbitrary signals
+const number1 = reactive(1);
+const number2 = reactive(2);
+
+// Track a computed signal, reactive too.
+const sum = computed(() => number1.value + number2.value);
+trackNumberChanges(() => sum.value);
+
+// Also works: the using a getter directly, without wrapping it into a computed first.
+trackNumberChanges(() => number1.value + number2.value);
+```
+
+A `MaybeReactive<T>` may be any of the following:
+
+- An immediate value (not reactive)
+- A readable signal (`reactive`, `computed`, etc.)
+- A getter function implemented in terms of signals (or not)
+
+`getReactive(maybeReactive)` will extract the value:
+
+- For immediate values: return them directly
+- For signals: return `maybeReactive.value`
+- For getters: return `maybeReactive()`
+
+#### When to use a getter vs. computed
+
+A getter is re-evaluated on every access, while a computed signal caches its result and
+only re-computes when a dependency changes. Prefer computed for expensive derivations;
+use a plain getter for trivial expressions or when you want to avoid creating a signal object.
 
 ### Sync vs async effect / watch
 

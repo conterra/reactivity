@@ -1,12 +1,14 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it, Mock, vi } from "vitest";
+import { reactiveArray } from "./collections";
 import { effect } from "./effect";
 import {
     batch,
     computed,
     constant,
     external,
+    getReactive,
     getValue,
     isReactive,
     isReadonlyReactive,
@@ -17,9 +19,8 @@ import {
     untracked
 } from "./signals";
 import { EffectCallback, ReadonlyReactive } from "./types";
-import { watchValue } from "./watch";
 import { nextTick } from "./utils/dispatch";
-import { reactiveArray } from "./collections";
+import { watchValue } from "./watch";
 
 const syncEffect = (cb: EffectCallback) => effect(cb, { dispatch: "sync" });
 
@@ -143,6 +144,38 @@ describe("getValue", () => {
         r.value = 2;
         expect(spy).toHaveBeenCalledTimes(2);
         expect(spy).toHaveBeenCalledWith(2);
+    });
+});
+
+describe("getReactive", () => {
+    it("returns plain values as-is", () => {
+        expect(getReactive(1)).toBe(1);
+    });
+
+    it("returns inner values of signals", () => {
+        expect(getReactive(reactive(2))).toBe(2);
+    });
+
+    it("calls getters to unwrap their value", () => {
+        const signal = reactive(1);
+        const getter = () => signal.value + 1;
+        expect(getReactive(getter)).toBe(2);
+    });
+
+    it("tracks reactive changes", () => {
+        const signal = reactive(1);
+        const getter = () => signal.value + 1;
+
+        const spy = vi.fn();
+        syncEffect(() => {
+            spy(getReactive(getter));
+        });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(2);
+
+        signal.value = 2;
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(3);
     });
 });
 

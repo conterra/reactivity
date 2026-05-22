@@ -14,6 +14,7 @@ import {
     CleanupHandle,
     EqualsFunc,
     ExternalReactive,
+    MaybeReactive,
     Reactive,
     ReactiveGetter,
     ReactiveOptions,
@@ -21,9 +22,9 @@ import {
     RemoveBrand,
     SubscribeFunc
 } from "./types";
+import { createTracker, trackChanges, triggerChange } from "./utils/ChangeTracker";
 import { dispatchAsyncCallback } from "./utils/dispatch";
 import { defaultEquals } from "./utils/equality";
-import { createTracker, trackChanges, triggerChange } from "./utils/ChangeTracker";
 
 /**
  * Creates a new mutable signal, initialized to `undefined`.
@@ -367,36 +368,6 @@ export function untracked<T>(callback: () => T): T {
 }
 
 /**
- * Returns the current `.value` of the given signal, or the input argument itself
- * if it is not reactive.
- *
- * The access to `.value` is tracked.
- *
- * @group Primitives
- */
-export function getValue<T>(maybeReactive: ReadonlyReactive<T> | T): T {
-    if (!isReadonlyReactive(maybeReactive)) {
-        return maybeReactive;
-    }
-    return maybeReactive.value;
-}
-
-/**
- * Returns the current `.value` of the given signal, or the input argument itself
- * if it is not reactive.
- *
- * The access to `.value` is _not_ tracked.
- *
- * @group Primitives
- */
-export function peekValue<T>(maybeReactive: ReadonlyReactive<T> | T): T {
-    if (!isReadonlyReactive(maybeReactive)) {
-        return maybeReactive;
-    }
-    return maybeReactive.peek();
-}
-
-/**
  * Returns `true` if `maybeReactive` is any kind of signal.
  *
  * @group Primitives
@@ -416,6 +387,55 @@ export function isReactive<T>(maybeReactive: Reactive<T> | T): maybeReactive is 
     return (
         maybeReactive instanceof WritableReactiveImpl || maybeReactive instanceof LinkedReactiveImpl
     );
+}
+
+/**
+ * Returns the current `.value` of the given signal, or the input argument itself
+ * if it is not reactive.
+ *
+ * The access to `.value` is tracked.
+ *
+ * @group Primitives
+ */
+export function getValue<T>(maybeSignal: T | ReadonlyReactive<T>): T {
+    if (!isReadonlyReactive(maybeSignal)) {
+        return maybeSignal;
+    }
+    return maybeSignal.value;
+}
+
+/**
+ * Returns the current `.value` of the given signal, or the input argument itself
+ * if it is not reactive.
+ *
+ * The access to `.value` is _not_ tracked.
+ *
+ * @deprecated Use {@link untracked} in combination with {@link getValue} instead.
+ *
+ * @group Primitives *
+ */
+export function peekValue<T>(maybeSignal: T | ReadonlyReactive<T>): T {
+    if (!isReadonlyReactive(maybeSignal)) {
+        return maybeSignal;
+    }
+    return maybeSignal.peek();
+}
+
+/**
+ * Unwraps the given value, which may be a reactive value or not.
+ *
+ * This is like {@link getValue}, but also calls getters to unwrap their computed value.
+ *
+ * @group Primitives
+ */
+export function getReactive<T>(maybeReactive: MaybeReactive<T>) {
+    if (isReadonlyReactive(maybeReactive)) {
+        return maybeReactive.value;
+    }
+    if (typeof maybeReactive === "function") {
+        return (maybeReactive as ReactiveGetter<T>)();
+    }
+    return maybeReactive;
 }
 
 abstract class ReactiveImpl<T> implements RemoveBrand<

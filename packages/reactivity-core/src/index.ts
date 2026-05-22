@@ -27,6 +27,8 @@ export {
     type Reactive,
     type ExternalReactive,
     type ReactiveGetter,
+    type MaybeReactive,
+    type ReactiveSource,
     type EqualsFunc,
     type ReactiveOptions,
     type CleanupFunc,
@@ -51,6 +53,7 @@ export {
     batch,
     untracked,
     getValue,
+    getReactive,
     peekValue,
     isReadonlyReactive,
     isReactive

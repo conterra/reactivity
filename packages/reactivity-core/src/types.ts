@@ -113,6 +113,24 @@ export interface ExternalReactive<T> extends ReadonlyReactive<T> {
 export type ReactiveGetter<T> = () => T;
 
 /**
+ * Represents a value that may or may not be reactive.
+ *
+ * - Immediate values (`T`) are not reactive.
+ * - Signals (`ReadonlyReactive<T>`) are reactive by definition.
+ * - Functions are assumed to be implemented in terms of signals.
+ *
+ * @group Primitives
+ */
+export type MaybeReactive<T> = T | ReadonlyReactive<T> | ReactiveGetter<T>;
+
+/**
+ * A reactive value source, either a signal or a getter.
+ *
+ * @group Primitives
+ */
+export type ReactiveSource<T> = ReadonlyReactive<T> | ReactiveGetter<T>;
+
+/**
  * A function that shall return `true` if `a` and `b` are considered equal, `false` otherwise.
  *
  * @group Primitives
