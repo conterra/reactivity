@@ -412,7 +412,7 @@ export function getValue<T>(maybeSignal: T | ReadonlyReactive<T>): T {
  *
  * @deprecated Use {@link untracked} in combination with {@link getValue} instead.
  *
- * @group Primitives *
+ * @group Primitives
  */
 export function peekValue<T>(maybeSignal: T | ReadonlyReactive<T>): T {
     if (!isReadonlyReactive(maybeSignal)) {
