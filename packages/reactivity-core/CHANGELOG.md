@@ -1,5 +1,13 @@
 # @conterra/reactivity-core
 
+## 0.8.6
+
+### Patch Changes
+
+- 01c564d: Add `ReactiveSource<T>` type alias.
+- 70efebc: Deprecate `peekValue`.
+- 01c564d: Add `MaybeReactive<T>` and the associated `getReactive` function.
+
 ## 0.8.5
 
 ### Patch Changes
