@@ -13,7 +13,7 @@ catalog:
   "@types/node": ^24.13.2
   "@vitejs/plugin-vue": ^6.0.7
   concurrently: ^10.0.3
-  esbuild: ^0.28.0
+  esbuild: ^0.28.1
   eslint: ^9.39.4
   eslint-config-prettier: ^10.1.8
   eslint-plugin-headers: 1.3.4
@@ -27,21 +27,29 @@ catalog:
   typedoc: ^0.28.19
   typescript: ^6.0.3
   typescript-eslint: ^8.62.0
-  vite: ^8.0.12
+  vite: ^8.1.0
   vitest: ^4.1.9
   vue: ^3.5.39
   vue-eslint-parser: ^10.4.1
   vuetify: ^3.12.8
 
 # Empty object so renovate does not error out
-overrides: {}
+overrides:
+  # https://github.com/advisories/GHSA-6v5v-wf23-fmfq
+  "markdown-it@<=14.1.1": "^14.1.2"
+
+  # https://github.com/advisories/GHSA-22p9-wv53-3rq4  
+  "linkify-it@<=5.0.0": "^5.0.1"
 
 peerDependencyRules:
   allowedVersions:
     typescript: "*"
 
 # Empty object so renovate does not error out
-auditConfig: {}
+auditConfig:
+  ignoreGhsas:
+    # js-yaml: https://github.com/advisories/GHSA-h67p-54hq-rp68
+    - GHSA-h67p-54hq-rp68 
 
 minimumReleaseAge: 4320 # 3 days in minutes
 minimumReleaseAgeExclude:
