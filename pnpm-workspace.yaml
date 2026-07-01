@@ -47,6 +47,8 @@ minimumReleaseAge: 4320 # 3 days in minutes
 minimumReleaseAgeExclude:
   - "@open-pioneer/*"
   - "@conterra/*"
+  # Renovate security update: esbuild@0.28.1
+  - esbuild@0.28.1
 
 # Don't automatically link to workspace packages.
 # One must use the explicit `workspace:...` protocol instead.
