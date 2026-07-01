@@ -33,13 +33,15 @@ catalog:
   vue-eslint-parser: ^10.4.0
   vuetify: ^3.12.6
 
-overrides:
+# Empty object so renovate does not error out
+overrides: {}
 
 peerDependencyRules:
   allowedVersions:
     typescript: "*"
 
-auditConfig:
+# Empty object so renovate does not error out
+auditConfig: {}
 
 minimumReleaseAge: 4320 # 3 days in minutes
 minimumReleaseAgeExclude:
