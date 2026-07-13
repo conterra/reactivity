@@ -634,7 +634,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
     }
 
     #findLastIndex(predicate: (value: T, index: number) => boolean): number {
-        for (let i = this.length; i-- > 0; ) {
+        for (let i = this.length; i-- > 0;) {
             const v = this.get(i)!;
             if (predicate(v, i)) {
                 return i;

@@ -88,10 +88,10 @@ type AnyFunc = (...args: any[]) => any;
  */
 type GetMemberSchemaForProp<T, V> = [V] extends [AnyFunc]
     ? // V is wrapped in an array to prevent distributive conditional types
-          // see https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
-          | PropertyMemberType
-          | MethodMemberType<T, Parameters<V>, ReturnType<V>>
-          | ComputedMemberType<T, V>
+      // see https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
+      | PropertyMemberType
+      | MethodMemberType<T, Parameters<V>, ReturnType<V>>
+      | ComputedMemberType<T, V>
     : PropertyMemberType | ComputedMemberType<T, V>;
 
 /**

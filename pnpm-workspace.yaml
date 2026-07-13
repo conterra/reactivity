@@ -38,7 +38,7 @@ overrides:
   # https://github.com/advisories/GHSA-6v5v-wf23-fmfq
   "markdown-it@<=14.1.1": "^14.1.2"
 
-  # https://github.com/advisories/GHSA-22p9-wv53-3rq4  
+  # https://github.com/advisories/GHSA-22p9-wv53-3rq4
   "linkify-it@<=5.0.0": "^5.0.1"
 
 peerDependencyRules:
@@ -49,7 +49,7 @@ peerDependencyRules:
 auditConfig:
   ignoreGhsas:
     # js-yaml: https://github.com/advisories/GHSA-h67p-54hq-rp68
-    - GHSA-h67p-54hq-rp68 
+    - GHSA-h67p-54hq-rp68
 
 minimumReleaseAge: 4320 # 3 days in minutes
 minimumReleaseAgeExclude:
