@@ -7,6 +7,7 @@ import {
     signal as rawSignal
 } from "@preact/signals-core";
 import { describe, expect, it } from "vitest";
+import { forceGc, forceGcUntil } from "./test/gc";
 
 // A long lived, watched computed ("center") must not leak the short lived computeds and
 // effects that subscribe to it. These tests use the raw signals directly: the wrapper
@@ -22,7 +23,7 @@ describe("garbage collection", () => {
             }
         });
 
-        await forceGc();
+        await forceGcUntil(() => countAlive(refs) === 0);
         expect(countAlive(refs)).toBe(0);
     });
 
@@ -62,7 +63,7 @@ describe("garbage collection", () => {
 
         condition.value = false; // the effect reruns and drops the computed as a dependency
         holder.downstream = undefined;
-        await forceGc();
+        await forceGcUntil(() => ref.deref() === undefined);
 
         expect(ref.deref()).toBeUndefined();
         dispose();
@@ -96,12 +97,4 @@ function allocate(fn: (track: (...objects: object[]) => void) => void): WeakRef<
 
 function countAlive(refs: WeakRef<object>[]): number {
     return refs.filter((ref) => ref.deref() !== undefined).length;
-}
-
-/** Weak refs used in the current task are not collected, and a single gc run is sometimes not enough. */
-async function forceGc(): Promise<void> {
-    for (let i = 0; i < 3; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        global.gc!();
-    }
 }

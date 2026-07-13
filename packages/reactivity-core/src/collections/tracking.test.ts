@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Trackers } from "./tracking";
 import { effect } from "../effect";
 import { computed } from "../signals";
+import { forceGc, forceGcUntil } from "../test/gc";
 
 describe("track key changes", () => {
     it("triggers effect() when key changes", async () => {
@@ -47,7 +48,7 @@ describe("track key changes", () => {
         // Initial call
         expect(calls).toBe(1);
 
-        await reallyGc();
+        await forceGc();
 
         // Key change triggers reevaluation
         trackers.trigger("foo");
@@ -71,7 +72,7 @@ describe("track key changes", () => {
         counter.value;
         expect(calls).toBe(1); // cached
 
-        await reallyGc();
+        await forceGc();
         trackers.trigger("foo");
 
         expect(calls).toBe(1);
@@ -100,11 +101,11 @@ describe("memory management", () => {
         );
         expect(trackerMap.size).toBe(1000);
 
-        await reallyGc();
+        await forceGc();
         expect(trackerMap.size).toBe(1000); // no change
 
         handle.destroy();
-        await reallyGc();
+        await forceGcUntil(() => trackerMap.size === 0);
         expect(trackerMap.size).toBe(0); // cleaned up
     });
 
@@ -133,7 +134,7 @@ describe("memory management", () => {
         trackers.trigger(123);
         expect(calls).toBe(2); // Only listens for 123 now
 
-        await reallyGc();
+        await forceGcUntil(() => trackerMap.size === 1);
         expect(trackerMap.size).toBe(1); // All except 123 cleared
 
         trackers.trigger(123);
@@ -163,7 +164,7 @@ describe("weak refs and finalization registries", () => {
         const w = new WeakRef({});
         expect(w.deref()).toBeDefined();
 
-        await gc();
+        await forceGcUntil(() => w.deref() === undefined);
 
         expect(w.deref()).toBe(undefined);
     });
@@ -183,7 +184,7 @@ describe("weak refs and finalization registries", () => {
         expect(w.deref()).toBeDefined();
         expect(callback).toHaveBeenCalledTimes(0);
 
-        await reallyGc();
+        await forceGcUntil(() => callback.mock.calls.length > 0);
 
         expect(w.deref()).toBeUndefined();
         expect(callback).toHaveBeenCalledTimes(1);
@@ -198,25 +199,3 @@ describe("weak refs and finalization registries", () => {
         global.gc!();
     });
 });
-
-async function reallyGc() {
-    // Sometimes one gc is not enough :)
-    await gc();
-    await gc();
-    await gc();
-}
-
-async function gc(): Promise<void> {
-    return new Promise((resolve, reject) => {
-        // Weak refs that are used in the current task are not collected -> perform gc
-        // in the next tick.
-        setTimeout(() => {
-            try {
-                global.gc!();
-                resolve();
-            } catch (e) {
-                reject(e);
-            }
-        }, 0);
-    });
-}
