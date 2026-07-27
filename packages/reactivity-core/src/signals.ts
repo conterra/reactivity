@@ -656,30 +656,32 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
         this.#signal = computed(
             (): Reactive<T> => {
                 const currentSource = source();
-                const prevSignal = this.#prevSignal;
-                if (currentSource === this.#prevSource && prevSignal) {
-                    // Source stays the same -> no change.
-                    return prevSignal;
-                }
+                return untracked(() => {
+                    const prevSignal = this.#prevSignal;
+                    if (currentSource === this.#prevSource && prevSignal) {
+                        // Source stays the same -> no change.
+                        return prevSignal;
+                    }
 
-                this.#prevSource = currentSource;
+                    this.#prevSource = currentSource;
 
-                // Get snapshot of current value (no reactive dependency).
-                let prev: T | undefined;
-                let hasPrev;
-                if (prevSignal) {
-                    prev = prevSignal.peek();
-                    hasPrev = true;
-                }
+                    // Get snapshot of current value (no reactive dependency).
+                    let prev: T | undefined;
+                    let hasPrev;
+                    if (prevSignal) {
+                        prev = prevSignal.value;
+                        hasPrev = true;
+                    }
 
-                // Compute new initial value; return old signal unchanged if its still the same.
-                const value = untracked(() => reset(currentSource, prev));
-                if (hasPrev && untracked(() => equal?.(prev!, value))) {
-                    return prevSignal!; // non-null due to hasPrev = true
-                }
+                    // Compute new initial value; return old signal unchanged if its still the same.
+                    const value = reset(currentSource, prev);
+                    if (hasPrev && equal?.(prev!, value)) {
+                        return prevSignal!; // non-null due to hasPrev = true
+                    }
 
-                // Initialize a new signal for independent temporary state.
-                return (this.#prevSignal = reactive(value, { equal }));
+                    // Initialize a new signal for independent temporary state.
+                    return (this.#prevSignal = reactive(value, { equal }));
+                });
             },
             { watched, unwatched }
         );
