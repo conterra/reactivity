@@ -1,0 +1,122 @@
+# Runs quality checks (linting, tests, etc.), updates the release PR / publishes packages.
+# Also builds the api docs and publishes them to github pages (main branch only).
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: "Run quality checks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install
+        uses: open-pioneer/trails-repo-automation/.github/actions/install@main
+
+      - name: Run checks
+        run: pnpm ci:test
+
+  # Builds the api documentation and uploads ./dist/docs as an artifact ("docs").
+  docs:
+    name: "Build documentation"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install
+        uses: open-pioneer/trails-repo-automation/.github/actions/install@main
+
+      - name: Build documentation
+        run: pnpm build-docs
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: docs
+          path: dist/docs
+          retention-days: 1
+
+  # Publishes packages using changesets.
+  release:
+    name: "Publish or create version PR"
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Install
+        uses: open-pioneer/trails-repo-automation/.github/actions/install@main
+
+      - name: Authenticate
+        uses: open-pioneer/trails-repo-automation/.github/actions/npm-authenticate@main
+        with:
+          npm-token: ${{ secrets.PUBLISH_TOKEN_NPM }}
+
+      - id: changesets
+        name: Create Release Pull Request or Publish to npm
+        uses: changesets/action@v1
+        with:
+          version: "pnpm run ci:version"
+          publish: "pnpm run ci:publish"
+          commit: "[RELEASE] Update package versions"
+          title: "[RELEASE] Update package versions"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NO_VERIFY: "1" # don't run git hooks on simple version commits
+
+  # Deploys the api documentation to github pages ("latest" for releases, "dev" otherwise).
+  deploy_docs:
+    name: "Deploy documentation"
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - checks
+      - docs
+      - release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Load documentation artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: docs
+          path: docs
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4
+        with:
+          folder: docs
+          branch: gh-pages
+          target-folder: ${{ needs.release.outputs.published == 'true' && 'latest' || 'dev' }}

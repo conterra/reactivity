@@ -14,6 +14,7 @@
         "lint": "eslint .",
         "prettier:common": "prettier --ignore-path .gitignore --ignore-path .prettierignore",
         "prettier": "pnpm run prettier:common --write --cache .",
+        "ci:test": "pnpm run lint && pnpm run build && pnpm run check-types && pnpm vitest run",
         "ci:version": "pnpm changeset version && pnpm install",
         "ci:publish": "pnpm run clean && pnpm run build && pnpm publish -r --access public && pnpm changeset tag",
         "prepare": "husky"
