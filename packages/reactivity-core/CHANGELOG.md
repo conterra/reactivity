@@ -1,5 +1,12 @@
 # @conterra/reactivity-core
 
+## 0.8.7
+
+### Patch Changes
+
+- 362d127: Update @preact/signals-core to 1.14.3
+- 8bfd417: Add `toReactiveGetter` helper to normalize a `MaybeReactive` into a functional getter.
+
 ## 0.8.6
 
 ### Patch Changes
