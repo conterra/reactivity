@@ -1,5 +1,11 @@
 # @conterra/reactivity-core
 
+## 0.8.8
+
+### Patch Changes
+
+- 8deb6e0: Add missing export.
+
 ## 0.8.7
 
 ### Patch Changes
