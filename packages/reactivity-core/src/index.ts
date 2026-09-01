@@ -56,7 +56,8 @@ export {
     getReactive,
     peekValue,
     isReadonlyReactive,
-    isReactive
+    isReactive,
+    toReactiveGetter
 } from "./signals";
 export { syncWatch, syncWatchValue, watch, watchValue } from "./watch";
 export { effect, syncEffect } from "./effect";
