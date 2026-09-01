@@ -16,6 +16,7 @@ import {
     peekValue,
     reactive,
     synchronized,
+    toReactiveGetter,
     untracked
 } from "./signals";
 import { EffectCallback, ReadonlyReactive } from "./types";
@@ -176,6 +177,24 @@ describe("getReactive", () => {
         signal.value = 2;
         expect(spy).toHaveBeenCalledTimes(2);
         expect(spy).toHaveBeenCalledWith(3);
+    });
+});
+
+describe("toReactiveGetter", () => {
+    it("returns a function as-is", () => {
+        const getter = () => 1;
+        expect(toReactiveGetter(getter)).toBe(getter);
+    });
+
+    it("wraps a signal into a getter", () => {
+        const signal = reactive(1);
+        const getter = toReactiveGetter(signal);
+        expect(getter()).toBe(1);
+    });
+
+    it("wraps a plain value into a getter", () => {
+        const getter = toReactiveGetter(123);
+        expect(getter()).toBe(123);
     });
 });
 

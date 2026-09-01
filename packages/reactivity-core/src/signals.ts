@@ -438,6 +438,23 @@ export function getReactive<T>(maybeReactive: MaybeReactive<T>) {
     return maybeReactive;
 }
 
+/**
+ * Normalizes the given `maybeReactive` value to a reactive getter.
+ *
+ * Returns the argument as-is if it's already a function.
+ * Returns a function dereferencing the signal or value otherwise.
+ *
+ * @group Primitives
+ */
+export function toReactiveGetter<T>(maybeReactive: MaybeReactive<T>): ReactiveGetter<T> {
+    if (typeof maybeReactive === "function") {
+        return maybeReactive as ReactiveGetter<T>;
+    }
+
+    const reactiveGetter = () => getReactive(maybeReactive);
+    return reactiveGetter;
+}
+
 abstract class ReactiveImpl<T> implements RemoveBrand<
     ReadonlyReactive<T> & Reactive<T> & ExternalReactive<T>
 > {
