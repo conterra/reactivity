@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import { it, expect, describe, vi } from "vitest";
-import { reactiveStruct } from "./struct";
-import { computed } from "../signals";
 import { effect } from "../effect";
+import { computed } from "../signals";
 import { EffectCallback } from "../types";
+import { reactiveStruct } from "./struct";
 
 type HasMessage = {
     msg: string;

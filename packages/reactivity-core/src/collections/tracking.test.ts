@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import { describe, expect, it, vi } from "vitest";
-import { Trackers } from "./tracking";
 import { effect } from "../effect";
 import { computed } from "../signals";
 import { forceGc, forceGcUntil } from "../test/gc";
+import { Trackers } from "./tracking";
 
 describe("track key changes", () => {
     it("triggers effect() when key changes", async () => {

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import { batch } from "../signals";
 import { Trackers } from "./tracking";
 
@@ -128,6 +129,7 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     *entries(): IterableIterator<[K, V]> {
         this.#getTrackers().track(ENTRIES_CHANGE);
         for (const key of this.#values.keys()) {
+            // oxlint-disable-next-line typescript/no-non-null-assertion
             const value = this.get(key)!; // tracks
             yield [key, value];
         }
@@ -141,6 +143,7 @@ class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     *values(): IterableIterator<V> {
         this.#getTrackers().track(ENTRIES_CHANGE);
         for (const key of this.#values.keys()) {
+            // oxlint-disable-next-line typescript/no-non-null-assertion
             const value = this.get(key)!; // tracks
             yield value;
         }

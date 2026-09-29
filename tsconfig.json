@@ -3,6 +3,13 @@
     "compilerOptions": {
         "noEmit": true
     },
-    "include": ["packages", "playground", "vitest.config.ts", "vite-env.d.ts"],
+    "include": [
+        "packages",
+        "playground",
+        "oxlint.config.ts",
+        "oxfmt.config.ts",
+        "vitest.config.ts",
+        "vite-env.d.ts"
+    ],
     "exclude": ["**/node_modules", "**/dist", "**/temp"]
 }

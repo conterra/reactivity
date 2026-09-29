@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import { batch } from "../signals";
 import { Trackers } from "./tracking";
 
@@ -625,6 +626,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
 
     #findIndex(predicate: (value: T, index: number) => boolean, fromIndex?: number): number {
         for (let i = fromIndex ?? 0, n = this.length; i < n; ++i) {
+            // oxlint-disable-next-line typescript/no-non-null-assertion
             const v = this.get(i)!;
             if (predicate(v, i)) {
                 return i;
@@ -635,6 +637,7 @@ class ReactiveArrayImpl<T> implements ReactiveArray<T> {
 
     #findLastIndex(predicate: (value: T, index: number) => boolean): number {
         for (let i = this.length; i-- > 0;) {
+            // oxlint-disable-next-line typescript/no-non-null-assertion
             const v = this.get(i)!;
             if (predicate(v, i)) {
                 return i;

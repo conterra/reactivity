@@ -1,10 +1,11 @@
 <script setup lang="ts">
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import { ref } from "vue";
-import { TodosModel } from "./TodosModel";
 import { useReactiveSnapshot } from "./integration";
 import TodoItem from "./TodoItem.vue";
+import { TodosModel } from "./TodosModel";
 
 const model = new TodosModel();
 const snapshot = useReactiveSnapshot(() => {

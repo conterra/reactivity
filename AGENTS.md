@@ -24,8 +24,10 @@ pnpm install               # install all deps
 pnpm build                 # build all packages (recursive)
 pnpm test                  # run all tests (vitest)
 pnpm check-types           # tsc noEmit across all packages
-pnpm lint                  # eslint .
-pnpm prettier              # format all files in place
+pnpm lint                  # oxlint .
+pnpm lint:fix              # oxlint . --fix
+pnpm fmt                   # format all files in place (oxfmt)
+pnpm fmt:check             # check formatting without writing
 pnpm clean                 # remove all dist/ dirs
 pnpm dev                   # watch-build all packages in parallel
 pnpm build-docs            # typedoc → dist/docs
@@ -64,18 +66,21 @@ pnpm run build:js      # esbuild → dist/index.js (ESM, external packages, sour
 
 ## File header requirement
 
-**Every source file must begin with these two lines** (enforced by `eslint-plugin-headers`, will fail `pnpm lint` without them):
+**Every source file must begin with these two lines** (enforced by `@tony.ganchev/eslint-plugin-header`, loaded as an oxlint JS plugin; `pnpm lint` fails without them):
 
 ```ts
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
 ```
 
-## ESLint / style conventions
+## Lint / format conventions
+
+Linting uses oxlint (`oxlint.config.ts`), formatting uses oxfmt (`oxfmt.config.ts`). ESLint and Prettier are not used; the only eslint-related dependency is the header plugin.
 
 - Double quotes, semicolons, 4-space indent, no trailing commas, `printWidth: 100`
-- `@typescript-eslint/no-unused-expressions` is **disabled** — signal reads like `someSignal.value;` are intentional side effects
-- Test files (`**/*.test.*`): `no-non-null-assertion` and `no-explicit-any` are off
+- `no-unused-expressions` is **disabled** — signal reads like `someSignal.value;` are intentional side effects
+- Test files (`**/*.test.*`, `**/test/**`): `typescript/no-explicit-any` and `no-await-in-loop` are off
+- `vitest/expect-expect` treats `testWatch` as an assertion helper
 
 ## TypeScript
 

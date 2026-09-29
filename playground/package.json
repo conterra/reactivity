@@ -1,8 +1,8 @@
 {
     "name": "playground",
-    "type": "module",
     "version": "0.0.1",
     "private": true,
+    "type": "module",
     "scripts": {
         "dev": "vite"
     },
@@ -15,7 +15,6 @@
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "catalog:",
-        "eslint-plugin-vue": "catalog:",
         "vite": "catalog:"
     }
 }

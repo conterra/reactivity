@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { computed, getValue, isReactive, reactive } from "../signals";
 
@@ -121,7 +122,6 @@ type ReactiveStructConstructorParams<T, Def> = ConstructorArgs<
 /**
  * Makes the properties object optional if all properties are optional (i.e. if `{}` would be a valid value).
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type ConstructorArgs<Props> = {} extends Props ? [initialValues?: Props] : [initialValues: Props];
 
 /**

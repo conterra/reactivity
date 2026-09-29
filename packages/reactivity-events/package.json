@@ -1,9 +1,8 @@
 {
     "name": "@conterra/reactivity-events",
-    "type": "module",
     "version": "0.8.8",
-    "license": "Apache-2.0",
     "description": "Event support for reactive objects. Based on `@conterra/reactivity-core`.",
+    "license": "Apache-2.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/conterra/reactivity",
@@ -16,6 +15,8 @@
         "package.json",
         "dist/**"
     ],
+    "type": "module",
+    "sideEffects": false,
     "exports": {
         ".": {
             "import": "./dist/index.js",
@@ -23,7 +24,9 @@
         },
         "./package.json": "./package.json"
     },
-    "sideEffects": false,
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "clean": "rimraf dist",
         "build": "pnpm run build:types && pnpm run build:js",
@@ -38,8 +41,5 @@
     },
     "devDependencies": {
         "project-root": "workspace:*"
-    },
-    "publishConfig": {
-        "access": "public"
     }
 }

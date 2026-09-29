@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import {
     Signal as RawSignal,
     batch as rawBatch,
@@ -692,7 +693,9 @@ class LinkedReactiveImpl<S, T> extends ReactiveImpl<T> {
 
                     // Compute new initial value; return old signal unchanged if its still the same.
                     const value = reset(currentSource, prev);
+                    // oxlint-disable-next-line typescript/no-non-null-assertion
                     if (hasPrev && equal?.(prev!, value)) {
+                        // oxlint-disable-next-line typescript/no-non-null-assertion
                         return prevSignal!; // non-null due to hasPrev = true
                     }
 

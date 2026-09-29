@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2024-2025 con terra GmbH (https://www.conterra.de)
 // SPDX-License-Identifier: Apache-2.0
+
 import { effect as rawEffect } from "@preact/signals-core";
 import { CleanupHandle, EffectCallback, EffectContext, EffectOptions } from "../types";
 import { AsyncEffect } from "./AsyncEffect";
