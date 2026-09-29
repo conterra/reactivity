@@ -1,5 +1,13 @@
 # @conterra/reactivity-events
 
+## 0.8.9
+
+### Patch Changes
+
+- 009ba5d: Migrate to oxlint / oxfmt.
+- Updated dependencies [009ba5d]
+    - @conterra/reactivity-core@0.8.9
+
 ## 0.8.8
 
 ### Patch Changes
@@ -72,6 +80,7 @@
 - 1e3090b: Deprecate `onSync()`.
   Use `on()` with the new `dispatch` option instead.
 - 1e3090b: Introduce `dispatch` option to `on()`.
+
     - `"async"`: callbacks are executed in the next major task (the default, and the existing behavior)
     - `"sync"`: callbacks are executed synchronously (like `onSync` etc.)
 
@@ -109,6 +118,7 @@
 ### Minor Changes
 
 - 7b7ed6d: The `emitter()` function now supports two new options: `subscribed` and `unsubscribed`.
+
     - `subscribed()` will be called when the _first_ subscriber subscribes to the event.
       This can be used to initialize the event source lazily.
     - `unsubscribed()` will be called when the _last_ subscriber unsubscribes from the event.
