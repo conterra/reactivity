@@ -1,5 +1,11 @@
 # @conterra/reactivity-core
 
+## 0.8.9
+
+### Patch Changes
+
+- 009ba5d: Migrate to oxlint / oxfmt.
+
 ## 0.8.8
 
 ### Patch Changes
@@ -76,6 +82,7 @@
   Use `effect()`, `watch()` and `watchValue()` with the new `dispatch` option instead.
 - e7690b7: `synchronized`: add support for the `equal` option
 - 8667eff: Introduce `dispatch` option to `effect()`, `watch()` and `watchValue`:
+
     - `"async"`: callbacks are executed in the next major task (the default, and the existing behavior)
     - `"sync"`: callbacks are executed synchronously (like `syncEffect` etc.)
 
@@ -113,6 +120,7 @@
 ### Minor Changes
 
 - 546f3ec: Add two new options to all signal types: `watched` and `unwatched`.
+
     - `watched()` is called when the _first_ watcher starts watching the signal.
       This can be used, for example, to setup some background task.
     - `unwatched()` is called when the _last_ watcher stops watching the signal.
