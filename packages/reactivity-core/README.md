@@ -867,15 +867,24 @@ With [npm](https://npmjs.org/) installed, run
 npm install @conterra/reactivity-core
 ```
 
-## Agent skill
+## Agent skills
 
-This package ships agent skills that teach coding agents how to use this library.
-After installation, they are available in `node_modules/@conterra/reactivity-core/skills/`:
+This package ships agent skills that teach AI coding agents how to use this library:
 
-- `reactivity-core/SKILL.md`: signals, effects, watches and reactive collections (this package).
-- `reactivity-events/SKILL.md`: event emitters from [`@conterra/reactivity-events`](https://www.npmjs.com/package/@conterra/reactivity-events).
+- `reactivity-core`: signals, effects, watches and reactive collections (this package).
+- `reactivity-events`: event emitters from [`@conterra/reactivity-events`](https://www.npmjs.com/package/@conterra/reactivity-events).
 
-Copy or symlink the skill directories into your agent's skill directory (e.g. `.agents/skills/` or `.claude/skills/`) to use them.
+With pnpm >= 12.11, the skills are linked into your agent's skill directory automatically once approved (via `pnpm approve` or in `pnpm-workspace.yaml`).
+See the [pnpm documentation](https://pnpm.io/agent-skills) for details.
+
+```yaml
+# pnpm-workspace.yaml
+permissions:
+    "@conterra/reactivity-core":
+        skills: true
+```
+
+Otherwise, copy or symlink the directories from `node_modules/@conterra/reactivity-core/skills/` into your agent's skill directory (e.g. `.agents/skills/` or `.claude/skills/`).
 
 ## Gotchas and tips
 

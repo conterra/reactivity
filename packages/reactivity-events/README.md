@@ -31,9 +31,9 @@ emit(view.clicked, { x: 10, y: 20 });
 
 ## Agent skill
 
-An agent skill that teaches coding agents how to use this library is shipped with `@conterra/reactivity-core`.
-After installation, it is available at `node_modules/@conterra/reactivity-core/skills/reactivity-events/SKILL.md`.
-Copy or symlink the `skills/reactivity-events` directory into your agent's skill directory (e.g. `.agents/skills/` or `.claude/skills/`) to use it.
+An agent skill for this library is shipped with `@conterra/reactivity-core` (`skills/reactivity-events`).
+With pnpm >= 12.11, add `@conterra/reactivity-core` as a direct dependency and approve its skills to have it linked automatically.
+See the [pnpm documentation](https://pnpm.io/agent-skills) and the [`@conterra/reactivity-core` README](https://github.com/conterra/reactivity/tree/main/packages/reactivity-core#agent-skills).
 
 ## Usage
 
