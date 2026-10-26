@@ -867,6 +867,12 @@ With [npm](https://npmjs.org/) installed, run
 npm install @conterra/reactivity-core
 ```
 
+## Agent skill
+
+This package ships an [agent skill](https://agentskills.io) that teaches coding agents how to use this library.
+After installation, it is available at `node_modules/@conterra/reactivity-core/skills/reactivity-core/SKILL.md`.
+Copy or symlink the `skills/reactivity-core` directory into your agent's skill directory (e.g. `.agents/skills/` or `.claude/skills/`) to use it.
+
 ## Gotchas and tips
 
 ### Avoid cycles in computed signals
