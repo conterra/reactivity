@@ -861,10 +861,10 @@ See the comments inside the type declarations or the built TypeDoc documentation
 
 ## Installation
 
-With [npm](https://npmjs.org/) installed, run
+With [pnpm](https://pnpm.io/) installed, run
 
 ```sh
-npm install @conterra/reactivity-core
+pnpm add @conterra/reactivity-core
 ```
 
 ## Agent skills
