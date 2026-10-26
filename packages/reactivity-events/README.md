@@ -29,6 +29,12 @@ on(view.clicked, (event) => {
 emit(view.clicked, { x: 10, y: 20 });
 ```
 
+## Agent skill
+
+An agent skill that teaches coding agents how to use this library is shipped with `@conterra/reactivity-core`.
+After installation, it is available at `node_modules/@conterra/reactivity-core/skills/reactivity-events/SKILL.md`.
+Copy or symlink the `skills/reactivity-events` directory into your agent's skill directory (e.g. `.agents/skills/` or `.claude/skills/`) to use it.
+
 ## Usage
 
 Use `emitter()` to create an event emitter.

@@ -2,4 +2,4 @@
 "@conterra/reactivity-core": patch
 ---
 
-Ship an agent skill (`skills/reactivity-core/SKILL.md`) that explains how to use the package.
+Ship agent skills (`skills/reactivity-core/SKILL.md` and `skills/reactivity-events/SKILL.md`) that explain how to use `@conterra/reactivity-core` and `@conterra/reactivity-events`.
