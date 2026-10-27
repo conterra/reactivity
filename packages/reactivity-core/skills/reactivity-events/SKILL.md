@@ -15,6 +15,7 @@ API docs are in the type declarations (e.g. `node_modules/@conterra/reactivity-e
 
 - Events are for things that _happen_ (clicks, messages, "saved", "closed"), where every occurrence matters and there is no current value to read.
 - State that can be read at any time belongs in signals (`@conterra/reactivity-core`); consumers can `watch` it.
+- Don't model events as a boolean signal flipped back and forth: signal changes coalesce, so occurrences get lost.
 - Prefer `emitter` + `EventSource` over hand-written listener lists or untyped event emitters in classes and services.
 
 ## Basics
@@ -62,7 +63,7 @@ class ViewImpl implements ViewApi {
 
 `on(source, callback, { once, dispatch })`:
 
-- `once: true`: unsubscribe automatically after the first event. Still destroy the handle if you may need to unsubscribe earlier.
+- `once: true`: unsubscribe automatically after the first event. Still destroy the handle if you may need to unsubscribe earlier. Useful to tie cleanup to another object's lifetime: `on(other.destroyed, cleanup, { once: true })`.
 - `dispatch: "async"` (default): callbacks run in a later task (like `setTimeout(cb, 0)`).
 - `dispatch: "sync"`: callbacks run immediately during `emit`, or, inside `batch()`, after the outermost batch completes.
 - Do not use the deprecated `onSync`; use `on(..., { dispatch: "sync" })`.

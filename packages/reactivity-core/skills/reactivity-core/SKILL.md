@@ -32,7 +32,8 @@ count.value = 1; // notifies dependents
 
 - Read with `.value` (tracked). `signal.peek()` or `untracked(() => ...)` reads without tracking.
 - `computed` callbacks must be pure: no writes, no side effects. They only recompute when a dependency changed.
-- Change detection uses `Object.is`. For objects/arrays pass `{ equal: (a, b) => ... }` to `reactive`/`computed`/`linked`.
+- Types for public signatures: `Reactive<T>` (writable), `ReadonlyReactive<T>` (read-only), `MaybeReactive<T>` (see Helpers). `reactive<T>()` without initial value is `Reactive<T | undefined>`.
+- Change detection uses `Object.is`, so a fresh object literal always counts as a change and wakes all dependents. For objects/arrays pass `{ equal: (a, b) => ... }` to `reactive`/`computed`/`linked`/`watch`/`watchValue`.
 - `linked(source, reset?)`: writable signal that resets when `source` changes. Use for "user selection that resets when options change".
 - `synchronized(getValue, subscribe)`: bridge external (event based) state into a signal. `subscribe(onChange)` must return an unsubscribe function.
 - Do not use deprecated APIs: `external` (use `synchronized`), `peekValue` (use `untracked` + `getValue`), `syncEffect` / `syncWatch` / `syncWatchValue` (use the `dispatch: "sync"` option). Never use `internal_*` exports.
@@ -61,6 +62,7 @@ class Person {
 }
 ```
 
+With the setter as the only write path, invariants and side effects stay in one place.
 Any getter backed by signals is reactive when read inside `computed`/`effect`/`watch`.
 For simple data objects, `reactiveStruct<T>().define({...})` generates such a class (supports `writable: false`, `reactive: false`, `compute()`, `method()`); see README section `#### Struct`.
 
@@ -97,9 +99,25 @@ h2.destroy();
 - With `immediate: true`, `oldValue` is `undefined` on the first call; handle that case.
 - Watch options: `immediate`, `equal` (custom comparison for the watched value), `dispatch`. `effect` only accepts `dispatch`.
 - `dispatch: "async"` (default): re-runs are deferred to a later macro task, so synchronous changes coalesce. The _initial_ `effect` run is always synchronous.
-- `dispatch: "sync"`: runs inside the `.value` assignment (or at the end of `batch`). Only use when exact timing matters.
+- `dispatch: "sync"`: runs inside the `.value` assignment (or at the end of `batch`). Only use when the transition itself matters (e.g. a "loading" flag that toggles within one tick), not "for speed": it causes redundant runs and may observe half-applied state.
+- Displaying or deriving a value only needs a read. Use watchers only for real side effects (persisting, calling external APIs, syncing outside state).
 - Callbacks may return a cleanup function; it runs before the next execution and on `destroy()`. Use it to abort requests, remove listeners, etc.
-- To stop from inside the callback, use `ctx.destroy()` (the returned handle does not exist yet during an immediate first run).
+- To stop from inside the callback, use `ctx.destroy()` (the returned handle does not exist yet during an immediate first run). Typical "wait until" pattern:
+
+```ts
+await new Promise<void>((resolve) => {
+    watchValue(
+        () => ready.value,
+        (isReady, _old, ctx) => {
+            if (isReady) {
+                ctx.destroy();
+                resolve();
+            }
+        },
+        { immediate: true }
+    );
+});
+```
 
 ## Collections and complex values
 
@@ -143,7 +161,8 @@ currentAuthor.value.fullName; // updates when either currentPerson changes or wh
 
 - Don't mutate signal values in place (`list.value.push(x)`); see [Collections and complex values](#collections-and-complex-values).
 - Don't expose signals publicly in clean APIs [Reactive classes](#reactive-classes).
-- Don't lose effect or watch handles: whoever creates an `effect`/`watch` must store the handle and call `destroy()` (e.g. in its own `destroy()` method).
+- Don't lose effect or watch handles: whoever creates an `effect`/`watch` must store the handle and call `destroy()` (e.g. collect them in `#resources: CleanupHandle[]` and destroy all in the owner's `destroy()`). A leaked watcher keeps its owner alive and keeps firing.
+- Don't read non-signal state (DOM, objects of external libraries) inside `computed`/`effect`/selectors: it isn't tracked, so values go stale. Bridge it once via `synchronized`.
 
 ### Don't derive state in an effect
 
