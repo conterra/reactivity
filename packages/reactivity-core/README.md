@@ -35,6 +35,8 @@ firstName.value = "Jane";
 // prints "Jane Doe" (asynchronously, see "Timing and batching")
 ```
 
+For more details, see [Core concepts](#core-concepts).
+
 ## Why?
 
 One of the most important responsibilities of an application is to accurately present the current state of the system.
@@ -1325,26 +1327,11 @@ See [Reactive collections](#reactive-collections).
 
 ### Utilities
 
-| Export                               | Purpose                                                                                            |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `nextTick()`                         | Promise that resolves after pending async effect/watch callbacks have run. Useful in tests.        |
-| `dispatchAsyncCallback(cb)`          | Schedules `cb` in the same queue used for async effect/watch callbacks. Returns a `CleanupHandle`. |
-| `reportCallbackError(err, message?)` | Reports an error via `globalThis.reportError` (or `console.error` as fallback).                    |
+| Export       | Purpose                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `nextTick()` | Promise that resolves after pending async effect/watch callbacks have run. Useful in tests. |
 
 Exports prefixed with `internal_` are **not** part of the public API and may change at any time.
-For deprecated exports, see [Deprecated APIs](#deprecated-apis).
-
-## Deprecated APIs
-
-These exports still exist for backwards compatibility but should not be used in new code:
-
-| Deprecated         | Replacement                                            |
-| ------------------ | ------------------------------------------------------ |
-| `external()`       | `synchronized()`                                       |
-| `peekValue(v)`     | `untracked(() => getValue(v))`                         |
-| `syncEffect()`     | `effect(callback, { dispatch: "sync" })`               |
-| `syncWatch()`      | `watch(selector, callback, { dispatch: "sync" })`      |
-| `syncWatchValue()` | `watchValue(selector, callback, { dispatch: "sync" })` |
 
 ## Agent skills
 

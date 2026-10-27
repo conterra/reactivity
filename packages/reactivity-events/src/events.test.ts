@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as core from "@conterra/reactivity-core";
-import { batch, nextTick, Reactive, reactive, ReactiveGetter } from "@conterra/reactivity-core";
+import { batch, MaybeReactive, nextTick, reactive } from "@conterra/reactivity-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { emit, emitter, EventCallback, EventSource, on, SubscribeOptions } from "./events";
 
@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 const ON_SYNC = <T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
+    source: MaybeReactive<EventSource<T>>,
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ) =>

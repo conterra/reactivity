@@ -39,6 +39,8 @@ emit(view.clicked, { x: 10, y: 20 });
 // prints "Click at 10, 20" (asynchronously, see "Timing and batching")
 ```
 
+For more details, see [Core concepts](#core-concepts).
+
 ## Why?
 
 Many things in an application simply _happen_: a button is clicked, a message arrives, a job finishes.
@@ -117,10 +119,8 @@ A subscription that is not destroyed stays active (possibly forever), which may 
 `on()` supports multiple kinds of event source parameters:
 
 - A plain event source (like `view.clicked` in the example above; not reactive).
-- A writable signal holding an event source (reactive), e.g. created by `reactive()` or `linked()`.
-- A function returning an event source, implemented using signals (reactive).
-
-Read-only signals (e.g. `computed()`) are not accepted directly; wrap them in a function instead: `on(() => signal.value, callback)`.
+- A signal holding a reactive event source.
+- A function returning an event source, implemented using signals.
 
 In the following examples, the signal `currentLogger` points to the active logger object (either `logger1` or `logger2`).
 The subscription configured by `on` automatically switches between the two loggers whenever the signal changes.
@@ -347,14 +347,6 @@ See the [API documentation](https://conterra.github.io/reactivity/latest/) or th
 | `DispatchType`      | `"async"` (default) or `"sync"`. See [Sync vs async](#sync-vs-async-event-callbacks). |
 | `EventCallback<T>`  | Signature of an event listener callback.                                              |
 | `EventArgs<T>`      | Arguments for `emit()` / callbacks: `[event: T]`, or `[]` for `void` events.          |
-
-## Deprecated APIs
-
-These exports still exist for backwards compatibility but should not be used in new code:
-
-| Deprecated | Replacement                                  |
-| ---------- | -------------------------------------------- |
-| `onSync()` | `on(source, callback, { dispatch: "sync" })` |
 
 ## Agent skills
 
