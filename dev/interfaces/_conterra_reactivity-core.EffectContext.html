@@ -16,7 +16,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">EffectContext</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-call-signature" href="#destroy-1">destroy</a><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/conterra/reactivity/blob/21e9ad4910e38063e51657cacedb96268544c7f1/packages/reactivity-core/src/types.ts#L228">types.ts:228</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/conterra/reactivity/blob/b0d3fda6a45258496c4cc554838ad0baa17dab86/packages/reactivity-core/src/types.ts#L228">types.ts:228</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -39,13 +39,13 @@
 <p>This is mostly equivalent to destroying the handle returned by <a href="../functions/_conterra_reactivity-core.watch.html" class="tsd-kind-function">watch</a> or <a href="../functions/_conterra_reactivity-core.effect.html" class="tsd-kind-function">effect</a>.
 However, this method can be called safely from <em>within</em> the callback, even before the handle has been returned.</p>
 <p>Example:</p>
-<pre><code class="js"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">handle</span><span class="hl-1"> = </span><span class="hl-6">effect</span><span class="hl-1">((</span><span class="hl-2">ctx</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">   </span><span class="hl-0">if</span><span class="hl-1"> (</span><span class="hl-2">someCondition</span><span class="hl-1">) {</span><br/><span class="hl-1">       </span><span class="hl-8">// Would throw an error if called in the effect&#39;s first execution. `handle` has not been returned yet!</span><br/><span class="hl-1">       </span><span class="hl-8">// handle.destroy();</span><br/><br/><span class="hl-1">       </span><span class="hl-8">// This will always work:</span><br/><span class="hl-1">       </span><span class="hl-2">ctx</span><span class="hl-1">.</span><span class="hl-6">destroy</span><span class="hl-1">();</span><br/><span class="hl-1">   }</span><br/><span class="hl-1">});</span>
+<pre><code class="js"><span class="hl-5">const</span><span class="hl-1"> </span><span class="hl-6">handle</span><span class="hl-1"> = </span><span class="hl-0">effect</span><span class="hl-1">((</span><span class="hl-4">ctx</span><span class="hl-1">) </span><span class="hl-5">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">   </span><span class="hl-3">if</span><span class="hl-1"> (</span><span class="hl-4">someCondition</span><span class="hl-1">) {</span><br/><span class="hl-1">       </span><span class="hl-8">// Would throw an error if called in the effect&#39;s first execution. `handle` has not been returned yet!</span><br/><span class="hl-1">       </span><span class="hl-8">// handle.destroy();</span><br/><br/><span class="hl-1">       </span><span class="hl-8">// This will always work:</span><br/><span class="hl-1">       </span><span class="hl-4">ctx</span><span class="hl-1">.</span><span class="hl-0">destroy</span><span class="hl-1">();</span><br/><span class="hl-1">   }</span><br/><span class="hl-1">});</span>
 </code><button type="button">Copy</button></pre>
 
 </div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/conterra/reactivity/blob/21e9ad4910e38063e51657cacedb96268544c7f1/packages/reactivity-core/src/types.ts#L249">types.ts:249</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/conterra/reactivity/blob/b0d3fda6a45258496c4cc554838ad0baa17dab86/packages/reactivity-core/src/types.ts#L249">types.ts:249</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
