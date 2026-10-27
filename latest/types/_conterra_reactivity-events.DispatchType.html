@@ -27,16 +27,16 @@ when the callback runs.</p>
 <li><span class="tsd-signature-type">&quot;sync&quot;</span>
 <div class="tsd-comment tsd-typography"><p>Callbacks are invoked synchronously, either immediately or after the current <code>batch()</code>.</p>
 <p>For example:</p>
-<pre><code class="ts"><span class="hl-6">emit</span><span class="hl-1">(</span><span class="hl-2">myObject</span><span class="hl-1">.</span><span class="hl-2">click</span><span class="hl-1">, { </span><span class="hl-2">x:</span><span class="hl-1"> </span><span class="hl-9">1</span><span class="hl-1">, </span><span class="hl-2">y:</span><span class="hl-1"> </span><span class="hl-9">2</span><span class="hl-1"> });; </span><span class="hl-8">// sync callbacks run here</span>
+<pre><code class="ts"><span class="hl-0">emit</span><span class="hl-1">(</span><span class="hl-4">myObject</span><span class="hl-1">.</span><span class="hl-4">click</span><span class="hl-1">, { </span><span class="hl-4">x:</span><span class="hl-1"> </span><span class="hl-9">1</span><span class="hl-1">, </span><span class="hl-4">y:</span><span class="hl-1"> </span><span class="hl-9">2</span><span class="hl-1"> });; </span><span class="hl-8">// sync callbacks run here</span>
 </code><button type="button">Copy</button></pre>
 
 <p>or</p>
-<pre><code class="ts"><span class="hl-6">batch</span><span class="hl-1">(() </span><span class="hl-4">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-8">// ...</span><br/><span class="hl-1">  </span><span class="hl-2">mySignal</span><span class="hl-1">.</span><span class="hl-2">value</span><span class="hl-1"> = </span><span class="hl-2">newValue</span><span class="hl-1">;</span><br/><span class="hl-1">}); </span><span class="hl-8">// Or here, when the outermost batch is complete.</span>
+<pre><code class="ts"><span class="hl-0">batch</span><span class="hl-1">(() </span><span class="hl-5">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-8">// ...</span><br/><span class="hl-1">  </span><span class="hl-4">mySignal</span><span class="hl-1">.</span><span class="hl-4">value</span><span class="hl-1"> = </span><span class="hl-4">newValue</span><span class="hl-1">;</span><br/><span class="hl-1">}); </span><span class="hl-8">// Or here, when the outermost batch is complete.</span>
 </code><button type="button">Copy</button></pre>
 
 </div></li></ul></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/conterra/reactivity/blob/3404dd0f14d34e7dce4775c50ceae4593bc399a0/packages/reactivity-events/src/events.ts#L182">events.ts:182</a></li></ul></aside></div>
+<li>Defined in <a href="https://github.com/conterra/reactivity/blob/850300b4e42d29158c8d09fa73f34fe58ed0f1cf/packages/reactivity-events/src/events.ts#L182">events.ts:182</a></li></ul></aside></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
