@@ -1208,7 +1208,9 @@ Signals can also track the status of an asynchronous operation:
 import { reactive, effect } from "@conterra/reactivity-core";
 
 type JobState =
-    { state: "pending" } | { state: "done"; result: unknown } | { state: "error"; error: unknown };
+    | { state: "pending" }
+    | { state: "done"; result: unknown }
+    | { state: "error"; error: unknown };
 
 const jobState = reactive<JobState>({ state: "pending" });
 effect(() => {
