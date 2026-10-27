@@ -9,8 +9,7 @@ Typed event emitters for reactive objects, built on `@conterra/reactivity-core`.
 For signals, `batch`, `nextTick` etc. see the `reactivity-core` skill.
 
 Full documentation: `node_modules/@conterra/reactivity-events/README.md`.
-API docs are in the type declarations (`node_modules/@conterra/reactivity-events/dist/index.d.ts`).
-If the package is not at the project root's `node_modules` (e.g. pnpm without hoisting, nested workspaces), resolve its install location first.
+API docs are in the type declarations (e.g. `node_modules/@conterra/reactivity-events/dist/index.d.ts` from the importing package).
 
 ## When to use
 
@@ -111,8 +110,13 @@ With the default `dispatch: "async"`, callbacks have not run yet right after `em
 emit(clicked, { x: 1, y: 2 });
 expect(spy).toHaveBeenCalled();
 
-// Right
+// Okay
 emit(clicked, { x: 1, y: 2 });
 await nextTick(); // from @conterra/reactivity-core
 expect(spy).toHaveBeenCalled();
+
+// Better: independent of timing
+import { vi } from "vitest";
+emit(clicked, { x: 1, y: 2 });
+await vi.waitFor(() => expect(spy).toHaveBeenCalled());
 ```
