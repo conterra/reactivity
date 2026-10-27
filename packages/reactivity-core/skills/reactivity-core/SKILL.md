@@ -10,13 +10,12 @@ State lives in signals; derived values and side effects track the signals they r
 
 Full documentation with more examples: `node_modules/@conterra/reactivity-core/README.md`.
 Search it by section heading (e.g. `### Linked signals`, `### Working with promises`) when you need details.
-API docs are in the type declarations (`node_modules/@conterra/reactivity-core/dist/index.d.ts`).
-If the package is not at the project root's `node_modules` (e.g. pnpm without hoisting, nested workspaces), resolve its install location first.
+API docs are in the type declarations (e.g. `node_modules/@conterra/reactivity-core/dist/index.d.ts` from the importing package).
 
 ## When to use
 
-- State → `reactive`, derived values → `computed`, side effects → `watchValue`/`effect`, external event-based sources → `synchronized`.
-- Prefer signals over hand-written event emitters or "changed" events for observable state in models and services.
+- State → `reactive`, derived values → `computed`, mixed -> `linked`, side effects → `watchValue` / `watch` / `effect`, external event-based sources → `synchronized`.
+- Prefer signals over hand-written event emitters or "changed" events for observable state.
 - Signals hold only the latest value and coalesce changes. For discrete events where every occurrence matters (clicks, messages), use `@conterra/reactivity-events` instead.
 
 ## Primitives
@@ -31,7 +30,7 @@ const fixed = constant(3); // ReadonlyReactive<number>, never changes
 count.value = 1; // notifies dependents
 ```
 
-- Read with `.value` (tracked). `signal.peek()` reads without tracking.
+- Read with `.value` (tracked). `signal.peek()` or `untracked(() => ...)` reads without tracking.
 - `computed` callbacks must be pure: no writes, no side effects. They only recompute when a dependency changed.
 - Change detection uses `Object.is`. For objects/arrays pass `{ equal: (a, b) => ... }` to `reactive`/`computed`/`linked`.
 - `linked(source, reset?)`: writable signal that resets when `source` changes. Use for "user selection that resets when options change".
@@ -40,7 +39,7 @@ count.value = 1; // notifies dependents
 
 ## Reactive classes
 
-Keep signals private, expose plain getters/setters/methods. Consumers never see signals:
+Keep signals private, expose plain getters/setters/methods. Signals can be hidden from API consumers:
 
 ```ts
 import { reactive, computed } from "@conterra/reactivity-core";
@@ -104,7 +103,7 @@ h2.destroy();
 
 ## Collections and complex values
 
-Signals are not deeply reactive: mutating an object/array stored in a signal does not notify anybody.
+Signals are not deeply reactive: mutating a plain object/array stored in a signal does not notify anybody.
 Either replace the value immutably:
 
 ```ts
@@ -126,17 +125,24 @@ const set = reactiveSet<string>();
 const map = reactiveMap<string, number>();
 ```
 
+or use nested signals:
+
+```ts
+const currentAuthor = reactive(new Person());
+currentAuthor.value.fullName; // updates when either currentPerson changes or when person.fullName changes
+```
+
 ## Helpers
 
 - `batch(() => { ... })`: group multiple writes so watchers fire once with consistent state. Wrap complex updates in it.
 - `untracked(() => ...)`: read signals without becoming a dependency (works in `computed`, `effect`, watch selectors).
 - `MaybeReactive<T>` = value | signal | getter function. Accept it in reusable APIs; read the current value with `getReactive(x)`, or turn it into a getter function with `toReactiveGetter(x)`.
-- `getValue(x)`: unwraps a signal or returns a plain value.
+- `getReactive(x)`: unwraps a signal / getter or returns a plain value.
 
 ## Common mistakes
 
 - Don't mutate signal values in place (`list.value.push(x)`); see [Collections and complex values](#collections-and-complex-values).
-- Don't expose signals publicly; see [Reactive classes](#reactive-classes).
+- Don't expose signals publicly in clean APIs [Reactive classes](#reactive-classes).
 - Don't lose effect or watch handles: whoever creates an `effect`/`watch` must store the handle and call `destroy()` (e.g. in its own `destroy()` method).
 
 ### Don't derive state in an effect
@@ -212,10 +218,15 @@ With the default `dispatch: "async"`, effects and watch callbacks have not run y
 s.value = 1;
 expect(spy).toHaveBeenCalled();
 
-// Right
+// Okay
 s.value = 1;
 await nextTick(); // exported by this package
 expect(spy).toHaveBeenCalled();
+
+// Better: independent of timing
+import { vi } from "vitest";
+s.value = 1;
+await vi.waitFor(() => expect(spy).toHaveBeenCalled());
 ```
 
 ### Don't create effects inside `computed` or other effects
