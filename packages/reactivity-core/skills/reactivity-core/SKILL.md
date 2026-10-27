@@ -1,6 +1,6 @@
 ---
 name: reactivity-core
-description: How to use @conterra/reactivity-core (signals, computed, linked, effect, watch, reactive collections, reactiveStruct). Use when writing, reviewing or debugging code that imports from "@conterra/reactivity-core".
+description: How to use @conterra/reactivity-core (signals, computed, linked, effect, watch, reactive collections, reactiveStruct). Use when writing, reviewing or debugging code that imports from "@conterra/reactivity-core", or when designing observable state, derived values or change notifications in TypeScript code that depends on it.
 ---
 
 # @conterra/reactivity-core
@@ -11,6 +11,13 @@ State lives in signals; derived values and side effects track the signals they r
 Full documentation with more examples: `node_modules/@conterra/reactivity-core/README.md`.
 Search it by section heading (e.g. `### Linked signals`, `### Working with promises`) when you need details.
 API docs are in the type declarations (`node_modules/@conterra/reactivity-core/dist/index.d.ts`).
+If the package is not at the project root's `node_modules` (e.g. pnpm without hoisting, nested workspaces), resolve its install location first.
+
+## When to use
+
+- State → `reactive`, derived values → `computed`, side effects → `watchValue`/`effect`, external event-based sources → `synchronized`.
+- Prefer signals over hand-written event emitters or "changed" events for observable state in models and services.
+- Signals hold only the latest value and coalesce changes. For discrete events where every occurrence matters (clicks, messages), use `@conterra/reactivity-events` instead.
 
 ## Primitives
 
@@ -88,6 +95,7 @@ h2.destroy();
 ```
 
 - Prefer `watchValue`/`watch` when only specific changes matter; `effect` re-runs on every dependency change.
+- With `immediate: true`, `oldValue` is `undefined` on the first call; handle that case.
 - Watch options: `immediate`, `equal` (custom comparison for the watched value), `dispatch`. `effect` only accepts `dispatch`.
 - `dispatch: "async"` (default): re-runs are deferred to a later macro task, so synchronous changes coalesce. The _initial_ `effect` run is always synchronous.
 - `dispatch: "sync"`: runs inside the `.value` assignment (or at the end of `batch`). Only use when exact timing matters.
@@ -149,6 +157,7 @@ const b = computed(() => a.value * 2);
 
 An effect that writes one of its own dependencies (`v.value += 1`) throws "Cycle detected". If you really need the current value, read it without tracking via `untracked(() => v.value)` or `v.peek()`.
 The same error is thrown when a computed reads its own value during computation.
+Writing signals from an effect is rarely right; first check whether a `computed` fits (see above).
 
 ```ts
 // Wrong
@@ -174,7 +183,7 @@ effect(async () => {
 
 // Right
 const result = reactive<{ state: "pending" | "done" | "error"; data?: Data }>({ state: "pending" });
-watchValue(
+const handle = watchValue(
     () => id.value,
     (id) => {
         const controller = new AbortController();
@@ -191,6 +200,7 @@ watchValue(
     },
     { immediate: true }
 );
+// later: handle.destroy();
 ```
 
 ### Don't assert right after a write in tests

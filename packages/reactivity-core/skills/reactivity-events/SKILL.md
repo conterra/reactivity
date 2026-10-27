@@ -1,6 +1,6 @@
 ---
 name: reactivity-events
-description: How to use @conterra/reactivity-events (emitter, emit, on, EventSource, EventEmitter). Use when writing, reviewing or debugging code that imports from "@conterra/reactivity-events".
+description: How to use @conterra/reactivity-events (emitter, emit, on, EventSource, EventEmitter). Use when writing, reviewing or debugging code that imports from "@conterra/reactivity-events", or when designing typed events or notifications in TypeScript code that depends on it.
 ---
 
 # @conterra/reactivity-events
@@ -10,6 +10,13 @@ For signals, `batch`, `nextTick` etc. see the `reactivity-core` skill.
 
 Full documentation: `node_modules/@conterra/reactivity-events/README.md`.
 API docs are in the type declarations (`node_modules/@conterra/reactivity-events/dist/index.d.ts`).
+If the package is not at the project root's `node_modules` (e.g. pnpm without hoisting, nested workspaces), resolve its install location first.
+
+## When to use
+
+- Events are for things that _happen_ (clicks, messages, "saved", "closed"), where every occurrence matters and there is no current value to read.
+- State that can be read at any time belongs in signals (`@conterra/reactivity-core`); consumers can `watch` it.
+- Prefer `emitter` + `EventSource` over hand-written listener lists or untyped event emitters in classes and services.
 
 ## Basics
 
@@ -94,8 +101,6 @@ const mouseMoved = emitter<MouseEvent>({
 
 - Don't lose the handle returned by `on`: whoever subscribes must call `destroy()` (e.g. in its own `destroy()` method).
 - Don't expose `EventEmitter<T>` in public APIs; use `EventSource<T>` (see [Events on classes](#events-on-classes)).
-- Don't use events for state. Values that can be read at any time belong in signals (consumers can `watch` them); events are for things that _happen_ (clicks, messages, "saved").
-- Don't expect `dispatch: "sync"` callbacks to run inside a `batch()`; they run when the outermost batch ends.
 
 ### Don't assert right after `emit` in tests
 
