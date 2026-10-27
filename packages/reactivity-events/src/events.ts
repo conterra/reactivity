@@ -3,9 +3,8 @@
 
 import {
     CleanupHandle,
-    getValue,
-    Reactive,
-    ReactiveGetter,
+    getReactive,
+    MaybeReactive,
     untracked,
     WatchOptions,
     watchValue
@@ -249,19 +248,12 @@ const WATCH_OPTS = {
  * @group Subscribing
  */
 export function on<T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
+    source: MaybeReactive<EventSource<T>>,
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ): CleanupHandle {
-    let getter;
-    if (typeof source === "function") {
-        getter = source;
-    } else {
-        getter = () => getValue(source);
-    }
-
     return watchValue(
-        getter,
+        () => getReactive(source),
         (source) => {
             assertEmitter(source);
             const handle = subscribeImpl(source, callback as RawCallback, options);
@@ -308,7 +300,7 @@ export function on<T>(
  * @group Subscribing
  */
 export function onSync<T>(
-    source: EventSource<T> | Reactive<EventSource<T>> | ReactiveGetter<EventSource<T>>,
+    source: MaybeReactive<EventSource<T>>,
     callback: EventCallback<T>,
     options?: SubscribeOptions
 ): CleanupHandle {

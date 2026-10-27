@@ -13,7 +13,8 @@
         "CHANGELOG.md",
         "LICENSE",
         "package.json",
-        "dist/**"
+        "dist/**",
+        "skills/**"
     ],
     "type": "module",
     "sideEffects": false,
