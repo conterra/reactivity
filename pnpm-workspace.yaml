@@ -10,23 +10,23 @@ catalog:
   "@changesets/cli": ^2.31.1
   "@mdi/font": ^7.4.47
   "@tony.ganchev/eslint-plugin-header": ^3.4.4
-  "@types/node": ^24.19.2
+  "@types/node": ^24.19.4
   "@vitejs/plugin-vue": ^6.0.11
   concurrently: ^10.0.7
   esbuild: ^0.28.2
   happy-dom: ^21.0.4
   husky: ^9.1.7
-  lint-staged: ^17.6.0
+  lint-staged: ^17.6.2
   oxfmt: ^0.78.0
-  oxlint: ^1.93.0
+  oxlint: ^1.95.0
   rimraf: ^6.1.4
   tsx: ^4.23.15
   typedoc: ^0.28.20
   typescript: ^6.0.3
   vite: ^8.3.8
-  vitest: ^5.1.0
-  vue: ^3.5.45
-  vuetify: ^3.13.7
+  vitest: ^5.1.2
+  vue: ^3.5.46
+  vuetify: ^3.13.8
 
 # Empty object so renovate does not error out
 overrides:
